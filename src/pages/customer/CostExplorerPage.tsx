@@ -1,0 +1,71 @@
+import React from 'react';
+import CustomerShell from '../../layout/CustomerShell';
+
+const CostExplorerPage: React.FC = () => {
+  return (
+    <CustomerShell>
+      <div className="container-fluid" style={{maxWidth: '1200px', padding: '32px 32px 80px'}}>
+                  <div className="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+                      <div>
+                          <h1 className="fw-bold text-body mb-1 h4">Cost Explorer</h1><small className="text-muted">April 2026 · OCI — Total spend: $24,840</small>
+                      </div>
+                      <div className="btn-group btn-group-sm" role="group" aria-label="Period"><input type="radio" className="btn-check" id="pDay" name="period" /><label className="btn btn-outline-primary" htmlFor="pDay">Daily</label><input type="radio" className="btn-check" id="pWeek" name="period" /><label className="btn btn-outline-primary" htmlFor="pWeek">Weekly</label><input type="radio" defaultChecked="" className="btn-check" id="pMonth" name="period" /><label className="btn btn-outline-primary" htmlFor="pMonth">Monthly</label></div>
+                  </div>
+                  <div className="row mb-4 g-3">
+                      <div className="col-md-4">
+                          <div className="card border shadow-sm h-100">
+                              <div className="card-body"><small className="fw-medium text-muted d-block mb-3">Total Spend (Apr)</small>
+                                  <div className="text-body stat-value"><span>$24,840</span></div><small className="fw-semibold text-danger"><svg className="bi bi-arrow-up-short" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16">
+                                          <path fillRule="evenodd" d="M8 12a.5.5 0 0 0 .5-.5V5.707l2.146 2.147a.5.5 0 0 0 .708-.708l-3-3a.5.5 0 0 0-.708 0l-3 3a.5.5 0 1 0 .708.708L7.5 5.707V11.5a.5.5 0 0 0 .5.5"></path>
+                                      </svg>+12% vs March</small>
+                              </div>
+                          </div>
+                      </div>
+                      <div className="col-md-4">
+                          <div className="card border shadow-sm h-100">
+                              <div className="card-body"><small className="fw-medium text-muted d-block mb-3">Daily Average</small>
+                                  <div className="text-primary stat-value"><span>$828</span></div><small className="fw-semibold text-success"><svg className="bi bi-arrow-down-short" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16">
+                                          <path fillRule="evenodd" d="M8 4a.5.5 0 0 1 .5.5v5.793l2.146-2.147a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 1 1 .708-.708L7.5 10.293V4.5A.5.5 0 0 1 8 4"></path>
+                                      </svg>−$24 vs last month</small>
+                              </div>
+                          </div>
+                      </div>
+                      <div className="col-md-4">
+                          <div className="card border shadow-sm h-100">
+                              <div className="card-body"><small className="fw-medium text-muted d-block mb-3">Projected Month-End</small>
+                                  <div className="text-success stat-value"><span>$24,840</span></div><small className="text-muted">Final — month closed</small>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+                  <div className="card border shadow-sm mb-4">
+                      <div className="card-body p-4">
+                          <h6 className="fw-bold text-body mb-1">Spend over time</h6><small className="text-muted d-block mb-4">OCI cloud spend · monthly view</small>
+                          <div className="bg-body-secondary rounded-2 d-flex align-items-end gap-3 p-3" style={{height: '160px'}}>
+                              <div className="d-flex flex-column flex-grow-1 align-items-center gap-1">
+                                  <div className="bg-primary bg-opacity-50 w-100 rounded-top" style={{height: '75%'}}></div><small className="text-muted" style={{fontSize: '10px'}}>Jan</small>
+                              </div>
+                              <div className="d-flex flex-column flex-grow-1 align-items-center gap-1">
+                                  <div className="bg-primary bg-opacity-50 w-100 rounded-top" style={{height: '84%'}}></div><small className="text-muted" style={{fontSize: '10px'}}>Feb</small>
+                              </div>
+                              <div className="d-flex flex-column flex-grow-1 align-items-center gap-1">
+                                  <div className="bg-primary bg-opacity-75 w-100 rounded-top" style={{height: '100%'}}></div><small className="text-muted" style={{fontSize: '10px'}}>Mar</small>
+                              </div>
+                              <div className="d-flex flex-column flex-grow-1 align-items-center gap-1">
+                                  <div className="bg-primary w-100 rounded-top" style={{height: '89%'}}></div><small className="fw-bold text-primary" style={{fontSize: '10px'}}>Apr</small>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+                  <div className="card border shadow-sm">
+                      <div className="p-4 card-body">
+                          <ul className="nav nav-pills gap-1 mb-4" role="tablist"></ul>
+                          <div className="tab-content"></div>
+                      </div>
+                  </div>
+              </div>
+    </CustomerShell>
+  );
+};
+
+export default CostExplorerPage;

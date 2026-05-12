@@ -1,0 +1,134 @@
+import React from 'react';
+import CustomerShell from '../../layout/CustomerShell';
+
+const SavingsPage: React.FC = () => {
+  return (
+    <CustomerShell>
+      <div className="container-fluid" style={{maxWidth: '1200px', padding: '32px 32px 80px'}}>
+                  <div className="mb-4">
+                      <h1 className="fw-bold text-body mb-1 h4">Savings Recommendations</h1><small className="text-muted">AI-identified cost optimization opportunities · OCI</small>
+                  </div>
+                  <div className="row mb-4 g-3">
+                      <div className="col-md-4">
+                          <div className="card border shadow-sm h-100">
+                              <div className="card-body"><small className="fw-medium text-muted d-block mb-3">Total Identified</small>
+                                  <div className="text-body stat-value"><span>$5,600/mo</span></div><small className="text-muted">7 opportunities</small>
+                              </div>
+                          </div>
+                      </div>
+                      <div className="col-md-4">
+                          <div className="card border shadow-sm h-100">
+                              <div className="card-body"><small className="fw-medium text-muted d-block mb-3">Implemented</small>
+                                  <div className="text-success stat-value"><span>$0/mo</span></div><small className="text-muted">0 actions taken</small>
+                              </div>
+                          </div>
+                      </div>
+                      <div className="col-md-4">
+                          <div className="card border shadow-sm h-100">
+                              <div className="card-body"><small className="fw-medium text-muted d-block mb-3">Still Pending</small>
+                                  <div className="text-primary stat-value"><span>$5,600/mo</span></div><small className="text-muted">Ready to action</small>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+                  <ul className="nav nav-pills gap-1 mb-4" role="tablist">
+                      <li className="nav-item"><button className="active nav-link btn-sm" data-bs-toggle="pill" data-bs-target="#sAll">All</button></li>
+                      <li className="nav-item"><button className="nav-link btn-sm" data-bs-toggle="pill" data-bs-target="#sCompute">Compute</button></li>
+                      <li className="nav-item"><button className="nav-link btn-sm" data-bs-toggle="pill" data-bs-target="#sStorage">Storage</button></li>
+                      <li className="nav-item"><button className="nav-link btn-sm" data-bs-toggle="pill" data-bs-target="#sConfig">Config</button></li>
+                      <li className="nav-item"><button className="nav-link btn-sm" data-bs-toggle="pill" data-bs-target="#sNetwork">Network</button></li>
+                  </ul>
+                  <div className="tab-content">
+                      <div className="tab-pane fade show active" role="tabpanel" id="sAll">
+                          <div className="d-flex flex-column gap-3">
+                              <div className="card border shadow-sm p-4 border-s-primary">
+                                  <div className="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                                      <div className="flex-grow-1">
+                                          <div className="d-flex align-items-center flex-wrap gap-2 mb-2"><span className="fw-semibold text-body">Rightsize analytics cluster</span><span className="badge fw-normal text-secondary-emphasis bg-secondary-subtle" style={{fontSize: '10px'}}>compute</span></div>
+                                          <p className="text-muted mb-2" style={{fontSize: '13px'}}>Scale from 12 to 6 nodes. 14-day avg CPU: 22%. Low risk with auto-scaling enabled.</p>
+                                          <div className="d-flex align-items-center gap-3"><span className="fw-bold text-success">$2,400/mo</span><small className="text-muted">Effort: <strong className="text-body">Low</strong></small></div>
+                                      </div>
+                                      <div className="d-flex flex-shrink-0 gap-2"><button className="btn btn-primary btn-sm">Implement</button><button className="btn btn-outline-secondary btn-sm">Dismiss</button></div>
+                                  </div>
+                              </div>
+                              <div className="card border shadow-sm p-4 border-s-warning">
+                                  <div className="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                                      <div className="flex-grow-1">
+                                          <div className="d-flex align-items-center flex-wrap gap-2 mb-2"><span className="fw-semibold text-body">Fix auto-scale-in cooldown</span><span className="badge fw-normal text-secondary-emphasis bg-secondary-subtle" style={{fontSize: '10px'}}>config</span></div>
+                                          <p className="text-muted mb-2" style={{fontSize: '13px'}}>Current cooldown: 2 hours. Recommended: 30 minutes. Prevents cluster staying overprovisioned.</p>
+                                          <div className="d-flex align-items-center gap-3"><span className="fw-bold text-success">$1,200/mo</span><small className="text-muted">Effort: <strong className="text-body">Medium</strong></small></div>
+                                      </div>
+                                      <div className="d-flex flex-shrink-0 gap-2"><button className="btn btn-primary btn-sm">Implement</button><button className="btn btn-outline-secondary btn-sm">Dismiss</button></div>
+                                  </div>
+                              </div>
+                              <div className="card border shadow-sm p-4 border-s-success">
+                                  <div className="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                                      <div className="flex-grow-1">
+                                          <div className="d-flex align-items-center flex-wrap gap-2 mb-2"><span className="fw-semibold text-body">Archive unused block volumes</span><span className="badge fw-normal text-secondary-emphasis bg-secondary-subtle" style={{fontSize: '10px'}}>storage</span></div>
+                                          <p className="text-muted mb-2" style={{fontSize: '13px'}}>5 volumes unattached for more than 30 days. Safe to archive or delete.</p>
+                                          <div className="d-flex align-items-center gap-3"><span className="fw-bold text-success">$680/mo</span><small className="text-muted">Effort: <strong className="text-body">Low</strong></small></div>
+                                      </div>
+                                      <div className="d-flex flex-shrink-0 gap-2"><button className="btn btn-primary btn-sm">Implement</button><button className="btn btn-outline-secondary btn-sm">Dismiss</button></div>
+                                  </div>
+                              </div>
+                              <div className="card border shadow-sm p-4 border-s-primary">
+                                  <div className="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                                      <div className="flex-grow-1">
+                                          <div className="d-flex align-items-center flex-wrap gap-2 mb-2"><span className="fw-semibold text-body">Reserved instance for mysql-prod</span><span className="badge fw-normal text-secondary-emphasis bg-secondary-subtle" style={{fontSize: '10px'}}>compute</span></div>
+                                          <p className="text-muted mb-2" style={{fontSize: '13px'}}>This instance runs 24/7. A 1-year reserved instance saves 40% vs on-demand pricing.</p>
+                                          <div className="d-flex align-items-center gap-3"><span className="fw-bold text-success">$480/mo</span><small className="text-muted">Effort: <strong className="text-body">Medium</strong></small></div>
+                                      </div>
+                                      <div className="d-flex flex-shrink-0 gap-2"><button className="btn btn-primary btn-sm">Implement</button><button className="btn btn-outline-secondary btn-sm">Dismiss</button></div>
+                                  </div>
+                              </div>
+                              <div className="card border shadow-sm p-4" style={{borderLeft: '3px solid #3B82F6'}}>
+                                  <div className="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                                      <div className="flex-grow-1">
+                                          <div className="d-flex align-items-center flex-wrap gap-2 mb-2"><span className="fw-semibold text-body">Move cold objects to Archive tier</span><span className="badge fw-normal text-secondary-emphasis bg-secondary-subtle" style={{fontSize: '10px'}}>storage</span></div>
+                                          <p className="text-muted mb-2" style={{fontSize: '13px'}}>62% of Object Storage data untouched for more than 90 days. Lifecycle policy recommended.</p>
+                                          <div className="d-flex align-items-center gap-3"><span className="fw-bold text-success">$340/mo</span><small className="text-muted">Effort: <strong className="text-body">Low</strong></small></div>
+                                      </div>
+                                      <div className="d-flex flex-shrink-0 gap-2"><button className="btn btn-primary btn-sm">Implement</button><button className="btn btn-outline-secondary btn-sm">Dismiss</button></div>
+                                  </div>
+                              </div>
+                              <div className="card border shadow-sm p-4 border-s-danger">
+                                  <div className="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                                      <div className="flex-grow-1">
+                                          <div className="d-flex align-items-center flex-wrap gap-2 mb-2"><span className="fw-semibold text-body">Reduce cross-region egress</span><span className="badge fw-normal text-secondary-emphasis bg-secondary-subtle" style={{fontSize: '10px'}}>network</span></div>
+                                          <p className="text-muted mb-2" style={{fontSize: '13px'}}>Melbourne traffic could route via Sydney endpoint instead, cutting cross-region fees.</p>
+                                          <div className="d-flex align-items-center gap-3"><span className="fw-bold text-success">$260/mo</span><small className="text-muted">Effort: <strong className="text-body">High</strong></small></div>
+                                      </div>
+                                      <div className="d-flex flex-shrink-0 gap-2"><button className="btn btn-primary btn-sm">Implement</button><button className="btn btn-outline-secondary btn-sm">Dismiss</button></div>
+                                  </div>
+                              </div>
+                              <div className="card border shadow-sm p-4 border-s-warning">
+                                  <div className="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                                      <div className="flex-grow-1">
+                                          <div className="d-flex align-items-center flex-wrap gap-2 mb-2"><span className="fw-semibold text-body">Terminate idle staging database</span><span className="badge fw-normal text-secondary-emphasis bg-secondary-subtle" style={{fontSize: '10px'}}>config</span></div>
+                                          <p className="text-muted mb-2" style={{fontSize: '13px'}}>mysql-staging has had 0 active connections for 12 consecutive days.</p>
+                                          <div className="d-flex align-items-center gap-3"><span className="fw-bold text-success">$240/mo</span><small className="text-muted">Effort: <strong className="text-body">Low</strong></small></div>
+                                      </div>
+                                      <div className="d-flex flex-shrink-0 gap-2"><button className="btn btn-primary btn-sm">Implement</button><button className="btn btn-outline-secondary btn-sm">Dismiss</button></div>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                      <div className="tab-pane fade" role="tabpanel" id="sCompute">
+                          <p className="text-muted mt-3" style={{fontSize: '13px'}}>Showing compute recommendations.</p>
+                      </div>
+                      <div className="tab-pane fade" role="tabpanel" id="sStorage">
+                          <p className="text-muted mt-3" style={{fontSize: '13px'}}>Showing storage recommendations.</p>
+                      </div>
+                      <div className="tab-pane fade" role="tabpanel" id="sConfig">
+                          <p className="text-muted mt-3" style={{fontSize: '13px'}}>Showing config recommendations.</p>
+                      </div>
+                      <div className="tab-pane fade" role="tabpanel" id="sNetwork">
+                          <p className="text-muted mt-3" style={{fontSize: '13px'}}>Showing network recommendations.</p>
+                      </div>
+                  </div>
+              </div>
+    </CustomerShell>
+  );
+};
+
+export default SavingsPage;

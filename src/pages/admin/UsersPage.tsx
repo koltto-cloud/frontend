@@ -1,0 +1,91 @@
+import React from 'react';
+import AdminShell from '../../layout/AdminShell';
+import { useAuth } from '../../context/AuthContext';
+import { useAdminUsers } from '../../hooks/useAdminUsers';
+
+const UsersPage: React.FC = () => {
+  const { user } = useAuth();
+  const { userRows, loading, createFirst, setCreateFirst, createLast, setCreateLast, createEmail, setCreateEmail, creating, handleCreateSubmit, openCreateModal, accountStatusLabel, userTypeLabel, userStatusBadgeClass, userTypeBadgeClass, userStatusActionLabel, formatUserDisplayName, toggleUserAccount, sendPasswordReset } = useAdminUsers();
+  return (
+    <AdminShell>
+      <div className="container-fluid" style={{maxWidth: '1200px', padding: '32px 32px 80px'}}>
+                  <div className="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+                      <div>
+                          <h1 className="fw-bold text-body mb-1 h4">Users</h1><small className="text-muted">10 total · 8 active</small>
+                      </div><button className="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalNewUser" data-cloudey="admin.users.open_create_btn" type="button" onClick={openCreateModal}><svg className="bi bi-plus-lg me-1" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16">
+                              <path fillRule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"></path>
+                          </svg>New User </button>
+                  </div>
+                  <div className="d-flex align-items-center flex-wrap gap-3 mb-4">
+                      <div className="input-group" style={{maxWidth: '300px'}}><span className="text-muted bg-body-secondary input-group-text border-end-0"><svg className="bi bi-search" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16" style={{fontSize: '12px'}}>
+                                  <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"></path>
+                              </svg></span><input className="bg-body-secondary form-control border-start-0" type="text" placeholder="Search users..." style={{fontSize: '13px'}} /></div>
+                      <ul className="nav nav-pills gap-1 mb-0" role="tablist">
+                          <li className="nav-item"><button className="active nav-link btn-sm" data-bs-toggle="pill" data-bs-target="#uAll">All</button></li>
+                          <li className="nav-item"><button className="nav-link btn-sm" data-bs-toggle="pill" data-bs-target="#uActive">Active</button></li>
+                          <li className="nav-item"><button className="nav-link btn-sm" data-bs-toggle="pill" data-bs-target="#uInvited">Invited</button></li>
+                          <li className="nav-item"><button className="nav-link btn-sm" data-bs-toggle="pill" data-bs-target="#uSuspended">Suspended</button></li>
+                      </ul>
+                  </div>
+                  <div className="tab-content">
+                      <div className="tab-pane fade show active" role="tabpanel" id="uAll">
+                          <div className="card border shadow-sm">
+                              <div className="p-0 card-body">
+                                  <table className="table table-hover align-middle mb-0">
+                                      <thead>
+                                          <tr>
+                                              <th className="text-uppercase fw-semibold text-muted px-4" style={{fontSize: '10px', letterSpacing: '.5px', paddingBlock: '12px'}}>User</th>
+                                              <th className="text-uppercase fw-semibold text-muted" style={{fontSize: '10px', letterSpacing: '.5px'}}>Email</th>
+                                              <th className="text-uppercase fw-semibold text-muted" style={{fontSize: '10px', letterSpacing: '.5px'}}>Status</th>
+                                              <th className="text-uppercase fw-semibold text-muted" style={{fontSize: '10px', letterSpacing: '.5px'}}>Role</th>
+                                              <th></th>
+                                          </tr>
+                                      </thead>
+                                      <tbody>
+        {userRows.map((user) => (
+          <tr key={String(user.user_id)}>
+                                              <td className="text-body px-4" style={{fontSize: '13px'}}>{formatUserDisplayName(user)}</td>
+                                              <td className="text-muted" style={{fontSize: '12px'}}>{user.email}</td>
+                                              <td><span className="badge fw-semibold rounded-pill" style={{fontSize: '11px'}} className={userStatusBadgeClass(user.account_status)} style={{fontSize: '11px'}}>{accountStatusLabel(user.account_status)}</span></td>
+                                              <td><span className="badge fw-semibold rounded-pill" style={{fontSize: '11px'}} className={userTypeBadgeClass(user.user_type)} style={{fontSize: '11px'}}>{userTypeLabel(user.user_type)}</span></td>
+                                              <td className="pe-3">
+                                                  <div className="btn-group d-flex gap-1" role="group"><button className="btn btn-outline-warning btn-sm py-1" type="button" disabled={user.account_status === 'pending_invite'} onClick={() => void toggleUserAccount(user)}>{userStatusActionLabel(user)}</button><button className="btn btn-outline-info btn-sm py-1" type="button" onClick={() => void sendPasswordReset(user)}>Reset password</button></div>
+                                              </td>
+                                          </tr>
+        ))}
+      </tbody>
+                                  </table>
+                              </div>
+                          </div>
+                      </div>
+                      <div className="tab-pane fade" role="tabpanel" id="uActive">
+                          <p className="text-muted mt-3" style={{fontSize: '13px'}}>Showing active users.</p>
+                      </div>
+                      <div className="tab-pane fade" role="tabpanel" id="uInvited">
+                          <p className="text-muted mt-3" style={{fontSize: '13px'}}>Showing invited users.</p>
+                      </div>
+                      <div className="tab-pane fade" role="tabpanel" id="uSuspended">
+                          <p className="text-muted mt-3" style={{fontSize: '13px'}}>Showing suspended users.</p>
+                      </div>
+                  </div>
+                  <div className="modal fade" role="dialog" tabIndex="-1" id="modalNewUser">
+                      <div className="modal-dialog modal-dialog-centered" role="document">
+                          <div className="modal-content rounded-3">
+                              <div className="modal-header border-bottom">
+                                  <h6 className="modal-title fw-bold">Create User</h6><button className="btn-close" data-bs-dismiss="modal" type="button"></button>
+                              </div>
+                              <form data-cloudey="admin.users.create_form" onSubmit={handleCreateSubmit}>
+                                  <div className="modal-body"><label className="fw-semibold d-block form-label" style={{fontSize: '13px'}}>First Name <span className="text-danger">*</span><input className="bg-light border form-control form-control-sm d-block w-100" type="text" placeholder="Alex" data-cloudey="admin.users.create.first_name" value={createFirst} onChange={e => setCreateFirst(e.target.value)} /></label><label className="fw-semibold d-block form-label" style={{fontSize: '13px'}}>Last Name <span className="text-danger">*</span><input className="bg-light border form-control form-control-sm d-block w-100" type="text" placeholder="Morgan" data-cloudey="admin.users.create.last_name" value={createLast} onChange={e => setCreateLast(e.target.value)} /></label><label className="fw-semibold d-block form-label" style={{fontSize: '13px'}}>Email <span className="text-danger">*</span><input className="bg-light border form-control form-control-sm d-block w-100 form-control" type="email" placeholder="alex@acme.com" data-cloudey="admin.users.create.email" value={createEmail} onChange={e => setCreateEmail(e.target.value)} type="email" /></label></div>
+                                  <div className="modal-footer border-top"><button className="btn btn-outline-primary btn-sm" type="submit"><svg className="bi bi-send me-1" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16">
+                                              <path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576zm6.787-8.201L1.591 6.602l4.339 2.76z"></path>
+                                          </svg>Send Invite</button><button className="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button></div>
+                              </form>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+    </AdminShell>
+  );
+};
+
+export default UsersPage;

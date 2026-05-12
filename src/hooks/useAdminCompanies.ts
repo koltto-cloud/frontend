@@ -1,0 +1,183 @@
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { closeModalFromForm } from '../utils/modal';
+
+/** Matches GET /api/admin/companies/table */
+export type CompanyTableRow = {
+  company_id: string;
+  name: string;
+  plan_type: string;
+  users_count: number;
+  active: boolean;
+  time_created: string;
+};
+
+export const COMPANY_PLAN_OPTIONS = ['Free Trial', 'Starter', 'Pro', 'Enterprise'] as const;
+
+export function planBadgeClass(plan: string): string {
+  if (plan === 'Free Trial') return 'badge fw-semibold rounded-pill text-info bg-info bg-opacity-10';
+  if (plan === 'Starter') return 'badge fw-semibold rounded-pill text-primary bg-primary bg-opacity-10';
+  if (plan === 'Pro') return 'badge fw-semibold rounded-pill text-success bg-success bg-opacity-10';
+  if (plan === 'Enterprise') return 'badge fw-semibold rounded-pill text-warning bg-warning bg-opacity-25';
+  return 'badge fw-semibold rounded-pill text-secondary bg-secondary bg-opacity-10';
+}
+
+export function statusBadgeClass(active: boolean): string {
+  return active
+    ? 'badge fw-semibold rounded-pill text-success bg-success bg-opacity-10'
+    : 'badge fw-semibold rounded-pill text-warning bg-warning bg-opacity-25';
+}
+
+const API_URL = import.meta.env.VITE_API_URL ?? '';
+
+async function apiRequest(path: string, init: RequestInit = {}) {
+  const token = localStorage.getItem('cloudey_access_token');
+  const headers = new Headers(init.headers);
+  headers.set('Content-Type', 'application/json');
+  if (token) headers.set('Authorization', `Bearer ${token}`);
+  const res = await fetch(`${API_URL}${path}`, { ...init, headers });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`${path} -> ${res.status} ${text}`);
+  }
+  if (res.status === 204) return null;
+  return res.json();
+}
+
+/**
+ * Admin companies page — wired from BSS via data-cloudey + cloudey.config.json.
+ * Implement fetch/mutations against /api/admin/companies (see backend router).
+ */
+export function useAdminCompanies() {
+  const [companyRows, setCompanyRows] = useState<CompanyTableRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const [createName, setCreateName] = useState('');
+  const [createPlan, setCreatePlan] = useState<string>(COMPANY_PLAN_OPTIONS[0]);
+  const [creating, setCreating] = useState(false);
+
+  const [editCompanyId, setEditCompanyId] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editPlan, setEditPlan] = useState<string>(COMPANY_PLAN_OPTIONS[0]);
+  const [saving, setSaving] = useState(false);
+
+  const loadRows = useCallback(async () => {
+    setLoading(true);
+    try {
+      const rows = await apiRequest('/api/admin/companies/table');
+      setCompanyRows(Array.isArray(rows) ? rows : []);
+    } catch (err) {
+      console.error('Failed to load companies table', err);
+      setCompanyRows([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadRows();
+  }, [loadRows]);
+
+  const openCreateModal = useCallback(() => {
+    setCreateName('');
+    setCreatePlan(COMPANY_PLAN_OPTIONS[0]);
+    // TODO [cloudey]: show Bootstrap modal #adminCompanyCreateModal (or your modal id)
+  }, []);
+
+  const handleCreateSubmit = useCallback(
+    async (e: FormEvent) => {
+      e.preventDefault();
+      const formEl = e.currentTarget as HTMLFormElement;
+      setCreating(true);
+      try {
+        await apiRequest('/api/admin/companies/', {
+          method: 'POST',
+          body: JSON.stringify({
+            name: createName.trim(),
+            plan_type: createPlan,
+            active: true,
+          }),
+        });
+        await loadRows();
+        setCreateName('');
+        setCreatePlan(COMPANY_PLAN_OPTIONS[0]);
+        closeModalFromForm(formEl);
+      } catch (err) {
+        console.error('Failed to create company', err);
+      } finally {
+        setCreating(false);
+      }
+    },
+    [createName, createPlan, loadRows],
+  );
+
+  const openEditCompany = useCallback((company: CompanyTableRow) => {
+    setEditCompanyId(company.company_id);
+    setEditName(company.name);
+    setEditPlan(company.plan_type);
+    // TODO [cloudey]: show modal #adminCompanyEditModal
+  }, []);
+
+  const handleEditSubmit = useCallback(
+    async (e: FormEvent) => {
+      e.preventDefault();
+      const formEl = e.currentTarget as HTMLFormElement;
+      if (!editCompanyId) return;
+      setSaving(true);
+      try {
+        await apiRequest(`/api/admin/companies/${editCompanyId}`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            name: editName.trim(),
+            plan_type: editPlan,
+          }),
+        });
+        await loadRows();
+        closeModalFromForm(formEl);
+      } catch (err) {
+        console.error('Failed to update company', err);
+      } finally {
+        setSaving(false);
+      }
+    },
+    [editCompanyId, editName, editPlan, loadRows],
+  );
+
+  const toggleCompanyActive = useCallback(
+    async (company: CompanyTableRow) => {
+      try {
+        await apiRequest(`/api/admin/companies/${company.company_id}`, {
+          method: 'PUT',
+          body: JSON.stringify({ active: !company.active }),
+        });
+        await loadRows();
+      } catch (err) {
+        console.error('Failed to toggle company active', err);
+      }
+    },
+    [loadRows],
+  );
+
+  return {
+    companyRows,
+    loading,
+    createName,
+    setCreateName,
+    createPlan,
+    setCreatePlan,
+    creating,
+    editCompanyId,
+    editName,
+    setEditName,
+    editPlan,
+    setEditPlan,
+    saving,
+    loadRows,
+    openCreateModal,
+    handleCreateSubmit,
+    openEditCompany,
+    handleEditSubmit,
+    toggleCompanyActive,
+    planBadgeClass,
+    statusBadgeClass,
+  };
+}

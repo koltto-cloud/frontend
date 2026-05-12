@@ -1,0 +1,142 @@
+// @ts-nocheck
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useAuth } from '../context/AuthContext';
+
+type ProfileMembershipRow = {
+  company_id: string;
+  company_name: string;
+  role: string;
+  active: boolean;
+};
+
+const API_URL = import.meta.env.VITE_API_URL ?? '';
+
+async function apiRequest(path: string, init: RequestInit = {}) {
+  const token = localStorage.getItem('cloudey_access_token');
+  const headers = new Headers(init.headers);
+  headers.set('Content-Type', 'application/json');
+  if (token) headers.set('Authorization', `Bearer ${token}`);
+  const res = await fetch(`${API_URL}${path}`, { ...init, headers });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`${path} -> ${res.status} ${text}`);
+  }
+  if (res.status === 204) return null;
+  return res.json();
+}
+
+export function membershipRoleBadgeClass(role: string): string {
+  if (role === 'Owner') return 'badge fw-semibold rounded-pill text-warning bg-warning bg-opacity-25';
+  if (role === 'Admin') return 'badge fw-semibold rounded-pill text-primary bg-primary bg-opacity-10';
+  return 'badge fw-semibold rounded-pill text-secondary bg-secondary bg-opacity-10';
+}
+
+export function membershipStatusBadgeClass(active: boolean): string {
+  return active
+    ? 'badge fw-semibold rounded-pill text-success bg-success bg-opacity-10'
+    : 'badge fw-semibold rounded-pill text-warning bg-warning bg-opacity-25';
+}
+
+export function useProfile() {
+  const { user } = useAuth();
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [membershipRows, setMembershipRows] = useState<ProfileMembershipRow[]>([]);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordMessage, setPasswordMessage] = useState('');
+
+  useEffect(() => {
+    setFirstName(user?.first_name ?? '');
+    setLastName(user?.last_name ?? '');
+    setEmail(user?.email ?? '');
+  }, [user?.first_name, user?.last_name, user?.email]);
+
+  const loadMemberships = useCallback(async () => {
+    try {
+      const rows = await apiRequest('/api/identity/memberships/me');
+      setMembershipRows(Array.isArray(rows) ? rows : []);
+    } catch (err) {
+      console.error('Failed to load profile memberships', err);
+      setMembershipRows([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadMemberships();
+  }, [loadMemberships]);
+
+  const handleProfileSubmit = useCallback(
+    async (e: FormEvent) => {
+      e.preventDefault();
+      try {
+        await apiRequest('/api/identity/users/me', {
+          method: 'PUT',
+          body: JSON.stringify({
+            first_name: firstName.trim() || null,
+            last_name: lastName.trim() || null,
+            email: email.trim(),
+          }),
+        });
+      } catch (err) {
+        console.error('Failed to update profile', err);
+      }
+    },
+    [firstName, lastName, email],
+  );
+
+  const handlePasswordSubmit = useCallback(
+    async (e: FormEvent) => {
+      e.preventDefault();
+      setPasswordMessage('');
+      if (!currentPassword || !newPassword || !confirmPassword) {
+        setPasswordMessage('Please fill in all password fields.');
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        setPasswordMessage('New password and confirmation do not match.');
+        return;
+      }
+      try {
+        await apiRequest('/api/identity/users/me/password', {
+          method: 'PUT',
+          body: JSON.stringify({
+            current_password: currentPassword,
+            new_password: newPassword,
+          }),
+        });
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+        setPasswordMessage('Password updated successfully.');
+      } catch (err) {
+        console.error('Failed to update password', err);
+        setPasswordMessage('Could not update password. Verify current password and try again.');
+      }
+    },
+    [currentPassword, newPassword, confirmPassword],
+  );
+
+  return {
+    firstName,
+    setFirstName,
+    lastName,
+    setLastName,
+    email,
+    setEmail,
+    membershipRows,
+    handleProfileSubmit,
+    currentPassword,
+    setCurrentPassword,
+    newPassword,
+    setNewPassword,
+    confirmPassword,
+    setConfirmPassword,
+    passwordMessage,
+    handlePasswordSubmit,
+    membershipRoleBadgeClass,
+    membershipStatusBadgeClass,
+  };
+}

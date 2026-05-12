@@ -1,0 +1,105 @@
+import React from 'react';
+import CustomerShell from '../../layout/CustomerShell';
+
+const AnomaliesPage: React.FC = () => {
+  return (
+    <CustomerShell>
+      <div className="container-fluid" style={{maxWidth: '1200px', padding: '32px 32px 80px'}}>
+                  <div className="mb-4">
+                      <h1 className="fw-bold text-body mb-1 h4">Anomalies</h1><small className="text-muted">Unusual spending patterns detected by Cloudey AI</small>
+                  </div>
+                  <div className="row mb-4 g-3">
+                      <div className="col-md-4">
+                          <div className="card border shadow-sm h-100">
+                              <div className="card-body"><small className="fw-medium text-muted d-block mb-3">Active</small>
+                                  <div className="text-danger stat-value"><span>5</span></div><small className="text-muted">Needs attention</small>
+                              </div>
+                          </div>
+                      </div>
+                      <div className="col-md-4">
+                          <div className="card border shadow-sm h-100">
+                              <div className="card-body"><small className="fw-medium text-muted d-block mb-3">Resolved</small>
+                                  <div className="text-success stat-value"><span>0</span></div><small className="text-muted">This month</small>
+                              </div>
+                          </div>
+                      </div>
+                      <div className="col-md-4">
+                          <div className="card border shadow-sm h-100">
+                              <div className="card-body"><small className="fw-medium text-muted d-block mb-3">Acknowledged</small>
+                                  <div className="text-warning stat-value"><span>0</span></div><small className="text-muted">Being monitored</small>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+                  <ul className="nav nav-pills gap-1 mb-4" role="tablist">
+                      <li className="nav-item"><button className="active nav-link btn-sm" data-bs-toggle="pill" data-bs-target="#aAll">All</button></li>
+                      <li className="nav-item"><button className="nav-link btn-sm" data-bs-toggle="pill" data-bs-target="#aActive">Active</button></li>
+                      <li className="nav-item"><button className="nav-link btn-sm" data-bs-toggle="pill" data-bs-target="#aResolved">Resolved</button></li>
+                      <li className="nav-item"><button className="nav-link btn-sm" data-bs-toggle="pill" data-bs-target="#aAcknowledged">Acknowledged</button></li>
+                  </ul>
+                  <div className="tab-content">
+                      <div className="tab-pane fade show active" role="tabpanel" id="aAll">
+                          <div className="accordion d-flex flex-column gap-2" role="tablist" id="anomalyAccordion">
+                              <div className="accordion-item border rounded-2 overflow-hidden border-s-danger">
+                                  <h2 className="accordion-header" role="tab"><button className="accordion-button fw-medium" type="button" data-bs-toggle="collapse" data-bs-target="#a0" aria-expanded="true" aria-controls="anomalyAccordion .item-1"><div className="d-flex align-items-center gap-2 flex-wrap me-3"><span className="badge bg-danger-subtle text-danger-emphasis fw-bold" style={{}}>High</span><span style={{}}>Unexpected compute spike</span></div><small className="text-nowrap text-muted ms-auto me-3">$2,400/mo excess · Apr 14</small></button></h2>
+                                  <div className="accordion-collapse collapse show item-1" role="tabpanel" data-bs-parent="#anomalyAccordion" id="a0">
+                                      <div className="accordion-body pt-2">
+                                          <p className="text-muted mb-3" style={{fontSize: '13px'}}>Analytics cluster scaled from 4 to 12 nodes. Trigger: queue depth spike. Cluster has not scaled back down. Recommended: reduce to 6 nodes and fix scale-in cooldown.</p>
+                                          <div className="d-flex gap-2"><button className="btn btn-primary btn-sm">Mark Resolved</button><button className="btn btn-outline-secondary btn-sm">Acknowledge</button></div>
+                                      </div>
+                                  </div>
+                              </div>
+                              <div className="accordion-item border rounded-2 overflow-hidden border-s-warning">
+                                  <h2 className="accordion-header" role="tab"><button className="accordion-button collapsed fw-medium" type="button" data-bs-toggle="collapse" data-bs-target="#a1" aria-expanded="false" aria-controls="anomalyAccordion .item-2"><div className="d-flex align-items-center gap-2 flex-wrap me-3"><span className="badge bg-warning-subtle text-warning-emphasis fw-bold" style={{}}>Medium</span><span style={{}}>Egress cost up 34%</span></div><small className="text-nowrap text-muted ms-auto me-3">+$680 vs baseline · Apr 10</small></button></h2>
+                                  <div className="accordion-collapse collapse item-2" role="tabpanel" data-bs-parent="#anomalyAccordion" id="a1">
+                                      <div className="accordion-body pt-2">
+                                          <p className="text-muted mb-3" style={{fontSize: '13px'}}>Outbound data transfer costs spiked 34% vs 30-day baseline. Cross-region replication jobs appear to be running more frequently than scheduled.</p>
+                                          <div className="d-flex gap-2"><button className="btn btn-primary btn-sm">Mark Resolved</button><button className="btn btn-outline-secondary btn-sm">Acknowledge</button></div>
+                                      </div>
+                                  </div>
+                              </div>
+                              <div className="accordion-item border rounded-2 overflow-hidden border-s-secondary">
+                                  <h2 className="accordion-header" role="tab"><button className="accordion-button collapsed fw-medium" type="button" data-bs-toggle="collapse" data-bs-target="#a2" aria-expanded="false" aria-controls="anomalyAccordion .item-3"><div className="d-flex align-items-center gap-2 flex-wrap me-3"><span className="badge bg-secondary-subtle text-secondary-emphasis fw-bold" style={{}}>Low</span><span style={{}}>Idle DB instance detected</span></div><small className="text-nowrap text-muted ms-auto me-3">$240/mo wasted · Apr 3</small></button></h2>
+                                  <div className="accordion-collapse collapse item-3" role="tabpanel" data-bs-parent="#anomalyAccordion" id="a2">
+                                      <div className="accordion-body pt-2">
+                                          <p className="text-muted mb-3" style={{fontSize: '13px'}}>mysql-staging has had 0 active connections for 12 consecutive days. Consider stopping or deleting this instance to eliminate unnecessary spend.</p>
+                                          <div className="d-flex gap-2"><button className="btn btn-primary btn-sm">Mark Resolved</button><button className="btn btn-outline-secondary btn-sm">Acknowledge</button></div>
+                                      </div>
+                                  </div>
+                              </div>
+                              <div className="accordion-item border rounded-2 overflow-hidden border-s-danger">
+                                  <h2 className="accordion-header" role="tab"><button className="accordion-button collapsed fw-medium" type="button" data-bs-toggle="collapse" data-bs-target="#a3" aria-expanded="false" aria-controls="anomalyAccordion .item-4"><div className="d-flex align-items-center gap-2 flex-wrap me-3"><span className="badge bg-danger-subtle text-danger-emphasis fw-bold" style={{}}>High</span><span style={{}}>Object storage growth anomaly</span></div><small className="text-nowrap text-muted ms-auto me-3">+$340 vs forecast · Mar 28</small></button></h2>
+                                  <div className="accordion-collapse collapse item-4" role="tabpanel" data-bs-parent="#anomalyAccordion" id="a3">
+                                      <div className="accordion-body pt-2">
+                                          <p className="text-muted mb-3" style={{fontSize: '13px'}}>Object storage grew 28% in one week. Audit logs show a nightly job writing 50GB/day without a lifecycle policy. Add a 90-day archive rule to contain costs.</p>
+                                          <div className="d-flex gap-2"><button className="btn btn-primary btn-sm">Mark Resolved</button><button className="btn btn-outline-secondary btn-sm">Acknowledge</button></div>
+                                      </div>
+                                  </div>
+                              </div>
+                              <div className="accordion-item border rounded-2 overflow-hidden border-s-warning">
+                                  <h2 className="accordion-header" role="tab"><button className="accordion-button collapsed fw-medium" type="button" data-bs-toggle="collapse" data-bs-target="#a4" aria-expanded="false" aria-controls="anomalyAccordion .item-5"><div className="d-flex align-items-center gap-2 flex-wrap me-3"><span className="badge bg-warning-subtle text-warning-emphasis fw-bold" style={{}}>Medium</span><span style={{}}>Load balancer health check errors</span></div><small className="text-nowrap text-muted ms-auto me-3">Reliability risk · Mar 22</small></button></h2>
+                                  <div className="accordion-collapse collapse item-5" role="tabpanel" data-bs-parent="#anomalyAccordion" id="a4">
+                                      <div className="accordion-body pt-2">
+                                          <p className="text-muted mb-3" style={{fontSize: '13px'}}>Health check failure rate reached 12% for 4 hours on Mar 22. Backend instances recovered, but root cause is unknown. Consider adding health check alerting.</p>
+                                          <div className="d-flex gap-2"><button className="btn btn-primary btn-sm">Mark Resolved</button><button className="btn btn-outline-secondary btn-sm">Acknowledge</button></div>
+                                      </div>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                      <div className="tab-pane fade" role="tabpanel" id="aActive">
+                          <p className="text-muted mt-3" style={{fontSize: '13px'}}>Showing active anomalies.</p>
+                      </div>
+                      <div className="tab-pane fade" role="tabpanel" id="aResolved">
+                          <p className="text-muted mt-3" style={{fontSize: '13px'}}>No resolved anomalies yet.</p>
+                      </div>
+                      <div className="tab-pane fade" role="tabpanel" id="aAcknowledged">
+                          <p className="text-muted mt-3" style={{fontSize: '13px'}}>No acknowledged anomalies yet.</p>
+                      </div>
+                  </div>
+              </div>
+    </CustomerShell>
+  );
+};
+
+export default AnomaliesPage;

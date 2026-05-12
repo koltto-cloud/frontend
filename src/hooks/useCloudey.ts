@@ -1,0 +1,87 @@
+import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+import Dropdown from 'bootstrap/js/dist/dropdown';
+
+/**
+ * useCloudey
+ * UI interactions shared across authenticated shells.
+ *
+ * **BSS / `cloudey.js` parity:** The Vite app does **not** load `bss-export/assets/js/cloudey.js`
+ * (that file runs on static BSS previews). This hook reimplements the same behaviors that
+ * `cloudey.js` attaches on `DOMContentLoaded`: sidebar toggle, theme toggle, login password
+ * eye toggle (same element ids / `aria-label` selectors as in BSS).
+ *
+ * **Not duplicated here** (by design): OCI settings + copy buttons → `useCustomerSettings`;
+ * login submit → `useLogin`. Header user dropdown is **not** in `cloudey.js`; in BSS it is
+ * Bootstrap (`data-bs-toggle="dropdown"`). We call `Dropdown.getOrCreateInstance` after each
+ * navigation because `AdminShell` / `CustomerShell` remount per route and `AppLayout` does not.
+ *
+ * Called from `AppLayout` on every authenticated route.
+ */
+export function useCloudey() {
+  const location = useLocation();
+  const shellLayoutKey = `${location.pathname}${location.search}${location.hash}`;
+
+  // ── Sidebar toggle ────────────────────────────────────────────
+  useEffect(() => {
+    function toggleSidebar() {
+      ['sidebar', 'topbar', 'mainContent'].forEach((id) => {
+        document.getElementById(id)?.classList.toggle('collapsed');
+      });
+    }
+    const toggleBtn = document.getElementById('sidebarToggle');
+    const logoMini  = document.getElementById('logoMini');
+    toggleBtn?.addEventListener('click', toggleSidebar);
+    logoMini?.addEventListener('click', toggleSidebar);
+    return () => {
+      toggleBtn?.removeEventListener('click', toggleSidebar);
+      logoMini?.removeEventListener('click', toggleSidebar);
+    };
+  }, [shellLayoutKey]);
+
+  // ── Dark / Light toggle ───────────────────────────────────────
+  useEffect(() => {
+    function toggleTheme() {
+      const html   = document.documentElement;
+      const isDark = html.getAttribute('data-bs-theme') === 'dark';
+      html.setAttribute('data-bs-theme', isDark ? 'light' : 'dark');
+    }
+    const themeBtn = document.querySelector<HTMLElement>('[aria-label="Toggle theme"]');
+    themeBtn?.addEventListener('click', toggleTheme);
+    return () => { themeBtn?.removeEventListener('click', toggleTheme); };
+  }, [shellLayoutKey]);
+
+  // ── Topbar user menu (Bootstrap dropdown, same markup as BSS) ──
+  useEffect(() => {
+    const toggles = Array.from(
+      document.querySelectorAll<HTMLElement>('#topbar [data-bs-toggle="dropdown"]'),
+    );
+    toggles.forEach((el) => {
+      Dropdown.getOrCreateInstance(el);
+    });
+    return () => {
+      toggles.forEach((el) => {
+        Dropdown.getInstance(el)?.dispose();
+      });
+    };
+  }, [shellLayoutKey]);
+
+  // ── Password show/hide ────────────────────────────────────────
+  useEffect(() => {
+    function togglePassword() {
+      const input = document.getElementById('password') as HTMLInputElement | null;
+      const icon  = document.getElementById('eyeIcon');
+      if (!input) return;
+      if (input.type === 'password') {
+        input.type = 'text';
+        if (icon) icon.className = 'bi bi-eye-slash';
+      } else {
+        input.type = 'password';
+        if (icon) icon.className = 'bi bi-eye';
+      }
+    }
+    const pwToggle = document.getElementById('pwToggle');
+    pwToggle?.addEventListener('click', togglePassword);
+    return () => { pwToggle?.removeEventListener('click', togglePassword); };
+  }, [shellLayoutKey]);
+}

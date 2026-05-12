@@ -1,0 +1,123 @@
+import React from 'react';
+import CustomerShell from '../layout/CustomerShell';
+import AdminShell from '../layout/AdminShell';
+import { useAuth } from '../context/AuthContext';
+import { useProfile } from '../hooks/useProfile';
+
+const ProfilePage: React.FC = () => {
+  const { user } = useAuth();
+  const { firstName, setFirstName, lastName, setLastName, email, setEmail, membershipRows, handleProfileSubmit, currentPassword, setCurrentPassword, newPassword, setNewPassword, confirmPassword, setConfirmPassword, passwordMessage, handlePasswordSubmit, membershipRoleBadgeClass, membershipStatusBadgeClass } = useProfile();
+  return (
+    (user?.user_type ?? '').toLowerCase() === 'staff' ? (
+      <AdminShell>
+      <div className="container-fluid" style={{maxWidth: '1100px', padding: '32px 32px 80px'}}>
+                  <div className="mb-4">
+                      <h1 className="fw-bold text-body mb-1 h4">My Profile</h1><small className="text-muted">Manage your account information and preferences</small>
+                  </div>
+                  <div className="d-flex flex-column gap-4">
+                      <div className="card border shadow-sm p-4">
+                          <h6 className="fw-bold text-body mb-1">Account Details</h6><small className="text-muted d-block mb-4">Update your personal information</small>
+                          <form className="pb-4" data-cloudey="profile.form" onSubmit={handleProfileSubmit}>
+                              <div className="row mb-3 g-3">
+                                  <div className="col-md-6"><label className="fw-semibold form-label" style={{fontSize: '13px'}}>First Name</label><input className="form-control form-control-sm form-control" type="text" defaultValue="Alex" data-cloudey="profile.user.first_name" value={firstName} onChange={e => setFirstName(e.target.value)} /></div>
+                                  <div className="col-md-6"><label className="fw-semibold form-label" style={{fontSize: '13px'}}>Last Name</label><input className="form-control form-control-sm form-control" type="text" defaultValue="Morgan" data-cloudey="profile.user.last_name" value={lastName} onChange={e => setLastName(e.target.value)} /></div>
+                              </div>
+                              <div className="row mb-3 g-3">
+                                  <div>
+                                      <div className="mb-3"><label className="form-label fw-semibold" style={{fontSize: '13px'}}>Email Address</label><input className="form-control form-control-sm form-control" type="email" defaultValue="alex@acme.com" data-cloudey="profile.user.email" value={email} onChange={e => setEmail(e.target.value)} /></div>
+                                  </div>
+                              </div><button className="btn btn-primary w-100" type="submit">Save Changes</button>
+                          </form>
+                          <div className="pt-4 mb-3 border-top"><label className="form-label fw-semibold" style={{fontSize: '13px'}}>Memberships</label>
+                              <div className="p-0 card-body">
+                                  <table className="table table-hover align-middle mb-0">
+                                      <thead>
+                                          <tr>
+                                              <th className="text-uppercase fw-semibold text-muted" style={{fontSize: '10px', letterSpacing: '.5px'}}>Company</th>
+                                              <th className="text-uppercase fw-semibold text-muted" style={{fontSize: '10px', letterSpacing: '.5px'}}>Role</th>
+                                              <th className="text-uppercase fw-semibold text-muted" style={{fontSize: '10px', letterSpacing: '.5px'}}>Status</th>
+                                          </tr>
+                                      </thead>
+                                      <tbody>
+        {membershipRows.map((membership) => (
+          <tr key={`${membership.company_id}-${membership.role}`}>
+                                              <td className="fw-bold" style={{fontSize: '13px'}}>{membership.company_name}</td>
+                                              <td><span className={`badge fw-semibold rounded-pill ${membershipRoleBadgeClass(membership.role)}`} style={{fontSize: '11px'}} >{membership.role}</span></td>
+                                              <td><span className={`badge fw-semibold rounded-pill ${membershipStatusBadgeClass(membership.active)}`} style={{fontSize: '11px'}} >{membership.active ? 'Active' : 'Inactive'}</span></td>
+                                          </tr>
+        ))}
+      </tbody>
+                                  </table>
+                              </div>
+                          </div>
+                      </div>
+                      <div className="card border shadow-sm p-4">
+                          <h6 className="fw-bold text-body mb-1">Change Password</h6><small className="text-muted d-block mb-4">Choose a strong password and do not reuse it elsewhere</small>
+                          <form data-cloudey="profile.password.form" onSubmit={handlePasswordSubmit}>
+                              <div className="mb-3"><label className="form-label fw-semibold" style={{fontSize: '13px'}}>Current Password</label><input className="form-control form-control" type="password" placeholder="••••••••" data-cloudey="profile.password.current" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} /></div>
+                              <div className="mb-3"><label className="form-label fw-semibold" style={{fontSize: '13px'}}>New Password</label><input className="form-control form-control" type="password" placeholder="••••••••" data-cloudey="profile.password.new" value={newPassword} onChange={e => setNewPassword(e.target.value)} /></div>
+                              <div className="mb-4"><label className="form-label fw-semibold" style={{fontSize: '13px'}}>Confirm New Password</label><input className="form-control form-control" type="password" placeholder="••••••••" data-cloudey="profile.password.confirm" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} /></div><button className="btn btn-dark w-100" type="submit">Update Password</button>
+                          </form>
+                      </div>
+                  </div>
+              </div>
+      </AdminShell>
+    ) : (
+      <CustomerShell>
+      <div className="container-fluid" style={{maxWidth: '1100px', padding: '32px 32px 80px'}}>
+                  <div className="mb-4">
+                      <h1 className="fw-bold text-body mb-1 h4">My Profile</h1><small className="text-muted">Manage your account information and preferences</small>
+                  </div>
+                  <div className="d-flex flex-column gap-4">
+                      <div className="card border shadow-sm p-4">
+                          <h6 className="fw-bold text-body mb-1">Account Details</h6><small className="text-muted d-block mb-4">Update your personal information</small>
+                          <form className="pb-4" data-cloudey="profile.form" onSubmit={handleProfileSubmit}>
+                              <div className="row mb-3 g-3">
+                                  <div className="col-md-6"><label className="fw-semibold form-label" style={{fontSize: '13px'}}>First Name</label><input className="form-control form-control-sm form-control" type="text" defaultValue="Alex" data-cloudey="profile.user.first_name" value={firstName} onChange={e => setFirstName(e.target.value)} /></div>
+                                  <div className="col-md-6"><label className="fw-semibold form-label" style={{fontSize: '13px'}}>Last Name</label><input className="form-control form-control-sm form-control" type="text" defaultValue="Morgan" data-cloudey="profile.user.last_name" value={lastName} onChange={e => setLastName(e.target.value)} /></div>
+                              </div>
+                              <div className="row mb-3 g-3">
+                                  <div>
+                                      <div className="mb-3"><label className="form-label fw-semibold" style={{fontSize: '13px'}}>Email Address</label><input className="form-control form-control-sm form-control" type="email" defaultValue="alex@acme.com" data-cloudey="profile.user.email" value={email} onChange={e => setEmail(e.target.value)} /></div>
+                                  </div>
+                              </div><button className="btn btn-primary w-100" type="submit">Save Changes</button>
+                          </form>
+                          <div className="pt-4 mb-3 border-top"><label className="form-label fw-semibold" style={{fontSize: '13px'}}>Memberships</label>
+                              <div className="p-0 card-body">
+                                  <table className="table table-hover align-middle mb-0">
+                                      <thead>
+                                          <tr>
+                                              <th className="text-uppercase fw-semibold text-muted" style={{fontSize: '10px', letterSpacing: '.5px'}}>Company</th>
+                                              <th className="text-uppercase fw-semibold text-muted" style={{fontSize: '10px', letterSpacing: '.5px'}}>Role</th>
+                                              <th className="text-uppercase fw-semibold text-muted" style={{fontSize: '10px', letterSpacing: '.5px'}}>Status</th>
+                                          </tr>
+                                      </thead>
+                                      <tbody>
+        {membershipRows.map((membership) => (
+          <tr key={`${membership.company_id}-${membership.role}`}>
+                                              <td className="fw-bold" style={{fontSize: '13px'}}>{membership.company_name}</td>
+                                              <td><span className={`badge fw-semibold rounded-pill ${membershipRoleBadgeClass(membership.role)}`} style={{fontSize: '11px'}} >{membership.role}</span></td>
+                                              <td><span className={`badge fw-semibold rounded-pill ${membershipStatusBadgeClass(membership.active)}`} style={{fontSize: '11px'}} >{membership.active ? 'Active' : 'Inactive'}</span></td>
+                                          </tr>
+        ))}
+      </tbody>
+                                  </table>
+                              </div>
+                          </div>
+                      </div>
+                      <div className="card border shadow-sm p-4">
+                          <h6 className="fw-bold text-body mb-1">Change Password</h6><small className="text-muted d-block mb-4">Choose a strong password and do not reuse it elsewhere</small>
+                          <form data-cloudey="profile.password.form" onSubmit={handlePasswordSubmit}>
+                              <div className="mb-3"><label className="form-label fw-semibold" style={{fontSize: '13px'}}>Current Password</label><input className="form-control form-control" type="password" placeholder="••••••••" data-cloudey="profile.password.current" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} /></div>
+                              <div className="mb-3"><label className="form-label fw-semibold" style={{fontSize: '13px'}}>New Password</label><input className="form-control form-control" type="password" placeholder="••••••••" data-cloudey="profile.password.new" value={newPassword} onChange={e => setNewPassword(e.target.value)} /></div>
+                              <div className="mb-4"><label className="form-label fw-semibold" style={{fontSize: '13px'}}>Confirm New Password</label><input className="form-control form-control" type="password" placeholder="••••••••" data-cloudey="profile.password.confirm" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} /></div><button className="btn btn-dark w-100" type="submit">Update Password</button>
+                          </form>
+                      </div>
+                  </div>
+              </div>
+      </CustomerShell>
+    )
+  );
+};
+
+export default ProfilePage;

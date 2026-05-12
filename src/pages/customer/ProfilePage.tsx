@@ -1,0 +1,71 @@
+import React from 'react';
+import CustomerShell from '../../layout/CustomerShell';
+import { useAuth } from '../../context/AuthContext';
+import { useProfile } from '../../hooks/useProfile';
+
+const ProfilePage: React.FC = () => {
+  const { activeCompany } = useAuth();
+  const { firstName, setFirstName, lastName, setLastName, email, setEmail, membershipRows, handleProfileSubmit, currentPassword, setCurrentPassword, newPassword, setNewPassword, confirmPassword, setConfirmPassword, passwordMessage, handlePasswordSubmit, membershipRoleBadgeClass, membershipStatusBadgeClass } = useProfile();
+  return (
+    <CustomerShell>
+      <div className="container-fluid" style={{maxWidth: '1100px', padding: '32px 32px 80px'}}>
+                  <div className="mb-4">
+                      <h1 className="fw-bold text-body mb-1 h4">My Profile</h1><small className="text-muted">Manage your account information and preferences</small>
+                  </div>
+                  <div className="row align-items-start g-4">
+                      <div className="col-lg-4 col-xl-3">
+                          <div className="d-flex flex-column gap-4">
+                              <div className="card text-center border shadow-sm p-4">
+                                  <div className="d-flex justify-content-center mb-3">
+                                      <div className="position-relative">
+                                          <div className="fw-bold text-white bg-primary rounded-circle d-flex justify-content-center mx-auto align-items-center" style={{width: '88px', height: '88px', fontSize: '32px', boxShadow: '0 4px 16px rgba(6,182,212,.35)'}}><span>A</span></div><button className="btn btn-sm bg-body border rounded-circle position-absolute bottom-0 end-0 d-flex align-items-center p-0 justify-content-center text-muted" style={{width: '28px', height: '28px'}} aria-label="Edit avatar"><svg className="bi bi-pencil-fill" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16" style={{fontSize: '10px'}}>
+                                                  <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.5.5 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z"></path>
+                                              </svg></button>
+                                      </div>
+                                  </div>
+                                  <div className="fw-bold text-body mb-1" style={{fontSize: '17px'}}><span data-cloudey="profile.user.first_name" value={firstName} onChange={e => setFirstName(e.target.value)}>Alex&nbsp;</span><span data-cloudey="profile.user.last_name" value={lastName} onChange={e => setLastName(e.target.value)}>Morgan</span></div>
+                                  <div className="text-muted mb-1" style={{fontSize: '13px'}}><span>Head of Infrastructure</span></div>
+                                  <div className="text-muted mb-3" style={{fontSize: '13px'}}><span data-cloudey="company.name" data-cloudey-replace="company.name">Acme Corp</span></div>
+                              </div>
+                              <div className="card border shadow-sm p-4">
+                                  <div className="fw-bold text-body mb-3" style={{fontSize: '13px'}}><span>Activity Overview</span></div>
+                                  <div className="d-flex justify-content-between align-items-center py-2 border-bottom"><small className="text-muted">Reports generated</small><small className="fw-bold text-primary">12</small></div>
+                                  <div className="d-flex justify-content-between align-items-center py-2 border-bottom"><small className="text-muted">Anomalies resolved</small><small className="fw-bold text-primary">8</small></div>
+                                  <div className="d-flex justify-content-between align-items-center py-2 border-bottom"><small className="text-muted">Savings actioned</small><small className="fw-bold text-primary">$4,620</small></div>
+                                  <div className="d-flex justify-content-between align-items-center py-2"><small className="text-muted">Member since</small><small className="fw-bold text-primary">Jan 2026</small></div>
+                              </div>
+                          </div>
+                      </div>
+                      <div className="col-lg-8 col-xl-9">
+                          <div className="d-flex flex-column gap-4">
+                              <div className="card border shadow-sm p-4">
+                                  <h6 className="fw-bold text-body mb-1">Account Details</h6><small className="text-muted d-block mb-4">Update your personal information</small>
+                                  <div className="row mb-3 g-3">
+                                      <div className="col-md-6"><label className="fw-semibold form-label" style={{fontSize: '13px'}}>First Name</label><input type="text" className="form-control" defaultValue="Alex" data-cloudey="profile.user.first_name" value={firstName} onChange={e => setFirstName(e.target.value)} /></div>
+                                      <div className="col-md-6"><label className="fw-semibold form-label" style={{fontSize: '13px'}}>Last Name</label><input type="text" className="form-control" defaultValue="Morgan" data-cloudey="profile.user.last_name" value={lastName} onChange={e => setLastName(e.target.value)} /></div>
+                                  </div>
+                                  <div className="mb-3"><label className="form-label fw-semibold" style={{fontSize: '13px'}}>Email Address</label><input type="email" className="form-control" defaultValue="alex@acme.com" data-cloudey="profile.user.email" value={email} onChange={e => setEmail(e.target.value)} /></div>
+                                  <div className="row mb-3 g-3">
+                                      <div className="col-md-6"><label className="fw-semibold form-label" style={{fontSize: '13px'}}>Role / Title</label><input type="text" className="form-control" defaultValue="Head of Infrastructure" /></div>
+                                      <div className="col-md-6"><label className="fw-semibold form-label" style={{fontSize: '13px'}}>Company</label><input type="text" className="form-control" data-cloudey="company.name" data-cloudey-replace="company.name" value={activeCompany?.name ?? 'Acme Corp'} readOnly /></div>
+                                  </div><button className="btn btn-primary">Save Changes</button>
+                              </div>
+                              <div className="card border shadow-sm p-4">
+                                  <h6 className="fw-bold text-body mb-1">Change Password</h6><small className="text-muted d-block mb-4">Choose a strong password and do not reuse it elsewhere</small>
+                                  <div className="mb-3"><label className="form-label fw-semibold" style={{fontSize: '13px'}}>Current Password</label><input type="password" className="form-control" placeholder="••••••••" /></div>
+                                  <div className="mb-3"><label className="form-label fw-semibold" style={{fontSize: '13px'}}>New Password</label><input type="password" className="form-control" placeholder="••••••••" /></div>
+                                  <div className="mb-4"><label className="form-label fw-semibold" style={{fontSize: '13px'}}>Confirm New Password</label><input type="password" className="form-control" placeholder="••••••••" /></div><button className="btn btn-dark">Update Password</button>
+                              </div>
+                              <div className="card border shadow-sm p-4">
+                                  <h6 className="fw-bold text-body mb-1">Danger Zone</h6><small className="text-muted d-block mb-3">These actions are irreversible. Please proceed with caution.</small>
+                                  <div className="d-flex flex-wrap gap-2"><button className="btn btn-sm" style={{border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.06)', color: '#EF4444'}}> Delete My Account </button><button className="btn btn-outline-secondary btn-sm"> Sign out all devices </button></div>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+    </CustomerShell>
+  );
+};
+
+export default ProfilePage;
