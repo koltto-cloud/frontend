@@ -278,9 +278,9 @@
   border-left: 3px solid var(--bs-secondary) !important;
 }
 
-/* ── Login page ─────────────────────────────────────────────────────────── */
+/* ── Login / Auth pages ──────────────────────────────────────────────────── */
 
-#loginPage {
+#loginPage, #forgotPassword, #resetPassword {
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -292,7 +292,7 @@
 
 /* Dot grid */
 
-#loginPage::before {
+#loginPage::before, #forgotPassword::before, #resetPassword::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -405,7 +405,7 @@
 
 /* Password toggle button */
 
-#pwToggle {
+#pwToggle, #pwToggleConfirm {
   position: absolute;
   right: 13px;
   top: 50%;
@@ -421,11 +421,11 @@
   z-index: 5;
 }
 
-#pwToggle:hover {
+#pwToggle:hover, #pwToggleConfirm:hover {
   color: var(--bs-primary);
 }
 
-[data-bs-theme="dark"] #loginPage {
+[data-bs-theme="dark"] #loginPage, [data-bs-theme="dark"] #forgotPassword, [data-bs-theme="dark"] #resetPassword {
   background: #0B1221;
 }
 
