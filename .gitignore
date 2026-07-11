@@ -25,6 +25,7 @@ dist-ssr
 __pycache__
 
 # BSS export
+old_files/
 bss-export/
 bss_exporter/
 CLOUDEY_BRAND_COLORS.md
@@ -32,3 +33,4 @@ cloudey_notes.txt
 DEPLOYMENT.md
 README.md
 .env
+.cursor/
