@@ -21,6 +21,7 @@ import InvoiceItemsPage from '@/pages/billing/InvoiceItemsPage'
 import ConnectionsPage from '@/pages/oci/ConnectionsPage'
 import UsagePage from '@/pages/oci/UsagePage'
 import ResourcesPage from '@/pages/oci/ResourcesPage'
+import MonitoringPage from '@/pages/oci/MonitoringPage'
 import PricingPage from '@/pages/oci/PricingPage'
 
 export default function App() {
@@ -50,6 +51,7 @@ export default function App() {
               <Route path="/oci/connections" element={<ConnectionsPage />} />
               <Route path="/oci/usage" element={<UsagePage />} />
               <Route path="/oci/resources" element={<ResourcesPage />} />
+              <Route path="/oci/monitoring" element={<MonitoringPage />} />
               <Route path="/oci/pricing" element={<PricingPage />} />
             </Route>
           </Route>

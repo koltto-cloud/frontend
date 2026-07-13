@@ -36,6 +36,7 @@ const NAV = [
       { to: '/oci/connections', label: 'Connections' },
       { to: '/oci/usage', label: 'Usage & Costs' },
       { to: '/oci/resources', label: 'Resources' },
+      { to: '/oci/monitoring', label: 'Monitoring' },
       { to: '/oci/pricing', label: 'Pricing' },
     ],
   },
