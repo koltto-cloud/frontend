@@ -1,5 +1,5 @@
 interface BarChartProps {
-  items: { label: string; value: number }[]
+  items: { label: string; value: number; title?: string }[]
   formatValue?: (value: number) => string
 }
 
@@ -10,9 +10,9 @@ export default function BarChart({ items, formatValue = (v) => v.toFixed(2) }: B
 
   return (
     <div className="bar-chart">
-      {items.map((item) => (
-        <div key={item.label} className="bar-row">
-          <span className="bar-label" title={item.label}>
+      {items.map((item, index) => (
+        <div key={`${item.label}-${index}`} className="bar-row">
+          <span className="bar-label" title={item.title ?? item.label}>
             {item.label}
           </span>
           <div className="bar-track">

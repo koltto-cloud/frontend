@@ -21,6 +21,48 @@ function formatUsd(amount: unknown) {
   return `$${value.toFixed(2)}`
 }
 
+const INVENTORY_LIST_PATHS = [
+  { segment: 'compute', resource: 'compute' },
+  { segment: 'block-storage', resource: 'block-storage' },
+  { segment: 'object-storage', resource: 'object-storage' },
+  { segment: 'file-storage', resource: 'file-storage' },
+  { segment: 'load-balancer', resource: 'load-balancers' },
+] as const
+
+async function loadResourceDisplayNames(
+  companyId: string,
+  connectionId: string,
+): Promise<Record<string, string>> {
+  const lists = await Promise.all(
+    INVENTORY_LIST_PATHS.map(({ segment, resource }) =>
+      apiRequest<{ resource_ocid?: string; display_name?: string | null }[]>(
+        `/api/v1/cloud/oci/${segment}/${companyId}/connections/${connectionId}/${resource}`,
+        { query: { limit: 500, offset: 0 } },
+      ).catch(() => []),
+    ),
+  )
+
+  const names: Record<string, string> = {}
+  for (const rows of lists) {
+    for (const row of rows) {
+      const ocid = row.resource_ocid
+      const name = row.display_name?.trim()
+      if (ocid && name) names[ocid] = name
+    }
+  }
+  return names
+}
+
+function topResourceLabel(
+  item: { resource_id?: string; service?: string },
+  names: Record<string, string>,
+) {
+  const id = item.resource_id
+  if (id && names[id]) return names[id]
+  if (id) return id.length > 28 ? `${id.slice(0, 28)}…` : id
+  return item.service ?? 'unknown'
+}
+
 export default function UsagePage() {
   const { activeCompany, connection } = useAuth()
   const defaults = defaultDateRange()
@@ -29,6 +71,7 @@ export default function UsagePage() {
   const [total, setTotal] = useState<Record<string, unknown> | null>(null)
   const [byService, setByService] = useState<Record<string, unknown> | null>(null)
   const [topResources, setTopResources] = useState<Record<string, unknown> | null>(null)
+  const [resourceNames, setResourceNames] = useState<Record<string, string>>({})
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -44,31 +87,39 @@ export default function UsagePage() {
   }, [byService])
 
   const topChart = useMemo(() => {
-    const items = (topResources?.items as { resource_id?: string; service?: string; total_cost?: number }[]) ?? []
+    const items =
+      (topResources?.items as { resource_id?: string; service?: string; total_cost?: number }[]) ??
+      []
     return items.map((i) => ({
-      label: i.resource_id?.slice(0, 20) ?? i.service ?? 'unknown',
+      label: topResourceLabel(i, resourceNames),
       value: i.total_cost ?? 0,
+      title: i.resource_id ?? i.service ?? undefined,
     }))
-  }, [topResources])
+  }, [topResources, resourceNames])
 
-  const base = companyId && connectionId
-    ? `/api/v1/cloud/oci/usage/${companyId}/connections/${connectionId}/usage`
-    : null
+  const base =
+    companyId && connectionId
+      ? `/api/v1/cloud/oci/usage/${companyId}/connections/${connectionId}/usage`
+      : null
 
   const loadSummaries = async () => {
-    if (!base) return
+    if (!base || !companyId || !connectionId) return
     setError('')
     setLoading(true)
     try {
       const query = { start_date: startDate, end_date: endDate }
-      const [totalRes, serviceRes, topRes] = await Promise.all([
+      const [totalRes, serviceRes, topRes, names] = await Promise.all([
         apiRequest<Record<string, unknown>>(`${base}/summary/total`, { query }),
         apiRequest<Record<string, unknown>>(`${base}/summary/by-service`, { query }),
-        apiRequest<Record<string, unknown>>(`${base}/summary/top-resources`, { query: { ...query, limit: 10 } }),
+        apiRequest<Record<string, unknown>>(`${base}/summary/top-resources`, {
+          query: { ...query, limit: 10 },
+        }),
+        loadResourceDisplayNames(companyId, connectionId),
       ])
       setTotal(totalRes)
       setByService(serviceRes)
       setTopResources(topRes)
+      setResourceNames(names)
     } catch (err) {
       setError(formatApiError(err))
     } finally {
@@ -98,7 +149,12 @@ export default function UsagePage() {
           End date
           <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
         </label>
-        <button type="button" className="btn btn-primary" disabled={loading} onClick={() => void loadSummaries()}>
+        <button
+          type="button"
+          className="btn btn-primary"
+          disabled={loading}
+          onClick={() => void loadSummaries()}
+        >
           {loading ? 'Loading…' : 'Load summaries'}
         </button>
       </div>
