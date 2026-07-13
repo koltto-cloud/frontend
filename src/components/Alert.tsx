@@ -1,4 +1,12 @@
-export function Alert({ type, children }: { type: 'error' | 'success' | 'info'; children: string }) {
+import type { ReactNode } from 'react'
+
+export function Alert({
+  type,
+  children,
+}: {
+  type: 'error' | 'success' | 'info'
+  children: ReactNode
+}) {
   if (!children) return null
   return <div className={`alert alert-${type}`}>{children}</div>
 }

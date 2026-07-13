@@ -1,20 +1,11 @@
 import { useState } from 'react'
-import { apiRequest, formatApiError } from '@/api/client'
+import { apiRequest } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
-import { useOciCompartments } from '@/hooks/useOciCompartments'
-import { useOciJobTracker } from '@/hooks/useOciJob'
 import { useAsyncData } from '@/hooks/useAsyncData'
+import { MONITORING_RESOURCE_TYPES } from '@/oci/monitoring'
 import { Alert } from '@/components/Alert'
 import DataTable from '@/components/DataTable'
-import OciJobStatusPanel from '@/components/OciJobStatusPanel'
-
-const RESOURCE_TYPES = [
-  { value: 'compute', label: 'Compute' },
-  { value: 'block_storage', label: 'Block storage' },
-  { value: 'object_storage', label: 'Object storage' },
-  { value: 'file_storage', label: 'File storage' },
-  { value: 'load_balancer', label: 'Load balancer' },
-] as const
+import { Link } from 'react-router-dom'
 
 function defaultDateRange() {
   const end = new Date()
@@ -47,27 +38,12 @@ export default function MonitoringPage() {
   const defaults = defaultDateRange()
   const [startDate, setStartDate] = useState(defaults.start)
   const [endDate, setEndDate] = useState(defaults.end)
-  const [compartmentId, setCompartmentId] = useState('')
-  const [resourceType, setResourceType] = useState<string>(RESOURCE_TYPES[0].value)
+  const [resourceType, setResourceType] = useState('')
   const [metricName, setMetricName] = useState('')
-  const [syncing, setSyncing] = useState(false)
-  const [actionError, setActionError] = useState('')
-  const [msg, setMsg] = useState('')
   const [listKey, setListKey] = useState(0)
 
   const companyId = activeCompany?.company_id
   const connectionId = connection?.connection_id
-
-  const { compartments, loading: compartmentsLoading } = useOciCompartments(companyId, connectionId)
-
-  const {
-    job,
-    polling,
-    error: jobError,
-    trackSyncResponse,
-    checkJob,
-    dismiss,
-  } = useOciJobTracker()
 
   const base =
     companyId && connectionId
@@ -90,43 +66,6 @@ export default function MonitoringPage() {
     },
     [base, listKey],
   )
-
-  const handleSync = async () => {
-    if (!base) return
-    if (!compartmentId) {
-      setActionError('Select a compartment to sync.')
-      return
-    }
-    setActionError('')
-    setMsg('')
-    setSyncing(true)
-    try {
-      const res = await apiRequest(`${base}/sync`, {
-        method: 'POST',
-        body: {
-          start_date: startDate,
-          end_date: endDate,
-          compartment_id: compartmentId,
-          resource_type: resourceType,
-        },
-      })
-      if (trackSyncResponse(res, { onComplete: () => setListKey((k) => k + 1) })) {
-        setMsg('Monitoring sync queued.')
-      } else {
-        setMsg('Monitoring sync triggered.')
-        setListKey((k) => k + 1)
-      }
-    } catch (err) {
-      setActionError(formatApiError(err))
-    } finally {
-      setSyncing(false)
-    }
-  }
-
-  const handleLoad = () => {
-    setActionError('')
-    setListKey((k) => k + 1)
-  }
 
   if (!companyId || !connectionId) {
     return (
@@ -154,6 +93,12 @@ export default function MonitoringPage() {
     <>
       <h1 className="page-title">OCI Monitoring</h1>
 
+      <Alert type="info">
+        Sync monitoring from <Link to="/oci/resources">Resources → Compartments</Link>: select
+        compartments, choose a monitoring resource type (or all), then Sync monitoring. This page
+        loads stored metrics.
+      </Alert>
+
       <div className="filters">
         <label>
           Start date
@@ -164,24 +109,10 @@ export default function MonitoringPage() {
           <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
         </label>
         <label>
-          Compartment
-          <select
-            value={compartmentId}
-            onChange={(e) => setCompartmentId(e.target.value)}
-            disabled={compartmentsLoading}
-          >
-            <option value="">Select compartment…</option>
-            {compartments.map((c) => (
-              <option key={c.compartment_ocid} value={c.compartment_ocid}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
           Resource type
           <select value={resourceType} onChange={(e) => setResourceType(e.target.value)}>
-            {RESOURCE_TYPES.map((t) => (
+            <option value="">All types</option>
+            {MONITORING_RESOURCE_TYPES.map((t) => (
               <option key={t.value} value={t.value}>
                 {t.label}
               </option>
@@ -200,12 +131,9 @@ export default function MonitoringPage() {
         <button
           type="button"
           className="btn btn-primary"
-          disabled={syncing || !compartmentId}
-          onClick={() => void handleSync()}
+          disabled={loading}
+          onClick={() => setListKey((k) => k + 1)}
         >
-          {syncing ? 'Queueing…' : 'Sync metrics'}
-        </button>
-        <button type="button" className="btn" disabled={loading} onClick={handleLoad}>
           {loading ? 'Loading…' : 'Load metrics'}
         </button>
         {listKey > 0 && (
@@ -215,20 +143,7 @@ export default function MonitoringPage() {
         )}
       </div>
 
-      <Alert type="error">{actionError || error}</Alert>
-      <Alert type="success">{msg}</Alert>
-      <Alert type="info">
-        Sync pulls metrics from OCI for one compartment + resource type. Load metrics to view stored rows.
-        Sync compartments on Resources first if the compartment list is empty.
-      </Alert>
-
-      <OciJobStatusPanel
-        job={job}
-        polling={polling}
-        error={jobError}
-        onDismiss={dismiss}
-        onCheckJob={checkJob}
-      />
+      <Alert type="error">{error}</Alert>
 
       {listKey === 0 ? (
         <p className="empty">Click Load metrics to fetch stored monitoring data.</p>

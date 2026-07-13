@@ -4,6 +4,7 @@ import {
   type SyncStepRead,
 } from '@/hooks/useOciSyncRun'
 import type { TrackedJob } from '@/hooks/useOciJobMap'
+import { monitoringResourceTypeLabel } from '@/oci/monitoring'
 
 function shortenJobId(jobId: string) {
   return jobId.length > 16 ? `${jobId.slice(0, 16)}…` : jobId
@@ -69,6 +70,14 @@ function usageLine(job: TrackedJob | undefined) {
   return `usage: ${job.jobId} — ${job.status}`
 }
 
+function monitoringLines(jobs: { resourceType: string; job: TrackedJob }[]) {
+  return jobs.map(({ resourceType, job }) => {
+    const label = monitoringResourceTypeLabel(resourceType)
+    if (job.error) return `monitoring (${label}): ${job.jobId} — ${job.status} — ${job.error}`
+    return `monitoring (${label}): ${job.jobId} — ${job.status}`
+  })
+}
+
 function jobIdStatusLabel(jobId: string | null | undefined, status: string) {
   if (!jobId) return status
   return `${shortenJobId(jobId)} — ${status}`
@@ -101,8 +110,14 @@ function CompartmentStepsTable({ steps }: { steps: SyncStepRead[] }) {
   )
 }
 
+export interface MonitoringTrackedJob {
+  resourceType: string
+  job: TrackedJob
+}
+
 interface CompartmentInventoryCellProps {
   usageJob?: TrackedJob
+  monitoringJobs?: MonitoringTrackedJob[]
   inventory: CompartmentInventorySnapshot | null
   expanded: boolean
   onToggleExpand: () => void
@@ -110,11 +125,13 @@ interface CompartmentInventoryCellProps {
 
 export default function CompartmentInventoryCell({
   usageJob,
+  monitoringJobs = [],
   inventory,
   expanded,
   onToggleExpand,
 }: CompartmentInventoryCellProps) {
   const usage = usageLine(usageJob)
+  const monitoring = monitoringLines(monitoringJobs)
   const summary = compartmentInventorySummary(inventory)
   const steps = inventory?.steps ?? []
   const lastSynced = lastInventorySyncedAt(inventory)
@@ -124,11 +141,16 @@ export default function CompartmentInventoryCell({
     inventory?.runStatus === 'running' ||
     inventory?.runStatus === 'queued'
 
-  if (!usage && !summary) return <>—</>
+  if (!usage && monitoring.length === 0 && !summary) return <>—</>
 
   return (
     <div className="compartment-sync-cell">
       {usage && <div className="sync-line">{usage}</div>}
+      {monitoring.map((line) => (
+        <div key={line} className="sync-line">
+          {line}
+        </div>
+      ))}
       {summary && (
         <div className="sync-line inventory-summary">
           <span className={`sync-status sync-status-${summary.status}`}>{summary.label}</span>

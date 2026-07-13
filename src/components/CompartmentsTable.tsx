@@ -4,6 +4,12 @@ import { useOciJobMap } from '@/hooks/useOciJobMap'
 import { useOciJobTracker } from '@/hooks/useOciJob'
 import { useOciSyncRun } from '@/hooks/useOciSyncRun'
 import type { OciCompartment } from '@/hooks/useOciCompartments'
+import {
+  MONITORING_RESOURCE_TYPE_ALL,
+  MONITORING_RESOURCE_TYPES,
+  monitoringJobKey,
+  parseMonitoringJobKey,
+} from '@/oci/monitoring'
 import { Alert } from '@/components/Alert'
 import CompartmentInventoryCell from '@/components/CompartmentInventoryCell'
 import OciSyncRunPanel from '@/components/OciSyncRunPanel'
@@ -47,7 +53,11 @@ export default function CompartmentsTable({
   const [startDate, setStartDate] = useState(defaults.start)
   const [endDate, setEndDate] = useState(defaults.end)
   const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [monitoringResourceType, setMonitoringResourceType] = useState<string>(
+    MONITORING_RESOURCE_TYPE_ALL,
+  )
   const [usageSyncing, setUsageSyncing] = useState(false)
+  const [monitoringSyncing, setMonitoringSyncing] = useState(false)
   const [compartmentSyncing, setCompartmentSyncing] = useState(false)
   const [error, setError] = useState('')
   const [msg, setMsg] = useState('')
@@ -64,11 +74,19 @@ export default function CompartmentsTable({
   })
 
   const usageBase = `/api/v1/cloud/oci/usage/${companyId}/connections/${connectionId}/usage`
+  const monitoringBase = `/api/v1/cloud/oci/monitoring/${companyId}/connections/${connectionId}/monitoring`
 
   const allSelected = compartments.length > 0 && selected.size === compartments.length
   const someSelected = selected.size > 0
 
   const selectedList = useMemo(() => Array.from(selected), [selected])
+
+  const monitoringTypesToSync = useMemo(() => {
+    if (monitoringResourceType === MONITORING_RESOURCE_TYPE_ALL) {
+      return MONITORING_RESOURCE_TYPES.map((t) => t.value)
+    }
+    return [monitoringResourceType]
+  }, [monitoringResourceType])
 
   const toggleAll = () => {
     if (allSelected) {
@@ -140,6 +158,44 @@ export default function CompartmentsTable({
     }
   }
 
+  const handleSyncMonitoring = async () => {
+    if (selectedList.length === 0) {
+      setError('Select at least one compartment.')
+      return
+    }
+    setError('')
+    setMsg('')
+    setMonitoringSyncing(true)
+    try {
+      const tasks = selectedList.flatMap((compartmentId) =>
+        monitoringTypesToSync.map(async (resourceType) => {
+          const res = await apiRequest(`${monitoringBase}/sync`, {
+            method: 'POST',
+            body: {
+              start_date: startDate,
+              end_date: endDate,
+              compartment_id: compartmentId,
+              resource_type: resourceType,
+            },
+          })
+          trackJob(monitoringJobKey(compartmentId, resourceType), res)
+        }),
+      )
+      await Promise.all(tasks)
+      const typeLabel =
+        monitoringResourceType === MONITORING_RESOURCE_TYPE_ALL
+          ? 'all resource types'
+          : monitoringResourceType
+      setMsg(
+        `Monitoring sync queued for ${selectedList.length} compartment(s) × ${typeLabel} (${tasks.length} job(s)).`,
+      )
+    } catch (err) {
+      setError(formatApiError(err))
+    } finally {
+      setMonitoringSyncing(false)
+    }
+  }
+
   const handleSyncCompartments = async () => {
     setError('')
     setMsg('')
@@ -194,6 +250,20 @@ export default function CompartmentsTable({
           End date
           <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
         </label>
+        <label>
+          Monitoring resource
+          <select
+            value={monitoringResourceType}
+            onChange={(e) => setMonitoringResourceType(e.target.value)}
+          >
+            <option value={MONITORING_RESOURCE_TYPE_ALL}>All resource types</option>
+            {MONITORING_RESOURCE_TYPES.map((t) => (
+              <option key={t.value} value={t.value}>
+                {t.label}
+              </option>
+            ))}
+          </select>
+        </label>
         <button
           type="button"
           className="btn btn-primary"
@@ -211,6 +281,16 @@ export default function CompartmentsTable({
           onClick={() => void handleSyncUsage()}
         >
           {usageSyncing ? 'Queueing…' : `Sync usage (${selected.size} selected)`}
+        </button>
+        <button
+          type="button"
+          className="btn"
+          disabled={!someSelected || monitoringSyncing}
+          onClick={() => void handleSyncMonitoring()}
+        >
+          {monitoringSyncing
+            ? 'Queueing…'
+            : `Sync monitoring (${selected.size} selected)`}
         </button>
         <button type="button" className="btn" onClick={onRefresh}>
           Refresh
@@ -276,10 +356,21 @@ export default function CompartmentsTable({
             {compartments.map((row) => {
               const ocid = row.compartment_ocid
               const usageJob = jobs[ocid]
+              const monitoringJobs = Object.entries(jobs)
+                .map(([key, job]) => {
+                  const parsed = parseMonitoringJobKey(key)
+                  if (!parsed || parsed.compartmentOcid !== ocid) return null
+                  return { resourceType: parsed.resourceType, job }
+                })
+                .filter(
+                  (item): item is { resourceType: string; job: (typeof jobs)[string] } =>
+                    item !== null,
+                )
               const inventory = inventorySync.getCompartmentDisplay(ocid)
               const steps = inventory?.steps ?? []
               const hasError =
-                usageJob?.error ||
+                Boolean(usageJob?.error) ||
+                monitoringJobs.some((m) => Boolean(m.job.error)) ||
                 steps.some((s) => s.status === 'failed')
               const isExpanded = expandedInventory.has(ocid)
               return (
@@ -306,6 +397,7 @@ export default function CompartmentsTable({
                   <td className={`col-job${hasError ? ' job-status-error' : ''}`}>
                     <CompartmentInventoryCell
                       usageJob={usageJob}
+                      monitoringJobs={monitoringJobs}
                       inventory={inventory}
                       expanded={isExpanded}
                       onToggleExpand={() => toggleInventoryExpand(ocid)}
