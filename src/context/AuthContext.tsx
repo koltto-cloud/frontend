@@ -120,7 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (company) {
         setActiveCompany(company)
         localStorage.setItem('koltto_selected_company_id', company.company_id)
-        await loadConnections(company.company_id)
+        void loadConnections(company.company_id)
       }
       return true
     } catch {
