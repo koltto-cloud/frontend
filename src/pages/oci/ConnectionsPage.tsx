@@ -2,7 +2,9 @@ import { useState } from 'react'
 import { apiRequest, formatApiError } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
 import { useAsyncData } from '@/hooks/useAsyncData'
+import { useClientPagination } from '@/hooks/useClientPagination'
 import { Alert } from '@/components/Alert'
+import PaginationControls from '@/components/PaginationControls'
 import Modal from '@/components/Modal'
 import JsonViewer from '@/components/JsonViewer'
 
@@ -53,6 +55,11 @@ export default function ConnectionsPage() {
     () => (base ? apiRequest<ConnectionRow[]>(base) : Promise.resolve([])),
     [base],
   )
+
+  const rows = data ?? []
+  const { page, pageSize, pageItems, totalItems, setPage, setPageSize } =
+    useClientPagination(rows)
+
 
   const openView = async (connectionId: string) => {
     if (!base) return
@@ -168,7 +175,8 @@ export default function ConnectionsPage() {
       {loading ? (
         <p className="loading">Loading…</p>
       ) : (
-        <div className="data-table-wrap">
+        <>
+          <div className="data-table-wrap">
           <table className="data-table">
             <thead>
               <tr>
@@ -181,7 +189,7 @@ export default function ConnectionsPage() {
               </tr>
             </thead>
             <tbody>
-              {(data ?? []).map((row) => (
+              {pageItems.map((row) => (
                 <tr key={row.connection_id}>
                   <td>
                     <button
@@ -214,6 +222,18 @@ export default function ConnectionsPage() {
           </table>
           {(data ?? []).length === 0 && <p className="empty">No connections.</p>}
         </div>
+
+      {!loading && rows.length > 0 && (
+        <PaginationControls
+          page={page}
+          pageSize={pageSize}
+          itemCount={pageItems.length}
+          totalItems={totalItems}
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
+        />
+      )}
+        </>
       )}
 
       {showCreate && (

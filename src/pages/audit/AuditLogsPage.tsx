@@ -1,7 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { apiRequest } from '@/api/client'
 import { useAsyncData } from '@/hooks/useAsyncData'
 import DataTable from '@/components/DataTable'
+import PaginationControls, {
+  DEFAULT_PAGE_SIZE,
+  MAX_PAGE_SIZE,
+} from '@/components/PaginationControls'
 import { Alert } from '@/components/Alert'
 import JsonViewer from '@/components/JsonViewer'
 
@@ -9,20 +13,30 @@ export default function AuditLogsPage() {
   const [userId, setUserId] = useState('')
   const [eventType, setEventType] = useState('')
   const [success, setSuccess] = useState('')
-  const [limit, setLimit] = useState('50')
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
 
   const { data, error, loading, reload } = useAsyncData(
-    () =>
-      apiRequest<Record<string, unknown>[]>('/api/v1/audit/logs', {
+    () => {
+      const limit = Math.min(Math.max(pageSize, 1), MAX_PAGE_SIZE)
+      return apiRequest<Record<string, unknown>[]>('/api/v1/audit/logs', {
         query: {
           user_id: userId || undefined,
           event_type: eventType || undefined,
           success: success === '' ? undefined : success === 'true',
           limit,
+          offset: (page - 1) * limit,
         },
-      }),
-    [userId, eventType, success, limit],
+      })
+    },
+    [userId, eventType, success, page, pageSize],
   )
+
+  useEffect(() => {
+    setPage(1)
+  }, [userId, eventType, success])
+
+  const rows = data ?? []
 
   return (
     <>
@@ -44,17 +58,29 @@ export default function AuditLogsPage() {
             <option value="false">no</option>
           </select>
         </label>
-        <label>
-          Limit
-          <input type="number" value={limit} onChange={(e) => setLimit(e.target.value)} min={1} max={500} />
-        </label>
         <button type="button" className="btn btn-primary" onClick={() => void reload()}>
           Search
         </button>
       </div>
 
       <Alert type="error">{error}</Alert>
-      {loading ? <p className="loading">Loading…</p> : <DataTable rows={data ?? []} />}
+      {loading ? (
+        <p className="loading">Loading…</p>
+      ) : (
+        <>
+          <DataTable rows={rows} paginate={false} />
+          <PaginationControls
+            page={page}
+            pageSize={pageSize}
+            itemCount={rows.length}
+            onPageChange={setPage}
+            onPageSizeChange={(size) => {
+              setPageSize(Math.min(size, MAX_PAGE_SIZE))
+              setPage(1)
+            }}
+          />
+        </>
+      )}
 
       {data && (
         <div className="card">

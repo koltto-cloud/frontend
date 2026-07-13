@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { apiRequest, formatApiError } from '@/api/client'
 import { useAsyncData } from '@/hooks/useAsyncData'
+import { useClientPagination } from '@/hooks/useClientPagination'
 import { Alert } from '@/components/Alert'
+import PaginationControls from '@/components/PaginationControls'
 import Modal from '@/components/Modal'
 import JsonViewer from '@/components/JsonViewer'
 import { CATALOG_STATUSES } from '@/pages/catalog/constants'
@@ -37,6 +39,11 @@ export default function FeaturesPage() {
       }),
     [name, featureStatus],
   )
+
+  const rows = data ?? []
+  const { page, pageSize, pageItems, totalItems, setPage, setPageSize } =
+    useClientPagination(rows)
+
 
   const openView = async (id: string) => {
     setViewId(id)
@@ -133,6 +140,7 @@ export default function FeaturesPage() {
       <Alert type="error">{error || err}</Alert>
       <Alert type="success">{msg}</Alert>
       {loading ? <p className="loading">Loading…</p> : (
+        <>
         <div className="data-table-wrap">
           <table className="data-table">
             <thead>
@@ -141,7 +149,7 @@ export default function FeaturesPage() {
               </tr>
             </thead>
             <tbody>
-              {(data ?? []).map((row) => (
+              {pageItems.map((row) => (
                 <tr key={row.feature_id}>
                   <td>
                     <button type="button" className="id-link" onClick={() => void openView(row.feature_id)}>
@@ -161,6 +169,18 @@ export default function FeaturesPage() {
             </tbody>
           </table>
         </div>
+
+      {!loading && rows.length > 0 && (
+        <PaginationControls
+          page={page}
+          pageSize={pageSize}
+          itemCount={pageItems.length}
+          totalItems={totalItems}
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
+        />
+      )}
+        </>
       )}
       {showCreate && (
         <Modal title="Create feature" onClose={() => setShowCreate(false)}>

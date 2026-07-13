@@ -3,6 +3,7 @@ import { apiRequest, formatApiError } from '@/api/client'
 import { useOciJobMap } from '@/hooks/useOciJobMap'
 import { useOciJobTracker } from '@/hooks/useOciJob'
 import { useOciSyncRun } from '@/hooks/useOciSyncRun'
+import { useClientPagination } from '@/hooks/useClientPagination'
 import type { OciCompartment } from '@/hooks/useOciCompartments'
 import {
   MONITORING_RESOURCE_TYPE_ALL,
@@ -13,6 +14,7 @@ import {
 import { Alert } from '@/components/Alert'
 import CompartmentInventoryCell from '@/components/CompartmentInventoryCell'
 import OciSyncRunPanel from '@/components/OciSyncRunPanel'
+import PaginationControls from '@/components/PaginationControls'
 
 function defaultDateRange() {
   const end = new Date()
@@ -80,6 +82,14 @@ export default function CompartmentsTable({
   const someSelected = selected.size > 0
 
   const selectedList = useMemo(() => Array.from(selected), [selected])
+  const {
+    page,
+    pageSize,
+    pageItems: pageCompartments,
+    totalItems,
+    setPage,
+    setPageSize,
+  } = useClientPagination(compartments)
 
   const monitoringTypesToSync = useMemo(() => {
     if (monitoringResourceType === MONITORING_RESOURCE_TYPE_ALL) {
@@ -353,7 +363,7 @@ export default function CompartmentsTable({
             </tr>
           </thead>
           <tbody>
-            {compartments.map((row) => {
+            {pageCompartments.map((row) => {
               const ocid = row.compartment_ocid
               const usageJob = jobs[ocid]
               const monitoringJobs = Object.entries(jobs)
@@ -409,6 +419,16 @@ export default function CompartmentsTable({
           </tbody>
         </table>
       </div>
+      {!loading && compartments.length > 0 && (
+        <PaginationControls
+          page={page}
+          pageSize={pageSize}
+          itemCount={pageCompartments.length}
+          totalItems={totalItems}
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
+        />
+      )}
     </>
   )
 }

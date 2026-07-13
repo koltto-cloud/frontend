@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { apiRequest, formatApiError } from '@/api/client'
 import { useAsyncData } from '@/hooks/useAsyncData'
+import { useClientPagination } from '@/hooks/useClientPagination'
 import { Alert } from '@/components/Alert'
+import PaginationControls from '@/components/PaginationControls'
 import Modal from '@/components/Modal'
 import JsonViewer from '@/components/JsonViewer'
 
@@ -56,6 +58,11 @@ export default function UsersPage() {
       }),
     [email, firstName, lastName, userType, accountStatus],
   )
+
+  const rows = data ?? []
+  const { page, pageSize, pageItems, totalItems, setPage, setPageSize } =
+    useClientPagination(rows)
+
 
   const openView = async (userId: string) => {
     setViewId(userId)
@@ -186,7 +193,8 @@ export default function UsersPage() {
       {loading ? (
         <p className="loading">Loading…</p>
       ) : (
-        <div className="data-table-wrap">
+        <>
+          <div className="data-table-wrap">
           <table className="data-table">
             <thead>
               <tr>
@@ -200,7 +208,7 @@ export default function UsersPage() {
               </tr>
             </thead>
             <tbody>
-              {(data ?? []).map((row) => (
+              {pageItems.map((row) => (
                 <tr key={row.user_id}>
                   <td>
                     <button type="button" className="id-link" onClick={() => void openView(row.user_id)}>
@@ -226,6 +234,18 @@ export default function UsersPage() {
           </table>
           {(data ?? []).length === 0 && <p className="empty">No users found.</p>}
         </div>
+
+      {!loading && rows.length > 0 && (
+        <PaginationControls
+          page={page}
+          pageSize={pageSize}
+          itemCount={pageItems.length}
+          totalItems={totalItems}
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
+        />
+      )}
+        </>
       )}
 
       {showCreate && (

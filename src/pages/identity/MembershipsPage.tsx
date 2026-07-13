@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { apiRequest, formatApiError } from '@/api/client'
 import { useAsyncData } from '@/hooks/useAsyncData'
+import { useClientPagination } from '@/hooks/useClientPagination'
 import { Alert } from '@/components/Alert'
+import PaginationControls from '@/components/PaginationControls'
 import Modal from '@/components/Modal'
 import JsonViewer from '@/components/JsonViewer'
 
@@ -50,6 +52,11 @@ export default function MembershipsPage() {
       }),
     [role, active, userEmail, companyName],
   )
+
+  const rows = data ?? []
+  const { page, pageSize, pageItems, totalItems, setPage, setPageSize } =
+    useClientPagination(rows)
+
 
   const openView = async (userId: string, companyId: string) => {
     setViewKey({ userId, companyId })
@@ -176,7 +183,8 @@ export default function MembershipsPage() {
       {loading ? (
         <p className="loading">Loading…</p>
       ) : (
-        <div className="data-table-wrap">
+        <>
+          <div className="data-table-wrap">
           <table className="data-table">
             <thead>
               <tr>
@@ -190,7 +198,7 @@ export default function MembershipsPage() {
               </tr>
             </thead>
             <tbody>
-              {(data ?? []).map((row) => (
+              {pageItems.map((row) => (
                 <tr key={`${row.user.user_id}-${row.company.company_id}`}>
                   <td>
                     <button
@@ -224,6 +232,18 @@ export default function MembershipsPage() {
           </table>
           {(data ?? []).length === 0 && <p className="empty">No memberships found.</p>}
         </div>
+
+      {!loading && rows.length > 0 && (
+        <PaginationControls
+          page={page}
+          pageSize={pageSize}
+          itemCount={pageItems.length}
+          totalItems={totalItems}
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
+        />
+      )}
+        </>
       )}
 
       {showCreate && (

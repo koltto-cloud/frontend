@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { apiRequest, formatApiError } from '@/api/client'
 import { useAsyncData } from '@/hooks/useAsyncData'
+import { useClientPagination } from '@/hooks/useClientPagination'
 import { Alert } from '@/components/Alert'
+import PaginationControls from '@/components/PaginationControls'
 import Modal from '@/components/Modal'
 import JsonViewer from '@/components/JsonViewer'
 import { CATALOG_STATUSES, PLAN_TYPES } from '@/pages/catalog/constants'
@@ -45,6 +47,11 @@ export default function PlansPage() {
       }),
     [name, planType, planStatus],
   )
+
+  const rows = data ?? []
+  const { page, pageSize, pageItems, totalItems, setPage, setPageSize } =
+    useClientPagination(rows)
+
 
   const openView = async (id: string) => {
     setViewId(id)
@@ -168,7 +175,8 @@ export default function PlansPage() {
       {loading ? (
         <p className="loading">Loading…</p>
       ) : (
-        <div className="data-table-wrap">
+        <>
+          <div className="data-table-wrap">
           <table className="data-table">
             <thead>
               <tr>
@@ -182,7 +190,7 @@ export default function PlansPage() {
               </tr>
             </thead>
             <tbody>
-              {(data ?? []).map((row) => (
+              {pageItems.map((row) => (
                 <tr key={row.plan_id}>
                   <td>
                     <button type="button" className="id-link" onClick={() => void openView(row.plan_id)}>
@@ -203,6 +211,18 @@ export default function PlansPage() {
             </tbody>
           </table>
         </div>
+
+      {!loading && rows.length > 0 && (
+        <PaginationControls
+          page={page}
+          pageSize={pageSize}
+          itemCount={pageItems.length}
+          totalItems={totalItems}
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
+        />
+      )}
+        </>
       )}
       {showCreate && (
         <Modal title="Create plan" onClose={() => setShowCreate(false)}>

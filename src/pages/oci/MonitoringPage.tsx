@@ -1,10 +1,14 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { apiRequest } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
 import { useAsyncData } from '@/hooks/useAsyncData'
 import { MONITORING_RESOURCE_TYPES } from '@/oci/monitoring'
 import { Alert } from '@/components/Alert'
 import DataTable from '@/components/DataTable'
+import PaginationControls, {
+  DEFAULT_PAGE_SIZE,
+  MAX_PAGE_SIZE,
+} from '@/components/PaginationControls'
 import { Link } from 'react-router-dom'
 
 function defaultDateRange() {
@@ -40,7 +44,9 @@ export default function MonitoringPage() {
   const [endDate, setEndDate] = useState(defaults.end)
   const [resourceType, setResourceType] = useState('')
   const [metricName, setMetricName] = useState('')
-  const [listKey, setListKey] = useState(0)
+  const [loaded, setLoaded] = useState(false)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
 
   const companyId = activeCompany?.company_id
   const connectionId = connection?.connection_id
@@ -50,22 +56,31 @@ export default function MonitoringPage() {
       ? `/api/v1/cloud/oci/monitoring/${companyId}/connections/${connectionId}/monitoring`
       : null
 
+  const listKey = loaded
+    ? `${base}:${resourceType}:${metricName}:${startDate}:${endDate}:${page}:${pageSize}`
+    : null
+
   const { data, error, loading, reload } = useAsyncData(
     () => {
-      if (!base || listKey === 0) return Promise.resolve([])
+      if (!base || !loaded) return Promise.resolve([])
+      const limit = Math.min(Math.max(pageSize, 1), MAX_PAGE_SIZE)
       return apiRequest<MonitoringMetric[]>(base, {
         query: {
           resource_type: resourceType || undefined,
           metric_name: metricName || undefined,
           start_date: startDate || undefined,
           end_date: endDate || undefined,
-          limit: 200,
-          offset: 0,
+          limit,
+          offset: (page - 1) * limit,
         },
       })
     },
-    [base, listKey],
+    [listKey],
   )
+
+  useEffect(() => {
+    setPage(1)
+  }, [resourceType, metricName, startDate, endDate])
 
   if (!companyId || !connectionId) {
     return (
@@ -76,7 +91,8 @@ export default function MonitoringPage() {
     )
   }
 
-  const rows = ((data ?? []) as MonitoringMetric[]).map((m) => ({
+  const metrics = (data ?? []) as MonitoringMetric[]
+  const rows = metrics.map((m) => ({
     metric_date: m.metric_date,
     resource_type: m.resource_type,
     metric_name: m.metric_name,
@@ -132,11 +148,14 @@ export default function MonitoringPage() {
           type="button"
           className="btn btn-primary"
           disabled={loading}
-          onClick={() => setListKey((k) => k + 1)}
+          onClick={() => {
+            setPage(1)
+            setLoaded(true)
+          }}
         >
           {loading ? 'Loading…' : 'Load metrics'}
         </button>
-        {listKey > 0 && (
+        {loaded && (
           <button type="button" className="btn" onClick={() => void reload()}>
             Refresh
           </button>
@@ -145,12 +164,24 @@ export default function MonitoringPage() {
 
       <Alert type="error">{error}</Alert>
 
-      {listKey === 0 ? (
+      {!loaded ? (
         <p className="empty">Click Load metrics to fetch stored monitoring data.</p>
       ) : loading ? (
         <p className="loading">Loading…</p>
       ) : (
-        <DataTable rows={rows as Record<string, unknown>[]} />
+        <>
+          <DataTable rows={rows as Record<string, unknown>[]} paginate={false} />
+          <PaginationControls
+            page={page}
+            pageSize={pageSize}
+            itemCount={metrics.length}
+            onPageChange={setPage}
+            onPageSizeChange={(size) => {
+              setPageSize(Math.min(size, MAX_PAGE_SIZE))
+              setPage(1)
+            }}
+          />
+        </>
       )}
     </>
   )
