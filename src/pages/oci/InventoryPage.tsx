@@ -5,6 +5,10 @@ import { useAsyncData } from '@/hooks/useAsyncData'
 import { ociCompartmentsPath, useOciCompartments } from '@/hooks/useOciCompartments'
 import CompartmentsTable from '@/components/CompartmentsTable'
 import InventoryResourceTable from '@/components/InventoryResourceTable'
+import PaginationControls, {
+  DEFAULT_PAGE_SIZE,
+  MAX_PAGE_SIZE,
+} from '@/components/PaginationControls'
 import { Alert } from '@/components/Alert'
 import Modal from '@/components/Modal'
 import JsonViewer from '@/components/JsonViewer'
@@ -30,6 +34,8 @@ export default function InventoryPage() {
   const { activeCompany, connection } = useAuth()
   const [tab, setTab] = useState<TabKey>('compartments')
   const [compartmentFilter, setCompartmentFilter] = useState(ALL_COMPARTMENTS)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
   const [actionError, setActionError] = useState('')
 
   const [viewId, setViewId] = useState<string | null>(null)
@@ -56,12 +62,16 @@ export default function InventoryPage() {
 
   const isResourceTab = tab !== 'compartments'
 
-  const listKey = isResourceTab ? `${base}:${compartmentFilter}` : null
+  const listKey = isResourceTab ? `${base}:${compartmentFilter}:${page}:${pageSize}` : null
 
   const { data, error, loading, reload: reloadInventory } = useAsyncData(
     () => {
       if (!base || !isResourceTab) return Promise.resolve([])
-      const query: Record<string, string | number> = { limit: 200, offset: 0 }
+      const limit = Math.min(Math.max(pageSize, 1), MAX_PAGE_SIZE)
+      const query: Record<string, string | number> = {
+        limit,
+        offset: (page - 1) * limit,
+      }
       if (compartmentFilter) query.compartment_id = compartmentFilter
       return apiRequest<Record<string, unknown>[]>(base, { query })
     },
@@ -70,7 +80,12 @@ export default function InventoryPage() {
 
   useEffect(() => {
     if (!isResourceTab) setCompartmentFilter(ALL_COMPARTMENTS)
+    setPage(1)
   }, [tab, isResourceTab])
+
+  useEffect(() => {
+    setPage(1)
+  }, [compartmentFilter])
 
   const openView = async (id: string) => {
     if (!companyId || !connectionId) return
@@ -172,12 +187,24 @@ export default function InventoryPage() {
           {loading ? (
             <p className="loading">Loading…</p>
           ) : (
-            <InventoryResourceTable
-              key={tab}
-              tabKey={tab}
-              rows={(data ?? []) as Record<string, unknown>[]}
-              compartmentNames={compartmentNames}
-            />
+            <>
+              <InventoryResourceTable
+                key={tab}
+                tabKey={tab}
+                rows={(data ?? []) as Record<string, unknown>[]}
+                compartmentNames={compartmentNames}
+              />
+              <PaginationControls
+                page={page}
+                pageSize={pageSize}
+                itemCount={(data ?? []).length}
+                onPageChange={setPage}
+                onPageSizeChange={(size) => {
+                  setPageSize(Math.min(size, MAX_PAGE_SIZE))
+                  setPage(1)
+                }}
+              />
+            </>
           )}
         </>
       )}
