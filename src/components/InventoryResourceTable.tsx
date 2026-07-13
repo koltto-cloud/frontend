@@ -108,6 +108,7 @@ export default function InventoryResourceTable({
             <th className="col-expand" aria-label="Expand" />
             <th>display_name</th>
             <th>compartment</th>
+            <th>status</th>
             <th>time_created</th>
             <th>synced_at</th>
           </tr>
@@ -133,12 +134,13 @@ export default function InventoryResourceTable({
                   </td>
                   <td>{formatValue(row.display_name)}</td>
                   <td title={compartmentId || undefined}>{compartmentLabel}</td>
+                  <td>{formatValue(row.lifecycle_state)}</td>
                   <td>{formatValue(row.time_created)}</td>
                   <td>{formatValue(row.synced_at)}</td>
                 </tr>
                 {isOpen && (
                   <tr className="resource-detail-row">
-                    <td colSpan={5}>
+                    <td colSpan={6}>
                       <dl className="resource-detail-list">
                         {detailFields.map((field) => (
                           <div key={field} className="resource-detail-item">
