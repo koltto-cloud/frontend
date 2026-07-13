@@ -6,7 +6,6 @@ import { useOciSyncRun } from '@/hooks/useOciSyncRun'
 import { useClientPagination } from '@/hooks/useClientPagination'
 import type { OciCompartment } from '@/hooks/useOciCompartments'
 import {
-  MONITORING_RESOURCE_TYPE_ALL,
   MONITORING_RESOURCE_TYPES,
   monitoringJobKey,
   parseMonitoringJobKey,
@@ -55,9 +54,6 @@ export default function CompartmentsTable({
   const [startDate, setStartDate] = useState(defaults.start)
   const [endDate, setEndDate] = useState(defaults.end)
   const [selected, setSelected] = useState<Set<string>>(new Set())
-  const [monitoringResourceType, setMonitoringResourceType] = useState<string>(
-    MONITORING_RESOURCE_TYPE_ALL,
-  )
   const [usageSyncing, setUsageSyncing] = useState(false)
   const [monitoringSyncing, setMonitoringSyncing] = useState(false)
   const [compartmentSyncing, setCompartmentSyncing] = useState(false)
@@ -90,13 +86,6 @@ export default function CompartmentsTable({
     setPage,
     setPageSize,
   } = useClientPagination(compartments)
-
-  const monitoringTypesToSync = useMemo(() => {
-    if (monitoringResourceType === MONITORING_RESOURCE_TYPE_ALL) {
-      return MONITORING_RESOURCE_TYPES.map((t) => t.value)
-    }
-    return [monitoringResourceType]
-  }, [monitoringResourceType])
 
   const toggleAll = () => {
     if (allSelected) {
@@ -178,7 +167,7 @@ export default function CompartmentsTable({
     setMonitoringSyncing(true)
     try {
       const tasks = selectedList.flatMap((compartmentId) =>
-        monitoringTypesToSync.map(async (resourceType) => {
+        MONITORING_RESOURCE_TYPES.map(async ({ value: resourceType }) => {
           const res = await apiRequest(`${monitoringBase}/sync`, {
             method: 'POST',
             body: {
@@ -192,12 +181,8 @@ export default function CompartmentsTable({
         }),
       )
       await Promise.all(tasks)
-      const typeLabel =
-        monitoringResourceType === MONITORING_RESOURCE_TYPE_ALL
-          ? 'all resource types'
-          : monitoringResourceType
       setMsg(
-        `Monitoring sync queued for ${selectedList.length} compartment(s) × ${typeLabel} (${tasks.length} job(s)).`,
+        `Monitoring sync queued for ${selectedList.length} compartment(s) × all resource types (${tasks.length} job(s)).`,
       )
     } catch (err) {
       setError(formatApiError(err))
@@ -259,20 +244,6 @@ export default function CompartmentsTable({
         <label>
           End date
           <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-        </label>
-        <label>
-          Monitoring resource
-          <select
-            value={monitoringResourceType}
-            onChange={(e) => setMonitoringResourceType(e.target.value)}
-          >
-            <option value={MONITORING_RESOURCE_TYPE_ALL}>All resource types</option>
-            {MONITORING_RESOURCE_TYPES.map((t) => (
-              <option key={t.value} value={t.value}>
-                {t.label}
-              </option>
-            ))}
-          </select>
         </label>
         <button
           type="button"

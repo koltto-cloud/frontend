@@ -111,8 +111,7 @@ export default function MonitoringPage() {
 
       <Alert type="info">
         Sync monitoring from <Link to="/oci/inventory">Inventory → Compartments</Link>: select
-        compartments, choose a monitoring resource type (or all), then Sync monitoring. This page
-        loads stored metrics.
+        compartments, then Sync monitoring (all resource types). This page loads stored metrics.
       </Alert>
 
       <div className="filters">
