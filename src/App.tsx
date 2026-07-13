@@ -20,7 +20,7 @@ import InvoicesPage from '@/pages/billing/InvoicesPage'
 import InvoiceItemsPage from '@/pages/billing/InvoiceItemsPage'
 import ConnectionsPage from '@/pages/oci/ConnectionsPage'
 import UsagePage from '@/pages/oci/UsagePage'
-import ResourcesPage from '@/pages/oci/ResourcesPage'
+import InventoryPage from '@/pages/oci/InventoryPage'
 import MonitoringPage from '@/pages/oci/MonitoringPage'
 import PricingPage from '@/pages/oci/PricingPage'
 
@@ -50,7 +50,8 @@ export default function App() {
               <Route path="/billing/invoice-items" element={<InvoiceItemsPage />} />
               <Route path="/oci/connections" element={<ConnectionsPage />} />
               <Route path="/oci/usage" element={<UsagePage />} />
-              <Route path="/oci/resources" element={<ResourcesPage />} />
+              <Route path="/oci/inventory" element={<InventoryPage />} />
+              <Route path="/oci/resources" element={<Navigate to="/oci/inventory" replace />} />
               <Route path="/oci/monitoring" element={<MonitoringPage />} />
               <Route path="/oci/pricing" element={<PricingPage />} />
             </Route>

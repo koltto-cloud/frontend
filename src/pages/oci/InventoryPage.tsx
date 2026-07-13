@@ -1,15 +1,15 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { apiRequest, formatApiError } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
 import { useAsyncData } from '@/hooks/useAsyncData'
 import { ociCompartmentsPath, useOciCompartments } from '@/hooks/useOciCompartments'
 import CompartmentsTable from '@/components/CompartmentsTable'
-import DataTable from '@/components/DataTable'
+import InventoryResourceTable from '@/components/InventoryResourceTable'
 import { Alert } from '@/components/Alert'
 import Modal from '@/components/Modal'
 import JsonViewer from '@/components/JsonViewer'
 
-const RESOURCE_TABS = [
+const INVENTORY_TABS = [
   { key: 'compartments', label: 'Compartments', segment: 'compartment', resource: 'compartments' },
   { key: 'compute', label: 'Compute', segment: 'compute', resource: 'compute' },
   { key: 'block-storage', label: 'Block Storage', segment: 'block-storage', resource: 'block-storage' },
@@ -18,15 +18,15 @@ const RESOURCE_TABS = [
   { key: 'load-balancer', label: 'Load Balancers', segment: 'load-balancer', resource: 'load-balancers' },
 ] as const
 
-type TabKey = (typeof RESOURCE_TABS)[number]['key']
+type TabKey = (typeof INVENTORY_TABS)[number]['key']
 
 const ALL_COMPARTMENTS = ''
 
-function resourceBase(companyId: string, connectionId: string, tab: (typeof RESOURCE_TABS)[number]) {
+function resourceBase(companyId: string, connectionId: string, tab: (typeof INVENTORY_TABS)[number]) {
   return `/api/v1/cloud/oci/${tab.segment}/${companyId}/connections/${connectionId}/${tab.resource}`
 }
 
-export default function ResourcesPage() {
+export default function InventoryPage() {
   const { activeCompany, connection } = useAuth()
   const [tab, setTab] = useState<TabKey>('compartments')
   const [compartmentFilter, setCompartmentFilter] = useState(ALL_COMPARTMENTS)
@@ -38,10 +38,18 @@ export default function ResourcesPage() {
 
   const companyId = activeCompany?.company_id
   const connectionId = connection?.connection_id
-  const tabConfig = RESOURCE_TABS.find((t) => t.key === tab)!
+  const tabConfig = INVENTORY_TABS.find((t) => t.key === tab)!
 
   const { compartments, error: compartmentsError, loading: compartmentsLoading, reload: reloadCompartments } =
     useOciCompartments(companyId, connectionId)
+
+  const compartmentNames = useMemo(() => {
+    const map: Record<string, string> = {}
+    for (const c of compartments) {
+      map[c.compartment_ocid] = c.name
+    }
+    return map
+  }, [compartments])
 
   const base =
     companyId && connectionId ? resourceBase(companyId, connectionId, tabConfig) : null
@@ -50,7 +58,7 @@ export default function ResourcesPage() {
 
   const listKey = isResourceTab ? `${base}:${compartmentFilter}` : null
 
-  const { data, error, loading, reload: reloadResources } = useAsyncData(
+  const { data, error, loading, reload: reloadInventory } = useAsyncData(
     () => {
       if (!base || !isResourceTab) return Promise.resolve([])
       const query: Record<string, string | number> = { limit: 200, offset: 0 }
@@ -65,17 +73,17 @@ export default function ResourcesPage() {
   }, [tab, isResourceTab])
 
   const openView = async (id: string) => {
-    const viewBase =
-      tab === 'compartments' && companyId && connectionId
-        ? ociCompartmentsPath(companyId, connectionId)
-        : base
-    if (!viewBase) return
+    if (!companyId || !connectionId) return
     setViewId(id)
     setViewData(null)
     setViewLoading(true)
     setActionError('')
     try {
-      setViewData(await apiRequest(`${viewBase}/${encodeURIComponent(id)}`))
+      setViewData(
+        await apiRequest(
+          `${ociCompartmentsPath(companyId, connectionId)}/${encodeURIComponent(id)}`,
+        ),
+      )
     } catch (err) {
       setActionError(formatApiError(err))
       setViewId(null)
@@ -84,18 +92,13 @@ export default function ResourcesPage() {
     }
   }
 
-  const handleRowClick = (row: Record<string, unknown>) => {
-    const id = String(row.resource_ocid ?? row.compartment_ocid ?? '')
-    if (id) void openView(id)
-  }
-
   const handleRefreshCompartments = useCallback(() => {
     void reloadCompartments()
   }, [reloadCompartments])
 
   const handleInventorySynced = useCallback(() => {
-    void reloadResources()
-  }, [reloadResources])
+    void reloadInventory()
+  }, [reloadInventory])
 
   const handleSyncCompartments = async () => {
     if (!companyId || !connectionId) {
@@ -107,7 +110,7 @@ export default function ResourcesPage() {
   if (!companyId || !connectionId) {
     return (
       <>
-        <h1 className="page-title">OCI Resources</h1>
+        <h1 className="page-title">OCI Inventory</h1>
         <p className="empty">Select a company and connection from the top bar.</p>
       </>
     )
@@ -115,10 +118,10 @@ export default function ResourcesPage() {
 
   return (
     <>
-      <h1 className="page-title">OCI Resources</h1>
+      <h1 className="page-title">OCI Inventory</h1>
 
       <div className="tabs">
-        {RESOURCE_TABS.map((t) => (
+        {INVENTORY_TABS.map((t) => (
           <button
             key={t.key}
             type="button"
@@ -159,7 +162,7 @@ export default function ResourcesPage() {
                 ))}
               </select>
             </label>
-            <button type="button" className="btn" onClick={() => void reloadResources()}>
+            <button type="button" className="btn" onClick={() => void reloadInventory()}>
               Refresh
             </button>
           </div>
@@ -169,7 +172,12 @@ export default function ResourcesPage() {
           {loading ? (
             <p className="loading">Loading…</p>
           ) : (
-            <DataTable rows={(data ?? []) as Record<string, unknown>[]} onRowClick={handleRowClick} />
+            <InventoryResourceTable
+              key={tab}
+              tabKey={tab}
+              rows={(data ?? []) as Record<string, unknown>[]}
+              compartmentNames={compartmentNames}
+            />
           )}
         </>
       )}
@@ -179,12 +187,7 @@ export default function ResourcesPage() {
       )}
 
       {viewId && (
-        <Modal
-          title={`${tabConfig.label} details`}
-          xl={tab === 'compartments'}
-          wide={tab !== 'compartments'}
-          onClose={() => setViewId(null)}
-        >
+        <Modal title="Compartment details" xl onClose={() => setViewId(null)}>
           {viewLoading ? (
             <p className="loading">Loading…</p>
           ) : viewData ? (

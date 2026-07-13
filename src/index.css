@@ -387,6 +387,63 @@ button {
   background: #fafafa;
 }
 
+.inventory-resource-table .col-expand {
+  width: 2rem;
+  text-align: center;
+  color: #71717a;
+}
+
+.inventory-resource-table tr {
+  cursor: pointer;
+}
+
+.inventory-resource-table tr.row-resource-expanded td {
+  background: #fafafa;
+}
+
+.inventory-resource-table tr.resource-detail-row {
+  cursor: default;
+}
+
+.inventory-resource-table tr.resource-detail-row:hover td {
+  background: #f4f4f5;
+}
+
+.inventory-resource-table tr.resource-detail-row td {
+  background: #f4f4f5;
+  padding: 0.75rem 1rem;
+}
+
+.resource-detail-list {
+  margin: 0;
+  display: grid;
+  gap: 0.35rem 1.25rem;
+  grid-template-columns: minmax(9rem, max-content) 1fr;
+  font-size: 0.8rem;
+  font-family: ui-monospace, monospace;
+}
+
+.resource-detail-item {
+  display: contents;
+}
+
+.resource-detail-list dt {
+  margin: 0;
+  color: #71717a;
+  font-weight: 600;
+}
+
+.resource-detail-list dd {
+  margin: 0;
+  word-break: break-all;
+  color: #18181b;
+}
+
+.expand-chevron {
+  display: inline-block;
+  width: 1rem;
+}
+
 .alert {
   padding: 0.6rem 0.75rem;
   border-radius: 4px;
