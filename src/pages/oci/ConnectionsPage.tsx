@@ -49,7 +49,12 @@ export default function ConnectionsPage() {
   const [editRow, setEditRow] = useState<ConnectionRow | null>(null)
   const [editForm, setEditForm] = useState({ name: '', description: '', region: '' })
 
+  const [syncingTenancyId, setSyncingTenancyId] = useState<string | null>(null)
+
   const base = companyId ? `/api/v1/cloud/oci/connection/${companyId}/connections` : null
+  const tenancySyncBase = companyId
+    ? `/api/v1/cloud/oci/tenancy/${companyId}/connections`
+    : null
 
   const { data, error, loading, reload } = useAsyncData(
     () => (base ? apiRequest<ConnectionRow[]>(base) : Promise.resolve([])),
@@ -60,6 +65,24 @@ export default function ConnectionsPage() {
   const { page, pageSize, pageItems, totalItems, setPage, setPageSize } =
     useClientPagination(rows)
 
+  const syncTenancy = async (connectionId: string, connectionName?: string) => {
+    if (!tenancySyncBase) return
+    setErr('')
+    setMsg('')
+    setSyncingTenancyId(connectionId)
+    try {
+      const result = await apiRequest<{ synced: number }>(
+        `${tenancySyncBase}/${connectionId}/tenancy/sync`,
+        { method: 'POST' },
+      )
+      const label = connectionName ? `"${connectionName}"` : connectionId.slice(0, 8)
+      setMsg(`Tenancy synced for ${label} (${result.synced} row(s)). You can sync compartments next.`)
+    } catch (e) {
+      setErr(formatApiError(e))
+    } finally {
+      setSyncingTenancyId(null)
+    }
+  }
 
   const openView = async (connectionId: string) => {
     if (!base) return
@@ -93,7 +116,7 @@ export default function ConnectionsPage() {
     setErr('')
     setMsg('')
     try {
-      await apiRequest(base, {
+      const created = await apiRequest<ConnectionRow>(base, {
         method: 'POST',
         body: {
           ...createForm,
@@ -107,6 +130,8 @@ export default function ConnectionsPage() {
       setCreateForm(EMPTY_CREATE)
       void reload()
       await refreshSession()
+      // Upsert oci_tenancies so compartment sync FK checks pass for new connections.
+      await syncTenancy(created.connection_id, created.name)
     } catch (e) {
       setErr(formatApiError(e))
     }
@@ -205,6 +230,15 @@ export default function ConnectionsPage() {
                   <td>{row.user?.slice(0, 20)}…</td>
                   <td>{row.region}</td>
                   <td className="actions-cell">
+                    <button
+                      type="button"
+                      className="btn btn-sm"
+                      disabled={syncingTenancyId === row.connection_id}
+                      onClick={() => void syncTenancy(row.connection_id, row.name)}
+                      title={`Sync tenancy ${row.tenancy}`}
+                    >
+                      {syncingTenancyId === row.connection_id ? 'Syncing…' : 'Sync tenancy'}
+                    </button>
                     <button type="button" className="btn btn-sm" onClick={() => openEdit(row)}>
                       Edit
                     </button>
