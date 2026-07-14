@@ -1,9 +1,22 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { apiRequest } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
 import { useAsyncData } from '@/hooks/useAsyncData'
+import {
+  budgetProgressPct,
+  computeMonthForecast,
+  loadBudget,
+  notableDayOverDaySpikes,
+  saveBudget,
+} from '@/dashboard/costInsights'
+import {
+  loadUnderutilizedOpportunities,
+  type TopResourceItem,
+} from '@/dashboard/opportunities'
+import { loadResourceDisplayNames, resourceDisplayLabel } from '@/oci/resourceDisplayNames'
 import TimeSeriesChart from '@/components/TimeSeriesChart'
+import BarChart from '@/components/BarChart'
 import { Alert } from '@/components/Alert'
 
 type RangePreset = 'day' | '3m' | '12m' | 'custom'
@@ -20,6 +33,20 @@ interface UsageByDateResponse {
   end_date: string
   currency: string | null
   items: DailyCostItem[]
+}
+
+interface UsageByServiceResponse {
+  start_date: string
+  end_date: string
+  currency: string | null
+  items: { service: string | null; total_cost: number }[]
+}
+
+interface TopResourcesResponse {
+  start_date: string
+  end_date: string
+  currency: string | null
+  items: TopResourceItem[]
 }
 
 function toIsoDate(d: Date): string {
@@ -61,6 +88,16 @@ function formatMoney(amount: number | null | undefined, currency: string | null)
   }
 }
 
+function formatPct(value: number | null | undefined): string {
+  if (value == null || Number.isNaN(value)) return '—'
+  return `${value >= 0 ? '+' : ''}${value.toFixed(0)}%`
+}
+
+function formatUtilPct(value: number | null | undefined): string {
+  if (value == null || Number.isNaN(value)) return '—'
+  return `${value.toFixed(1)}%`
+}
+
 export default function DashboardPage() {
   const { user, activeCompany, connection } = useAuth()
   const defaults = rangeForPreset('3m')
@@ -68,9 +105,17 @@ export default function DashboardPage() {
   const [startDate, setStartDate] = useState(defaults.start)
   const [endDate, setEndDate] = useState(defaults.end)
   const [cloud, setCloud] = useState<CloudFilter>('all')
+  const [budgetInput, setBudgetInput] = useState('')
+  const [budget, setBudget] = useState<number | null>(null)
 
   const companyId = activeCompany?.company_id
   const connectionId = connection?.connection_id
+
+  useEffect(() => {
+    const stored = loadBudget(companyId)
+    setBudget(stored)
+    setBudgetInput(stored != null ? String(stored) : '')
+  }, [companyId])
 
   const firstName = user?.first_name?.trim()
   const greetingName = firstName || user?.email || 'there'
@@ -83,7 +128,13 @@ export default function DashboardPage() {
       : null
 
   // OCI is the only cloud today; `all` uses the same series until AWS/GCP exist.
-  const costKey = usageBase ? `${usageBase}/by-date:${cloud}:${startDate}:${endDate}` : null
+  const rangeKey = usageBase ? `${cloud}:${startDate}:${endDate}` : null
+  const costKey = usageBase && rangeKey ? `${usageBase}/by-date:${rangeKey}` : null
+  const breakdownKey = usageBase && rangeKey ? `${usageBase}/breakdown:${rangeKey}` : null
+  const opportunitiesKey =
+    usageBase && companyId && connectionId && rangeKey
+      ? `${usageBase}/opportunities:${rangeKey}`
+      : null
 
   const {
     data: costSeries,
@@ -99,6 +150,49 @@ export default function DashboardPage() {
     [costKey],
     { keepPreviousData: true },
   )
+
+  const {
+    data: breakdown,
+    error: breakdownError,
+    loading: breakdownLoading,
+  } = useAsyncData(
+    async () => {
+      if (!usageBase || !companyId || !connectionId) return null
+      const query = { start_date: startDate, end_date: endDate }
+      const [byService, topResources, names] = await Promise.all([
+        apiRequest<UsageByServiceResponse>(`${usageBase}/summary/by-service`, { query }),
+        apiRequest<TopResourcesResponse>(`${usageBase}/summary/top-resources`, {
+          query: { ...query, limit: 10 },
+        }),
+        loadResourceDisplayNames(companyId, connectionId).catch(() => ({}) as Record<string, string>),
+      ])
+      return { byService, topResources, names }
+    },
+    [breakdownKey],
+    { keepPreviousData: true },
+  )
+
+  const {
+    data: opportunities,
+    error: opportunitiesError,
+    loading: opportunitiesLoading,
+  } = useAsyncData(
+    async () => {
+      if (!usageBase || !companyId || !connectionId) return []
+      const top = await apiRequest<TopResourcesResponse>(`${usageBase}/summary/top-resources`, {
+        query: { start_date: startDate, end_date: endDate, limit: 10 },
+      })
+      return loadUnderutilizedOpportunities({
+        companyId,
+        connectionId,
+        topResources: top.items ?? [],
+      })
+    },
+    [opportunitiesKey],
+    { keepPreviousData: true },
+  )
+
+  const currency = costSeries?.currency ?? breakdown?.byService.currency ?? 'USD'
 
   const chartPoints = useMemo(
     () =>
@@ -117,6 +211,38 @@ export default function DashboardPage() {
   const dayCount = daysInclusive(startDate, endDate)
   const dailyAverage = dayCount > 0 ? periodTotal / dayCount : null
 
+  const serviceChart = useMemo(() => {
+    const items = breakdown?.byService.items ?? []
+    return items.map((i) => ({
+      label: i.service ?? 'unknown',
+      value: i.total_cost ?? 0,
+    }))
+  }, [breakdown])
+
+  const topResourceChart = useMemo(() => {
+    const items = breakdown?.topResources.items ?? []
+    const names = breakdown?.names ?? {}
+    return items.map((i) => ({
+      label: i.resource_id
+        ? resourceDisplayLabel(i.resource_id, names, i.service ?? 'unknown')
+        : (i.service ?? 'unknown'),
+      value: i.total_cost ?? 0,
+      title: i.resource_id ?? i.service ?? undefined,
+    }))
+  }, [breakdown])
+
+  const spikes = useMemo(
+    () => notableDayOverDaySpikes(costSeries?.items ?? [], 5),
+    [costSeries],
+  )
+
+  const forecast = useMemo(
+    () => computeMonthForecast(costSeries?.items ?? []),
+    [costSeries],
+  )
+
+  const progressPct = budgetProgressPct(forecast.projectedEom ?? forecast.mtd, budget)
+
   function applyPreset(next: RangePreset) {
     setPreset(next)
     if (next === 'custom') return
@@ -125,7 +251,23 @@ export default function DashboardPage() {
     setEndDate(range.end)
   }
 
+  function applyBudget() {
+    if (!companyId) return
+    const trimmed = budgetInput.trim()
+    if (trimmed === '') {
+      saveBudget(companyId, null)
+      setBudget(null)
+      return
+    }
+    const value = Number(trimmed)
+    if (!Number.isFinite(value) || value <= 0) return
+    saveBudget(companyId, value)
+    setBudget(value)
+    setBudgetInput(String(value))
+  }
+
   const cloudLabel = cloud === 'all' ? 'All clouds' : 'OCI'
+  const opportunityRows = opportunities ?? []
 
   return (
     <>
@@ -145,104 +287,278 @@ export default function DashboardPage() {
           )}
         </p>
       ) : (
-        <section className="card dashboard-cost-card">
-          <div className="dashboard-cost-header">
-            <div>
-              <h2>Total cost</h2>
-              <p className="dashboard-cost-subtitle">Daily spend ({cloudLabel})</p>
-            </div>
-            <label className="dashboard-cloud-filter">
-              Cloud
-              <select value={cloud} onChange={(e) => setCloud(e.target.value as CloudFilter)}>
-                <option value="all">All clouds</option>
-                <option value="oci">OCI</option>
-              </select>
-            </label>
-          </div>
-
-          <div className="dashboard-cost-stats">
-            <div className="dashboard-cost-stat">
-              <span className="dashboard-cost-stat-label">Period total</span>
-              <span className="dashboard-cost-stat-value">
-                {formatMoney(periodTotal, costSeries?.currency ?? 'USD')}
-              </span>
-            </div>
-            <div className="dashboard-cost-stat">
-              <span className="dashboard-cost-stat-label">Daily average</span>
-              <span className="dashboard-cost-stat-value">
-                {formatMoney(dailyAverage, costSeries?.currency ?? 'USD')}
-              </span>
-            </div>
-          </div>
-
-          <div className="dashboard-cost-presets" role="group" aria-label="Date range">
-            {(
-              [
-                ['day', 'Last day'],
-                ['3m', '3 months'],
-                ['12m', '12 months'],
-                ['custom', 'Custom'],
-              ] as const
-            ).map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                className={`btn dashboard-preset-btn${preset === value ? ' is-active' : ''}`}
-                onClick={() => applyPreset(value)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          {preset === 'custom' && (
-            <div className="filters dashboard-cost-custom">
-              <label>
-                Start date
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => {
-                    setPreset('custom')
-                    setStartDate(e.target.value)
-                  }}
-                />
-              </label>
-              <label>
-                End date
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => {
-                    setPreset('custom')
-                    setEndDate(e.target.value)
-                  }}
-                />
+        <div className="dashboard-stack">
+          <section className="card dashboard-cost-card">
+            <div className="dashboard-cost-header">
+              <div>
+                <h2>Total cost</h2>
+                <p className="dashboard-cost-subtitle">Daily spend ({cloudLabel})</p>
+              </div>
+              <label className="dashboard-cloud-filter">
+                Cloud
+                <select value={cloud} onChange={(e) => setCloud(e.target.value as CloudFilter)}>
+                  <option value="all">All clouds</option>
+                  <option value="oci">OCI</option>
+                </select>
               </label>
             </div>
-          )}
 
-          <Alert type="error">{costError}</Alert>
+            <div className="dashboard-cost-stats">
+              <div className="dashboard-cost-stat">
+                <span className="dashboard-cost-stat-label">Period total</span>
+                <span className="dashboard-cost-stat-value">
+                  {formatMoney(periodTotal, currency)}
+                </span>
+              </div>
+              <div className="dashboard-cost-stat">
+                <span className="dashboard-cost-stat-label">Daily average</span>
+                <span className="dashboard-cost-stat-value">
+                  {formatMoney(dailyAverage, currency)}
+                </span>
+              </div>
+            </div>
 
-          {costLoading && !costSeries ? (
-            <p className="loading">Loading cost series…</p>
-          ) : (
-            <>
-              {costLoading && costSeries != null && (
-                <p className="dashboard-cost-updating" aria-live="polite">
-                  Updating…
+            <div className="dashboard-cost-presets" role="group" aria-label="Date range">
+              {(
+                [
+                  ['day', 'Last day'],
+                  ['3m', '3 months'],
+                  ['12m', '12 months'],
+                  ['custom', 'Custom'],
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  className={`btn dashboard-preset-btn${preset === value ? ' is-active' : ''}`}
+                  onClick={() => applyPreset(value)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {preset === 'custom' && (
+              <div className="filters dashboard-cost-custom">
+                <label>
+                  Start date
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => {
+                      setPreset('custom')
+                      setStartDate(e.target.value)
+                    }}
+                  />
+                </label>
+                <label>
+                  End date
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => {
+                      setPreset('custom')
+                      setEndDate(e.target.value)
+                    }}
+                  />
+                </label>
+              </div>
+            )}
+
+            <Alert type="error">{costError}</Alert>
+
+            {costLoading && !costSeries ? (
+              <p className="loading">Loading cost series…</p>
+            ) : (
+              <>
+                {costLoading && costSeries != null && (
+                  <p className="dashboard-cost-updating" aria-live="polite">
+                    Updating…
+                  </p>
+                )}
+                <TimeSeriesChart
+                  points={chartPoints}
+                  valueLabel="Cost"
+                  valuePrefix="$"
+                  dateOnly
+                  height={300}
+                />
+              </>
+            )}
+          </section>
+
+          <section className="card dashboard-cost-card">
+            <div className="dashboard-section-header">
+              <h2>Cost breakdown</h2>
+              <p className="dashboard-cost-subtitle">Where spend goes in this range ({cloudLabel})</p>
+            </div>
+            <Alert type="error">{breakdownError}</Alert>
+            {breakdownLoading && !breakdown ? (
+              <p className="loading">Loading breakdown…</p>
+            ) : (
+              <>
+                {breakdownLoading && breakdown != null && (
+                  <p className="dashboard-cost-updating" aria-live="polite">
+                    Updating…
+                  </p>
+                )}
+                <div className="dashboard-breakdown-grid">
+                  <div>
+                    <h3 className="dashboard-subsection-title">By service</h3>
+                    <BarChart items={serviceChart} formatValue={(v) => formatMoney(v, currency)} />
+                  </div>
+                  <div>
+                    <h3 className="dashboard-subsection-title">Top resources</h3>
+                    <BarChart
+                      items={topResourceChart}
+                      formatValue={(v) => formatMoney(v, currency)}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+          </section>
+
+          <section className="card dashboard-cost-card">
+            <div className="dashboard-section-header">
+              <h2>Opportunities</h2>
+              <p className="dashboard-cost-subtitle">
+                Underutilized compute among top spenders (last 14 days utilization)
+              </p>
+            </div>
+            <Alert type="error">{opportunitiesError}</Alert>
+            {opportunitiesLoading && opportunities == null ? (
+              <p className="loading">Loading opportunities…</p>
+            ) : (
+              <>
+                {opportunitiesLoading && opportunities != null && (
+                  <p className="dashboard-cost-updating" aria-live="polite">
+                    Updating…
+                  </p>
+                )}
+                {opportunityRows.length === 0 ? (
+                  <p className="empty">
+                    No underutilized high-cost compute in the top spenders.
+                  </p>
+                ) : (
+                  <ul className="dashboard-opportunity-list">
+                    {opportunityRows.map((row) => (
+                      <li key={row.resourceId} className="dashboard-opportunity-row">
+                        <div className="dashboard-opportunity-main">
+                          <Link
+                            to="/oci/monitoring"
+                            className="dashboard-opportunity-name"
+                            title={row.resourceId}
+                          >
+                            {row.name}
+                          </Link>
+                          <span className="util-badge util-badge-under">{row.statusLabel}</span>
+                        </div>
+                        <div className="dashboard-opportunity-meta">
+                          <span>{formatMoney(row.totalCost, currency)}</span>
+                          <span>CPU {formatUtilPct(row.cpuMean)}</span>
+                          <span>Mem {formatUtilPct(row.memMean)}</span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            )}
+          </section>
+
+          <section className="card dashboard-cost-card">
+            <div className="dashboard-section-header">
+              <h2>Notable changes</h2>
+              <p className="dashboard-cost-subtitle">Biggest day-over-day spend increases in this range</p>
+            </div>
+            {costLoading && !costSeries ? (
+              <p className="loading">Loading…</p>
+            ) : spikes.length === 0 ? (
+              <p className="empty">No notable daily increases in this range.</p>
+            ) : (
+              <ul className="dashboard-spike-list">
+                {spikes.map((spike) => (
+                  <li key={spike.date} className="dashboard-spike-row">
+                    <div className="dashboard-spike-main">
+                      <span className="dashboard-spike-date">{spike.date}</span>
+                      <span className="dashboard-spike-delta">
+                        +{formatMoney(spike.delta, currency)}
+                      </span>
+                    </div>
+                    <div className="dashboard-spike-meta">
+                      <span>
+                        {formatMoney(spike.previousCost, currency)} →{' '}
+                        {formatMoney(spike.cost, currency)}
+                      </span>
+                      <span>{formatPct(spike.pctChange)}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section className="card dashboard-cost-card">
+            <div className="dashboard-section-header">
+              <h2>Forecast &amp; budget</h2>
+              <p className="dashboard-cost-subtitle">
+                Calendar month projection from recent daily spend (budget saved in this browser)
+              </p>
+            </div>
+            <div className="dashboard-cost-stats">
+              <div className="dashboard-cost-stat">
+                <span className="dashboard-cost-stat-label">Month to date</span>
+                <span className="dashboard-cost-stat-value">
+                  {formatMoney(forecast.mtd, currency)}
+                </span>
+              </div>
+              <div className="dashboard-cost-stat">
+                <span className="dashboard-cost-stat-label">Projected month-end</span>
+                <span className="dashboard-cost-stat-value">
+                  {formatMoney(forecast.projectedEom, currency)}
+                </span>
+              </div>
+              <div className="dashboard-cost-stat">
+                <span className="dashboard-cost-stat-label">Budget</span>
+                <span className="dashboard-cost-stat-value">
+                  {budget != null ? formatMoney(budget, currency) : '—'}
+                </span>
+              </div>
+            </div>
+
+            {progressPct != null && (
+              <div className="dashboard-budget-progress" aria-label="Budget progress">
+                <div className="dashboard-budget-progress-bar">
+                  <div
+                    className={`dashboard-budget-progress-fill${progressPct >= 100 ? ' is-over' : ''}`}
+                    style={{ width: `${progressPct}%` }}
+                  />
+                </div>
+                <p className="dashboard-budget-progress-label">
+                  {progressPct.toFixed(0)}% of budget (using projected month-end)
                 </p>
-              )}
-              <TimeSeriesChart
-                points={chartPoints}
-                valueLabel="Cost"
-                valuePrefix="$"
-                dateOnly
-                height={300}
-              />
-            </>
-          )}
-        </section>
+              </div>
+            )}
+
+            <div className="dashboard-budget-form">
+              <label>
+                Monthly budget
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  placeholder="e.g. 5000"
+                  value={budgetInput}
+                  onChange={(e) => setBudgetInput(e.target.value)}
+                />
+              </label>
+              <button type="button" className="btn dashboard-preset-btn" onClick={applyBudget}>
+                Save budget
+              </button>
+            </div>
+          </section>
+        </div>
       )}
     </>
   )
