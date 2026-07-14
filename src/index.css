@@ -1136,10 +1136,17 @@ button {
   text-decoration: underline;
   cursor: pointer;
   font: inherit;
+  text-align: left;
+  display: inline;
 }
 
 .id-link:hover {
   color: var(--accent-hover);
+}
+
+.col-resource,
+.col-resource .id-link {
+  text-align: left;
 }
 
 .modal-overlay {

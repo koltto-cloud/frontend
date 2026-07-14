@@ -208,7 +208,6 @@ export default function MonitoringPage() {
                   <th>Mean</th>
                   <th>Max</th>
                   <th>Min</th>
-                  <th>Unit</th>
                   <th>Synced</th>
                 </tr>
               </thead>
@@ -220,7 +219,7 @@ export default function MonitoringPage() {
                       <td>{formatDate(row.metric_date)}</td>
                       <td>{RESOURCE_TYPE_LABELS[row.resource_type] ?? row.resource_type}</td>
                       <td>{row.metric_name || '—'}</td>
-                      <td>
+                      <td className="col-resource">
                         <button
                           type="button"
                           className="id-link"
@@ -233,7 +232,6 @@ export default function MonitoringPage() {
                       <td>{formatNumber(row.mean_value)}</td>
                       <td>{formatNumber(row.max_value)}</td>
                       <td>{formatNumber(row.min_value)}</td>
-                      <td>{row.unit || '—'}</td>
                       <td>{formatDate(row.synced_at)}</td>
                     </tr>
                   )
