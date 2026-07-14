@@ -121,6 +121,8 @@ export default function DashboardPage() {
   const hasConnection = Boolean(connectionId)
   const hasCompany = Boolean(companyId)
 
+  const [opportunitiesEnabled, setOpportunitiesEnabled] = useState(false)
+
   const usageBase =
     companyId && connectionId
       ? `/api/v1/cloud/oci/usage/${companyId}/connections/${connectionId}/usage`
@@ -131,7 +133,7 @@ export default function DashboardPage() {
   const costKey = usageBase && rangeKey ? `${usageBase}/by-date:${rangeKey}` : null
   const breakdownKey = usageBase && rangeKey ? `${usageBase}/breakdown:${rangeKey}` : null
   const opportunitiesKey =
-    usageBase && companyId && connectionId && rangeKey
+    usageBase && companyId && connectionId && rangeKey && opportunitiesEnabled
       ? `${usageBase}/opportunities:${rangeKey}`
       : null
 
@@ -149,6 +151,21 @@ export default function DashboardPage() {
     [costKey],
     { keepPreviousData: true },
   )
+
+  // Paint cost charts first; opportunities need extra monitoring/inventory calls.
+  useEffect(() => {
+    setOpportunitiesEnabled(false)
+  }, [rangeKey])
+
+  useEffect(() => {
+    if (!usageBase) {
+      setOpportunitiesEnabled(false)
+      return
+    }
+    if (costLoading && costSeries == null) return
+    const t = window.setTimeout(() => setOpportunitiesEnabled(true), 50)
+    return () => window.clearTimeout(t)
+  }, [usageBase, costLoading, costSeries, rangeKey])
 
   const {
     data: breakdown,
@@ -171,7 +188,7 @@ export default function DashboardPage() {
     loading: opportunitiesLoading,
   } = useAsyncData(
     async () => {
-      if (!usageBase || !companyId || !connectionId) return []
+      if (!opportunitiesEnabled || !usageBase || !companyId || !connectionId) return []
       const top = await apiRequest<TopResourcesResponse>(`${usageBase}/summary/top-resources`, {
         query: { start_date: startDate, end_date: endDate, limit: 10 },
       })
@@ -397,8 +414,8 @@ export default function DashboardPage() {
                 Underutilized compute among top spenders (last 14 days utilization)
               </p>
             </div>
-            <Alert type="error">{opportunitiesError}</Alert>
-            {opportunitiesLoading && opportunities == null ? (
+            {opportunitiesError ? <Alert type="error">{opportunitiesError}</Alert> : null}
+            {!opportunitiesEnabled || (opportunitiesLoading && opportunities == null) ? (
               <p className="loading">Loading opportunities…</p>
             ) : (
               <>

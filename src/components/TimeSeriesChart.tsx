@@ -73,7 +73,7 @@ export default function TimeSeriesChart({
   return (
     <div className="time-series-chart" style={{ width: '100%', height }}>
       <ResponsiveContainer>
-        <AreaChart data={points} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+        <AreaChart data={points} margin={{ top: 10, right: 16, left: 8, bottom: 4 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
           <XAxis
             dataKey="t"
