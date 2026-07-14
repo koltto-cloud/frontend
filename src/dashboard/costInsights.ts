@@ -48,13 +48,70 @@ export function saveBudget(companyId: string, amount: number | null): void {
   localStorage.setItem(key, String(amount))
 }
 
+/** YYYY-MM-DD in the user's local calendar (avoid UTC shift from toISOString). */
+export function toLocalIsoDate(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+export function dateKey(value: string | Date): string {
+  if (value instanceof Date) return toLocalIsoDate(value)
+  return String(value).slice(0, 10)
+}
+
+export function daysInclusive(start: string, end: string): number {
+  const a = new Date(`${dateKey(start)}T00:00:00Z`)
+  const b = new Date(`${dateKey(end)}T00:00:00Z`)
+  if (Number.isNaN(a.getTime()) || Number.isNaN(b.getTime()) || b < a) return 0
+  return Math.floor((b.getTime() - a.getTime()) / 86_400_000) + 1
+}
+
+/** Sum daily costs; optionally clamp to an inclusive YYYY-MM-DD window. */
+export function sumPeriodCost(
+  items: DailyCostPoint[],
+  start?: string,
+  end?: string,
+): number {
+  const startKey = start != null ? dateKey(start) : null
+  const endKey = end != null ? dateKey(end) : null
+  return items.reduce((sum, item) => {
+    const d = dateKey(item.date)
+    if (startKey != null && d < startKey) return sum
+    if (endKey != null && d > endKey) return sum
+    return sum + (Number(item.total_cost) || 0)
+  }, 0)
+}
+
+/**
+ * Period total + calendar daily average for a by-date series.
+ *
+ * Always derive the day count from the series' own start/end (not the picker),
+ * so keepPreviousData cannot mix an old chart with a new range's denominator.
+ */
+export function periodStatsFromSeries(
+  series: {
+    start_date: string
+    end_date: string
+    items: DailyCostPoint[]
+  } | null,
+): { periodTotal: number; dailyAverage: number | null; dayCount: number } | null {
+  if (series == null) return null
+  const start = dateKey(series.start_date)
+  const end = dateKey(series.end_date)
+  const dayCount = daysInclusive(start, end)
+  const periodTotal = sumPeriodCost(series.items, start, end)
+  return {
+    periodTotal,
+    dayCount,
+    dailyAverage: dayCount > 0 ? periodTotal / dayCount : null,
+  }
+}
+
 function parseUtcDate(iso: string): Date | null {
   const d = new Date(`${iso.slice(0, 10)}T00:00:00Z`)
   return Number.isNaN(d.getTime()) ? null : d
-}
-
-function toIsoDate(d: Date): string {
-  return d.toISOString().slice(0, 10)
 }
 
 function daysBetweenUtc(a: Date, b: Date): number {
@@ -68,7 +125,7 @@ export function notableDayOverDaySpikes(
 ): DayOverDaySpike[] {
   if (items.length < 2) return []
 
-  const sorted = [...items].sort((a, b) => a.date.localeCompare(b.date))
+  const sorted = [...items].sort((a, b) => dateKey(a.date).localeCompare(dateKey(b.date)))
   const spikes: DayOverDaySpike[] = []
 
   for (let i = 1; i < sorted.length; i++) {
@@ -78,8 +135,8 @@ export function notableDayOverDaySpikes(
     if (delta <= 0) continue
     const previousCost = prev.total_cost || 0
     spikes.push({
-      date: curr.date,
-      previousDate: prev.date,
+      date: dateKey(curr.date),
+      previousDate: dateKey(prev.date),
       cost: curr.total_cost || 0,
       previousCost,
       delta,
@@ -100,16 +157,19 @@ export function computeMonthForecast(
   now: Date = new Date(),
   recentDayWindow = 7,
 ): MonthForecast {
-  const today = toIsoDate(now)
-  const monthStartDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
-  const monthEndDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0))
-  const monthStart = toIsoDate(monthStartDate)
-  const monthEnd = toIsoDate(monthEndDate)
+  const today = toLocalIsoDate(now)
+  const monthStartDate = new Date(now.getFullYear(), now.getMonth(), 1)
+  const monthEndDate = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+  const monthStart = toLocalIsoDate(monthStartDate)
+  const monthEnd = toLocalIsoDate(monthEndDate)
 
-  const inMonth = items.filter((i) => i.date >= monthStart && i.date <= today)
+  const inMonth = items.filter((i) => {
+    const d = dateKey(i.date)
+    return d >= monthStart && d <= today
+  })
   const mtd = inMonth.reduce((sum, i) => sum + (i.total_cost || 0), 0)
 
-  const sorted = [...items].sort((a, b) => a.date.localeCompare(b.date))
+  const sorted = [...items].sort((a, b) => dateKey(a.date).localeCompare(dateKey(b.date)))
   const recent = sorted.slice(-Math.max(1, recentDayWindow))
   const recentDailyAvg =
     recent.length > 0
@@ -117,8 +177,11 @@ export function computeMonthForecast(
       : null
 
   const todayDate = parseUtcDate(today)
+  const monthEndUtc = parseUtcDate(monthEnd)
   const remainingDays =
-    todayDate != null ? Math.max(0, daysBetweenUtc(todayDate, monthEndDate)) : 0
+    todayDate != null && monthEndUtc != null
+      ? Math.max(0, daysBetweenUtc(todayDate, monthEndUtc))
+      : 0
 
   const projectedEom =
     recentDailyAvg != null ? mtd + recentDailyAvg * remainingDays : mtd > 0 ? mtd : null

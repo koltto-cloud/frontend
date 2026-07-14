@@ -8,7 +8,9 @@ import {
   computeMonthForecast,
   loadBudget,
   notableDayOverDaySpikes,
+  periodStatsFromSeries,
   saveBudget,
+  toLocalIsoDate,
 } from '@/dashboard/costInsights'
 import {
   loadUnderutilizedOpportunities,
@@ -48,28 +50,19 @@ interface TopResourcesResponse {
   items: TopResourceItem[]
 }
 
-function toIsoDate(d: Date): string {
-  return d.toISOString().slice(0, 10)
-}
-
 function rangeForPreset(preset: RangePreset): { start: string; end: string } {
   const end = new Date()
   const start = new Date()
   if (preset === 'day') {
+    // Single calendar day (yesterday) — not yesterday→today (2 days).
     start.setDate(start.getDate() - 1)
+    end.setTime(start.getTime())
   } else if (preset === '3m') {
     start.setMonth(start.getMonth() - 3)
   } else if (preset === '12m') {
     start.setMonth(start.getMonth() - 12)
   }
-  return { start: toIsoDate(start), end: toIsoDate(end) }
-}
-
-function daysInclusive(start: string, end: string): number {
-  const a = new Date(`${start}T00:00:00Z`)
-  const b = new Date(`${end}T00:00:00Z`)
-  if (Number.isNaN(a.getTime()) || Number.isNaN(b.getTime()) || b < a) return 0
-  return Math.floor((b.getTime() - a.getTime()) / 86_400_000) + 1
+  return { start: toLocalIsoDate(start), end: toLocalIsoDate(end) }
 }
 
 function formatMoney(amount: number | null | undefined, currency: string | null): string {
@@ -213,13 +206,11 @@ export default function DashboardPage() {
     [costSeries],
   )
 
-  const periodTotal = useMemo(
-    () => (costSeries?.items ?? []).reduce((sum, item) => sum + (item.total_cost || 0), 0),
-    [costSeries],
-  )
-
-  const dayCount = daysInclusive(startDate, endDate)
-  const dailyAverage = dayCount > 0 ? periodTotal / dayCount : null
+  // Tie stats to the series being shown (incl. keepPreviousData), never to the
+  // picker alone — otherwise changing range divides an old total by a new day count.
+  const periodStats = useMemo(() => periodStatsFromSeries(costSeries), [costSeries])
+  const periodTotal = periodStats?.periodTotal ?? null
+  const dailyAverage = periodStats?.dailyAverage ?? null
 
   const serviceChart = useMemo(() => {
     const items = breakdown?.items ?? []
