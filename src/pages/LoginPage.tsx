@@ -76,7 +76,7 @@ export default function LoginPage() {
         </header>
 
         <div className="auth-card">
-          <h1>{tempToken ? 'Two-factor verification' : 'Sign in'}</h1>
+          <h1>{tempToken ? 'Two-factor verification' : 'Welcome back'}</h1>
           <Alert type="error">{error}</Alert>
 
           {!tempToken ? (
