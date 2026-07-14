@@ -304,6 +304,11 @@ export default function DashboardPage() {
                 <span className="dashboard-cost-stat-value">
                   {formatMoney(dailyAverage, currency)}
                 </span>
+                {periodStats != null && periodStats.dayCount > 0 && (
+                  <span className="dashboard-cost-stat-hint">
+                    over {periodStats.dayCount} day{periodStats.dayCount === 1 ? '' : 's'} with data
+                  </span>
+                )}
               </div>
             </div>
 

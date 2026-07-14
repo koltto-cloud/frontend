@@ -1512,6 +1512,13 @@ button {
   letter-spacing: -0.02em;
 }
 
+.dashboard-cost-stat-hint {
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-weight: 500;
+  margin-top: 0.1rem;
+}
+
 .dashboard-cloud-filter {
   display: flex;
   flex-direction: column;

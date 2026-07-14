@@ -85,10 +85,11 @@ export function sumPeriodCost(
 }
 
 /**
- * Period total + calendar daily average for a by-date series.
+ * Period total + daily average for a by-date series.
  *
- * Always derive the day count from the series' own start/end (not the picker),
- * so keepPreviousData cannot mix an old chart with a new range's denominator.
+ * Daily average uses days that actually have cost points (not empty calendar
+ * months before the first sync). Day count still comes from the series items,
+ * clamped to the series' own start/end so keepPreviousData stays consistent.
  */
 export function periodStatsFromSeries(
   series: {
@@ -100,12 +101,17 @@ export function periodStatsFromSeries(
   if (series == null) return null
   const start = dateKey(series.start_date)
   const end = dateKey(series.end_date)
-  const dayCount = daysInclusive(start, end)
-  const periodTotal = sumPeriodCost(series.items, start, end)
+  const inRange = series.items.filter((item) => {
+    const d = dateKey(item.date)
+    return d >= start && d <= end
+  })
+  const periodTotal = inRange.reduce((sum, item) => sum + (Number(item.total_cost) || 0), 0)
+  // Unique days with a series point (ignore blank calendar months before data starts).
+  const daysWithData = new Set(inRange.map((item) => dateKey(item.date))).size
   return {
     periodTotal,
-    dayCount,
-    dailyAverage: dayCount > 0 ? periodTotal / dayCount : null,
+    dayCount: daysWithData,
+    dailyAverage: daysWithData > 0 ? periodTotal / daysWithData : null,
   }
 }
 
