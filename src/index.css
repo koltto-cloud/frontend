@@ -1343,6 +1343,78 @@ button {
   }
 }
 
+.dashboard-cost-card {
+  margin-top: 1.25rem;
+  max-width: 960px;
+}
+
+.dashboard-cost-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem 1.25rem;
+  margin-bottom: 0.85rem;
+}
+
+.dashboard-cost-header h2 {
+  margin: 0;
+}
+
+.dashboard-cost-subtitle {
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.dashboard-cloud-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.dashboard-cloud-filter select {
+  padding: 0.4rem 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  min-width: 110px;
+}
+
+.dashboard-cost-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 0.85rem;
+}
+
+.dashboard-preset-btn {
+  padding: 0.35rem 0.7rem;
+  font-size: 0.8rem;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+
+.dashboard-preset-btn:hover {
+  border-color: #93c5fd;
+}
+
+.dashboard-preset-btn.is-active {
+  border-color: var(--accent);
+  background: rgba(37, 99, 235, 0.08);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.dashboard-cost-custom {
+  margin-bottom: 0.75rem;
+}
+
 .monitoring-chart-card {
   margin-bottom: 1.25rem;
 }
