@@ -113,16 +113,17 @@ export async function loadUnderutilizedOpportunities(params: {
 
         if (overall !== 'underutilized') return null
 
-        return {
+        const row: OpportunityRow = {
           resourceId,
           name: resourceDisplayLabel(resourceId, names, item.service ?? 'compute'),
           service: item.service,
           totalCost: item.total_cost || 0,
           cpuMean,
           memMean,
-          status: overall,
-          statusLabel: UTILIZATION_STATUS_LABEL[overall],
-        } satisfies OpportunityRow
+          status: 'underutilized',
+          statusLabel: UTILIZATION_STATUS_LABEL.underutilized,
+        }
+        return row
       } catch {
         return null
       }
