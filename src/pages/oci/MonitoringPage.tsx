@@ -4,11 +4,12 @@ import { useAuth } from '@/context/AuthContext'
 import { useAsyncData } from '@/hooks/useAsyncData'
 import { MONITORING_RESOURCE_TYPES } from '@/oci/monitoring'
 import { Alert } from '@/components/Alert'
-import DataTable from '@/components/DataTable'
 import PaginationControls, {
   DEFAULT_PAGE_SIZE,
   MAX_PAGE_SIZE,
 } from '@/components/PaginationControls'
+import Modal from '@/components/Modal'
+import JsonViewer from '@/components/JsonViewer'
 import { Link } from 'react-router-dom'
 
 function defaultDateRange() {
@@ -37,6 +38,26 @@ interface MonitoringMetric {
   synced_at: string
 }
 
+const RESOURCE_TYPE_LABELS: Record<string, string> = Object.fromEntries(
+  MONITORING_RESOURCE_TYPES.map((t) => [t.value, t.label]),
+)
+
+function formatDate(value: string | null | undefined): string {
+  if (!value) return '—'
+  const d = new Date(value)
+  if (Number.isNaN(d.getTime())) return value
+  return d.toLocaleString()
+}
+
+function formatNumber(value: number | null | undefined): string {
+  if (value == null || Number.isNaN(Number(value))) return '—'
+  return Number(value).toLocaleString(undefined, { maximumFractionDigits: 4 })
+}
+
+function shortenId(id: string) {
+  return id.length > 20 ? `${id.slice(0, 20)}…` : id
+}
+
 export default function MonitoringPage() {
   const { activeCompany, connection } = useAuth()
   const defaults = defaultDateRange()
@@ -47,6 +68,7 @@ export default function MonitoringPage() {
   const [loaded, setLoaded] = useState(false)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
+  const [viewRow, setViewRow] = useState<MonitoringMetric | null>(null)
 
   const companyId = activeCompany?.company_id
   const connectionId = connection?.connection_id
@@ -91,19 +113,7 @@ export default function MonitoringPage() {
     )
   }
 
-  const metrics = (data ?? []) as MonitoringMetric[]
-  const rows = metrics.map((m) => ({
-    metric_date: m.metric_date,
-    resource_type: m.resource_type,
-    metric_name: m.metric_name,
-    resource_id: m.resource_id,
-    mean: m.mean_value,
-    max: m.max_value,
-    min: m.min_value,
-    unit: m.unit,
-    compartment_id: m.compartment_id,
-    synced_at: m.synced_at,
-  }))
+  const metrics = data ?? []
 
   return (
     <>
@@ -111,7 +121,8 @@ export default function MonitoringPage() {
 
       <Alert type="info">
         Sync monitoring from <Link to="/oci/inventory">Inventory → Compartments</Link>: select
-        compartments, then Sync monitoring (all resource types). This page loads stored metrics.
+        compartments, then Sync monitoring (all resource types). This page loads daily metric
+        aggregates (CPU, storage, etc.) — not SKUs or pricing parts.
       </Alert>
 
       <div className="filters">
@@ -169,7 +180,48 @@ export default function MonitoringPage() {
         <p className="loading">Loading…</p>
       ) : (
         <>
-          <DataTable rows={rows as Record<string, unknown>[]} paginate={false} />
+          <div className="data-table-wrap">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Resource type</th>
+                  <th>Metric</th>
+                  <th>Resource</th>
+                  <th>Mean</th>
+                  <th>Max</th>
+                  <th>Min</th>
+                  <th>Unit</th>
+                  <th>Synced</th>
+                </tr>
+              </thead>
+              <tbody>
+                {metrics.map((row) => (
+                  <tr key={`${row.id}-${row.metric_date}`}>
+                    <td>{formatDate(row.metric_date)}</td>
+                    <td>{RESOURCE_TYPE_LABELS[row.resource_type] ?? row.resource_type}</td>
+                    <td>{row.metric_name || '—'}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="id-link"
+                        title={row.resource_id}
+                        onClick={() => setViewRow(row)}
+                      >
+                        {shortenId(row.resource_id)}
+                      </button>
+                    </td>
+                    <td>{formatNumber(row.mean_value)}</td>
+                    <td>{formatNumber(row.max_value)}</td>
+                    <td>{formatNumber(row.min_value)}</td>
+                    <td>{row.unit || '—'}</td>
+                    <td>{formatDate(row.synced_at)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {metrics.length === 0 && <p className="empty">No monitoring metrics found.</p>}
+          </div>
           <PaginationControls
             page={page}
             pageSize={pageSize}
@@ -181,6 +233,12 @@ export default function MonitoringPage() {
             }}
           />
         </>
+      )}
+
+      {viewRow && (
+        <Modal title="Monitoring metric details" onClose={() => setViewRow(null)} wide>
+          <JsonViewer data={viewRow} />
+        </Modal>
       )}
     </>
   )
