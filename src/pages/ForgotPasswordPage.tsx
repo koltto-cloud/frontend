@@ -33,7 +33,7 @@ export default function ForgotPasswordPage() {
       <div className="auth-shell">
         <header className="auth-header">
           <p className="auth-brand">KÖLTTÖ</p>
-          <p className="auth-tagline">Cloud cost & inventory tester</p>
+          <p className="auth-tagline">Cloud cost & inventory</p>
         </header>
         <div className="auth-card">
           <h1>Forgot password</h1>

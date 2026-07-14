@@ -48,7 +48,6 @@ export default function Layout() {
       <aside className="sidebar">
         <div className="sidebar-brand">
           <p className="sidebar-brand-name">KÖLTTÖ</p>
-          <p className="sidebar-brand-sub">Tester</p>
         </div>
         {NAV.map((group) => (
           <div key={group.section} className="nav-section">
