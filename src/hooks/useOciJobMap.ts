@@ -5,6 +5,7 @@ import {
   ociJobPath,
   type OciJobStatus,
 } from '@/hooks/useOciJob'
+import { mapPool } from '@/utils/mapPool'
 
 export interface TrackedJob {
   jobId: string
@@ -38,41 +39,41 @@ export function useOciJobMap() {
       return
     }
 
-    await Promise.all(
-      active.map(async ([key, job]) => {
-        try {
-          const status = await apiRequest<OciJobStatus>(ociJobPath(job.jobId))
-          setJobs((prev) => {
-            const current = prev[key]
-            if (
-              current &&
-              current.status === status.status &&
-              current.error === (status.error ?? undefined)
-            ) {
-              return prev
-            }
-            return {
-              ...prev,
-              [key]: {
-                jobId: job.jobId,
-                status: status.status,
-                polling: !TERMINAL_STATUSES.has(status.status),
-                error: status.error ?? undefined,
-              },
-            }
-          })
-        } catch (err) {
-          setJobs((prev) => ({
+    // Cap concurrent job polls so we don't stampede the platform QueuePool
+    // when many compartment/resource syncs are in flight.
+    await mapPool(active, 4, async ([key, job]) => {
+      try {
+        const status = await apiRequest<OciJobStatus>(ociJobPath(job.jobId))
+        setJobs((prev) => {
+          const current = prev[key]
+          if (
+            current &&
+            current.status === status.status &&
+            current.error === (status.error ?? undefined)
+          ) {
+            return prev
+          }
+          return {
             ...prev,
             [key]: {
-              ...prev[key],
-              polling: false,
-              error: formatApiError(err),
+              jobId: job.jobId,
+              status: status.status,
+              polling: !TERMINAL_STATUSES.has(status.status),
+              error: status.error ?? undefined,
             },
-          }))
-        }
-      }),
-    )
+          }
+        })
+      } catch (err) {
+        setJobs((prev) => ({
+          ...prev,
+          [key]: {
+            ...prev[key],
+            polling: false,
+            error: formatApiError(err),
+          },
+        }))
+      }
+    })
 
     const stillActive = Object.values(jobsRef.current).some(
       (job) => !TERMINAL_STATUSES.has(job.status),

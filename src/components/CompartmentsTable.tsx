@@ -11,6 +11,7 @@ import {
   parseMonitoringJobKey,
 } from '@/oci/monitoring'
 import { formatColumnLabel } from '@/utils/formatLabel'
+import { mapPool } from '@/utils/mapPool'
 import { Alert } from '@/components/Alert'
 import CompartmentInventoryCell from '@/components/CompartmentInventoryCell'
 import OciSyncRunPanel from '@/components/OciSyncRunPanel'
@@ -162,20 +163,18 @@ export default function CompartmentsTable({
     setMsg('')
     setUsageSyncing(true)
     try {
-      const results = await Promise.all(
-        selectedList.map(async (compartmentId) => {
-          const res = await apiRequest(`${usageBase}/sync`, {
-            method: 'POST',
-            body: {
-              start_date: startDate,
-              end_date: endDate,
-              compartment_id: compartmentId,
-            },
-          })
-          trackJob(compartmentId, res)
-          return compartmentId
-        }),
-      )
+      const results = await mapPool(selectedList, 4, async (compartmentId) => {
+        const res = await apiRequest(`${usageBase}/sync`, {
+          method: 'POST',
+          body: {
+            start_date: startDate,
+            end_date: endDate,
+            compartment_id: compartmentId,
+          },
+        })
+        trackJob(compartmentId, res)
+        return compartmentId
+      })
       setMsg(`Usage sync queued for ${results.length} compartment(s).`)
     } catch (err) {
       setError(formatApiError(err))
@@ -194,20 +193,23 @@ export default function CompartmentsTable({
     setMonitoringSyncing(true)
     try {
       const tasks = selectedList.flatMap((compartmentId) =>
-        MONITORING_RESOURCE_TYPES.map(async ({ value: resourceType }) => {
-          const res = await apiRequest(`${monitoringBase}/sync`, {
-            method: 'POST',
-            body: {
-              start_date: startDate,
-              end_date: endDate,
-              compartment_id: compartmentId,
-              resource_type: resourceType,
-            },
-          })
-          trackJob(monitoringJobKey(compartmentId, resourceType), res)
-        }),
+        MONITORING_RESOURCE_TYPES.map((rt) => ({
+          compartmentId,
+          resourceType: rt.value,
+        })),
       )
-      await Promise.all(tasks)
+      await mapPool(tasks, 4, async ({ compartmentId, resourceType }) => {
+        const res = await apiRequest(`${monitoringBase}/sync`, {
+          method: 'POST',
+          body: {
+            start_date: startDate,
+            end_date: endDate,
+            compartment_id: compartmentId,
+            resource_type: resourceType,
+          },
+        })
+        trackJob(monitoringJobKey(compartmentId, resourceType), res)
+      })
       setMsg(
         `Monitoring sync queued for ${selectedList.length} compartment(s) × all resource types (${tasks.length} job(s)).`,
       )
