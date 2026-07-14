@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { apiRequest, formatApiError } from '@/api/client'
+import { apiRequest } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
 import { useAsyncData } from '@/hooks/useAsyncData'
 import { ociCompartmentsPath, useOciCompartments } from '@/hooks/useOciCompartments'
@@ -10,8 +10,6 @@ import PaginationControls, {
   MAX_PAGE_SIZE,
 } from '@/components/PaginationControls'
 import { Alert } from '@/components/Alert'
-import Modal from '@/components/Modal'
-import JsonViewer from '@/components/JsonViewer'
 
 const INVENTORY_TABS = [
   { key: 'compartments', label: 'Compartments', segment: 'compartment', resource: 'compartments' },
@@ -36,11 +34,6 @@ export default function InventoryPage() {
   const [compartmentFilter, setCompartmentFilter] = useState(ALL_COMPARTMENTS)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
-  const [actionError, setActionError] = useState('')
-
-  const [viewId, setViewId] = useState<string | null>(null)
-  const [viewData, setViewData] = useState<Record<string, unknown> | null>(null)
-  const [viewLoading, setViewLoading] = useState(false)
 
   const companyId = activeCompany?.company_id
   const connectionId = connection?.connection_id
@@ -86,26 +79,6 @@ export default function InventoryPage() {
   useEffect(() => {
     setPage(1)
   }, [compartmentFilter])
-
-  const openView = async (id: string) => {
-    if (!companyId || !connectionId) return
-    setViewId(id)
-    setViewData(null)
-    setViewLoading(true)
-    setActionError('')
-    try {
-      setViewData(
-        await apiRequest(
-          `${ociCompartmentsPath(companyId, connectionId)}/${encodeURIComponent(id)}`,
-        ),
-      )
-    } catch (err) {
-      setActionError(formatApiError(err))
-      setViewId(null)
-    } finally {
-      setViewLoading(false)
-    }
-  }
 
   const handleRefreshCompartments = useCallback(() => {
     void reloadCompartments()
@@ -157,7 +130,6 @@ export default function InventoryPage() {
           onRefresh={handleRefreshCompartments}
           onSyncCompartments={handleSyncCompartments}
           onInventorySynced={handleInventorySynced}
-          onViewDetail={(ocid) => void openView(ocid)}
         />
       ) : (
         <>
@@ -182,7 +154,7 @@ export default function InventoryPage() {
             </button>
           </div>
 
-          <Alert type="error">{actionError || error || compartmentsError}</Alert>
+          <Alert type="error">{error || compartmentsError}</Alert>
 
           {loading ? (
             <p className="loading">Loading…</p>
@@ -210,17 +182,7 @@ export default function InventoryPage() {
       )}
 
       {tab === 'compartments' && (
-        <Alert type="error">{actionError || compartmentsError}</Alert>
-      )}
-
-      {viewId && (
-        <Modal title="Compartment details" xl onClose={() => setViewId(null)}>
-          {viewLoading ? (
-            <p className="loading">Loading…</p>
-          ) : viewData ? (
-            <JsonViewer data={viewData} />
-          ) : null}
-        </Modal>
+        <Alert type="error">{compartmentsError}</Alert>
       )}
     </>
   )

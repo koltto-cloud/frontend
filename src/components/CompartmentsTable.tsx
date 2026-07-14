@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 import { apiRequest, formatApiError } from '@/api/client'
 import { useOciJobMap } from '@/hooks/useOciJobMap'
 import { useOciJobTracker } from '@/hooks/useOciJob'
@@ -10,10 +10,33 @@ import {
   monitoringJobKey,
   parseMonitoringJobKey,
 } from '@/oci/monitoring'
+import { formatColumnLabel } from '@/utils/formatLabel'
 import { Alert } from '@/components/Alert'
 import CompartmentInventoryCell from '@/components/CompartmentInventoryCell'
 import OciSyncRunPanel from '@/components/OciSyncRunPanel'
 import PaginationControls from '@/components/PaginationControls'
+
+const COMPARTMENT_DETAIL_FIELDS = [
+  'compartment_ocid',
+  'tenancy_ocid',
+  'name',
+  'lifecycle_state',
+  'parent_compartment_ocid',
+  'time_created',
+  'synced_at',
+] as const
+
+function formatDetailValue(value: unknown): string {
+  if (value === null || value === undefined || value === '') return '—'
+  if (typeof value === 'boolean') return value ? 'yes' : 'no'
+  if (typeof value === 'object') return JSON.stringify(value)
+  const str = String(value)
+  if (/^\d{4}-\d{2}-\d{2}T/.test(str)) {
+    const d = new Date(str)
+    if (!Number.isNaN(d.getTime())) return d.toLocaleString()
+  }
+  return str
+}
 
 function defaultDateRange() {
   const end = new Date()
@@ -25,10 +48,6 @@ function defaultDateRange() {
   }
 }
 
-function shortenOcid(ocid: string) {
-  return ocid.length > 24 ? `${ocid.slice(0, 24)}…` : ocid
-}
-
 interface CompartmentsTableProps {
   companyId: string
   connectionId: string
@@ -37,7 +56,6 @@ interface CompartmentsTableProps {
   onRefresh: () => void
   onSyncCompartments: () => Promise<unknown>
   onInventorySynced?: () => void
-  onViewDetail: (compartmentOcid: string) => void
 }
 
 export default function CompartmentsTable({
@@ -48,7 +66,6 @@ export default function CompartmentsTable({
   onRefresh,
   onSyncCompartments,
   onInventorySynced,
-  onViewDetail,
 }: CompartmentsTableProps) {
   const defaults = defaultDateRange()
   const [startDate, setStartDate] = useState(defaults.start)
@@ -60,6 +77,7 @@ export default function CompartmentsTable({
   const [error, setError] = useState('')
   const [msg, setMsg] = useState('')
   const [expandedInventory, setExpandedInventory] = useState<Set<string>>(new Set())
+  const [expandedDetails, setExpandedDetails] = useState<Set<string>>(new Set())
 
   const { jobs, trackJob } = useOciJobMap()
   const {
@@ -106,6 +124,15 @@ export default function CompartmentsTable({
 
   const toggleInventoryExpand = (ocid: string) => {
     setExpandedInventory((prev) => {
+      const next = new Set(prev)
+      if (next.has(ocid)) next.delete(ocid)
+      else next.add(ocid)
+      return next
+    })
+  }
+
+  const toggleDetails = (ocid: string) => {
+    setExpandedDetails((prev) => {
       const next = new Set(prev)
       if (next.has(ocid)) next.delete(ocid)
       else next.add(ocid)
@@ -314,8 +341,9 @@ export default function CompartmentsTable({
         <table className="data-table compartments-table">
           <colgroup>
             <col className="col-check" />
-            <col className="col-ocid" />
+            <col className="col-expand" />
             <col className="col-name" />
+            <col className="col-status" />
             <col className="col-job" />
           </colgroup>
           <thead>
@@ -328,8 +356,9 @@ export default function CompartmentsTable({
                   onChange={toggleAll}
                 />
               </th>
-              <th>Compartment OCID</th>
+              <th className="col-expand" aria-label="Expand" />
               <th>Name</th>
+              <th>Status</th>
               <th>Sync</th>
             </tr>
           </thead>
@@ -353,38 +382,60 @@ export default function CompartmentsTable({
                 Boolean(usageJob?.error) ||
                 monitoringJobs.some((m) => Boolean(m.job.error)) ||
                 steps.some((s) => s.status === 'failed')
-              const isExpanded = expandedInventory.has(ocid)
+              const inventoryExpanded = expandedInventory.has(ocid)
+              const detailsOpen = expandedDetails.has(ocid)
+
               return (
-                <tr key={ocid} className={isExpanded ? 'row-inventory-expanded' : undefined}>
-                  <td>
-                    <input
-                      type="checkbox"
-                      checked={selected.has(ocid)}
-                      aria-label={`Select ${row.name}`}
-                      onChange={() => toggleOne(ocid)}
-                    />
-                  </td>
-                  <td>
-                    <button
-                      type="button"
-                      className="id-link"
-                      title={ocid}
-                      onClick={() => onViewDetail(ocid)}
+                <Fragment key={ocid}>
+                  <tr
+                    className={
+                      detailsOpen || inventoryExpanded ? 'row-compartment-expanded' : undefined
+                    }
+                    onClick={() => toggleDetails(ocid)}
+                  >
+                    <td onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={selected.has(ocid)}
+                        aria-label={`Select ${row.name}`}
+                        onChange={() => toggleOne(ocid)}
+                      />
+                    </td>
+                    <td className="col-expand">
+                      <span className="expand-chevron" aria-hidden>
+                        {detailsOpen ? '▾' : '▸'}
+                      </span>
+                    </td>
+                    <td>{row.name}</td>
+                    <td>{formatDetailValue(row.lifecycle_state)}</td>
+                    <td
+                      className={`col-job${hasError ? ' job-status-error' : ''}`}
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      {shortenOcid(ocid)}
-                    </button>
-                  </td>
-                  <td>{row.name}</td>
-                  <td className={`col-job${hasError ? ' job-status-error' : ''}`}>
-                    <CompartmentInventoryCell
-                      usageJob={usageJob}
-                      monitoringJobs={monitoringJobs}
-                      inventory={inventory}
-                      expanded={isExpanded}
-                      onToggleExpand={() => toggleInventoryExpand(ocid)}
-                    />
-                  </td>
-                </tr>
+                      <CompartmentInventoryCell
+                        usageJob={usageJob}
+                        monitoringJobs={monitoringJobs}
+                        inventory={inventory}
+                        expanded={inventoryExpanded}
+                        onToggleExpand={() => toggleInventoryExpand(ocid)}
+                      />
+                    </td>
+                  </tr>
+                  {detailsOpen && (
+                    <tr className="resource-detail-row">
+                      <td colSpan={5}>
+                        <dl className="resource-detail-list">
+                          {COMPARTMENT_DETAIL_FIELDS.map((field) => (
+                            <div key={field} className="resource-detail-item">
+                              <dt>{formatColumnLabel(field)}</dt>
+                              <dd>{formatDetailValue(row[field])}</dd>
+                            </div>
+                          ))}
+                        </dl>
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
               )
             })}
           </tbody>

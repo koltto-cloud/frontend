@@ -8,6 +8,7 @@ export interface OciCompartment {
   lifecycle_state?: string | null
   parent_compartment_ocid?: string | null
   time_created?: string | null
+  synced_at?: string | null
 }
 
 export function ociCompartmentsPath(companyId: string, connectionId: string) {
