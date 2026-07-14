@@ -1,13 +1,33 @@
 import { useEffect, useState } from 'react'
 import { apiRequest } from '@/api/client'
 import { useAsyncData } from '@/hooks/useAsyncData'
-import DataTable from '@/components/DataTable'
 import PaginationControls, {
   DEFAULT_PAGE_SIZE,
   MAX_PAGE_SIZE,
 } from '@/components/PaginationControls'
 import { Alert } from '@/components/Alert'
+import Modal from '@/components/Modal'
 import JsonViewer from '@/components/JsonViewer'
+
+interface AuditLogRow {
+  event_id: string
+  email?: string | null
+  created_at?: string | null
+  ip_address?: string | null
+  url_path?: string | null
+  [key: string]: unknown
+}
+
+function formatCreated(value: unknown): string {
+  if (value == null || value === '') return '—'
+  const d = new Date(String(value))
+  if (!Number.isNaN(d.getTime())) return d.toLocaleString()
+  return String(value)
+}
+
+function shortenId(id: string) {
+  return id.length > 8 ? `${id.slice(0, 8)}…` : id
+}
 
 export default function AuditLogsPage() {
   const [userId, setUserId] = useState('')
@@ -15,11 +35,12 @@ export default function AuditLogsPage() {
   const [success, setSuccess] = useState('')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
+  const [viewRow, setViewRow] = useState<AuditLogRow | null>(null)
 
   const { data, error, loading, reload } = useAsyncData(
     () => {
       const limit = Math.min(Math.max(pageSize, 1), MAX_PAGE_SIZE)
-      return apiRequest<Record<string, unknown>[]>('/api/v1/audit/logs', {
+      return apiRequest<AuditLogRow[]>('/api/v1/audit/logs', {
         query: {
           user_id: userId || undefined,
           event_type: eventType || undefined,
@@ -68,7 +89,40 @@ export default function AuditLogsPage() {
         <p className="loading">Loading…</p>
       ) : (
         <>
-          <DataTable rows={rows} paginate={false} />
+          <div className="data-table-wrap">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Event ID</th>
+                  <th>Email</th>
+                  <th>Created</th>
+                  <th>IP address</th>
+                  <th>URL path</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr key={row.event_id}>
+                    <td>
+                      <button
+                        type="button"
+                        className="id-link"
+                        title={row.event_id}
+                        onClick={() => setViewRow(row)}
+                      >
+                        {shortenId(String(row.event_id))}
+                      </button>
+                    </td>
+                    <td>{row.email || '—'}</td>
+                    <td>{formatCreated(row.created_at)}</td>
+                    <td>{row.ip_address || '—'}</td>
+                    <td>{row.url_path || '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {rows.length === 0 && <p className="empty">No audit logs found.</p>}
+          </div>
           <PaginationControls
             page={page}
             pageSize={pageSize}
@@ -82,11 +136,10 @@ export default function AuditLogsPage() {
         </>
       )}
 
-      {data && (
-        <div className="card">
-          <h2>Raw response</h2>
-          <JsonViewer data={data} />
-        </div>
+      {viewRow && (
+        <Modal title="Audit event details" onClose={() => setViewRow(null)} wide>
+          <JsonViewer data={viewRow} />
+        </Modal>
       )}
     </>
   )
