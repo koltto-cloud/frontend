@@ -345,25 +345,33 @@ button {
   align-items: center;
   justify-content: center;
   gap: 0.35rem;
-  padding: 0.5rem 0.95rem;
+  padding: 0.5rem 1rem;
   border: 1px solid rgba(15, 23, 42, 0.1);
-  border-radius: 9px;
-  background: rgba(255, 255, 255, 0.92);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(8px);
   color: var(--ink);
+  font-family: Sora, system-ui, sans-serif;
+  font-size: 0.8125rem;
   font-weight: 600;
-  letter-spacing: 0.01em;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  letter-spacing: 0.02em;
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
   transition:
-    background 0.15s ease,
-    border-color 0.15s ease,
-    color 0.15s ease,
-    box-shadow 0.15s ease;
+    background 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
 }
 
 .btn:hover {
-  background: #f8fafc;
-  border-color: rgba(8, 145, 178, 0.28);
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+  background: rgba(248, 250, 252, 0.96);
+  border-color: rgba(8, 145, 178, 0.32);
+  box-shadow:
+    0 2px 8px rgba(15, 23, 42, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
 }
 
 .btn:focus-visible {
@@ -373,21 +381,34 @@ button {
 }
 
 .btn-primary {
-  background: linear-gradient(180deg, #1a2740 0%, var(--ink) 100%);
-  border-color: #0b1220;
+  background:
+    radial-gradient(ellipse 130% 90% at 0% 0%, rgba(56, 189, 248, 0.38), transparent 52%),
+    radial-gradient(ellipse 100% 80% at 100% 120%, rgba(8, 145, 178, 0.22), transparent 48%),
+    linear-gradient(165deg, #1e293b 0%, #0f172a 58%, #0b1220 100%);
+  border-color: rgba(148, 163, 184, 0.22);
   color: #f8fafc;
   box-shadow:
-    0 1px 2px rgba(15, 23, 42, 0.24),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    0 1px 2px rgba(15, 23, 42, 0.2),
+    0 10px 24px rgba(15, 23, 42, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .btn-primary:hover {
-  background: linear-gradient(180deg, #243552 0%, #152033 100%);
-  border-color: #0b1220;
+  background:
+    radial-gradient(ellipse 130% 90% at 8% -10%, rgba(103, 232, 249, 0.48), transparent 54%),
+    radial-gradient(ellipse 100% 80% at 100% 120%, rgba(14, 165, 233, 0.3), transparent 48%),
+    linear-gradient(165deg, #243447 0%, #152033 58%, #0f172a 100%);
+  border-color: rgba(125, 211, 252, 0.4);
   color: #fff;
+  transform: translateY(-1px);
   box-shadow:
-    0 2px 10px rgba(15, 23, 42, 0.22),
-    0 0 0 3px var(--accent-soft);
+    0 4px 16px rgba(15, 23, 42, 0.22),
+    0 0 0 3px rgba(8, 145, 178, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
 }
 
 .btn-primary:focus-visible {
@@ -397,17 +418,18 @@ button {
 }
 
 .btn-danger {
-  background: var(--danger-soft);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.65), var(--danger-soft));
   border-color: rgba(225, 29, 72, 0.28);
   color: var(--danger-hover);
-  box-shadow: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 
 .btn-danger:hover {
-  background: var(--danger);
-  border-color: var(--danger);
+  background: linear-gradient(180deg, #fb7185 0%, var(--danger) 100%);
+  border-color: var(--danger-hover);
   color: #fff;
-  box-shadow: 0 1px 3px rgba(190, 18, 60, 0.25);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(190, 18, 60, 0.22);
 }
 
 .btn-ghost {
@@ -416,6 +438,7 @@ button {
   color: var(--muted);
   padding: 0.35rem 0.55rem;
   box-shadow: none;
+  backdrop-filter: none;
 }
 
 .btn-ghost:hover {
@@ -425,10 +448,13 @@ button {
   box-shadow: none;
 }
 
-.btn:disabled {
+.btn:disabled,
+.btn-primary:disabled,
+.btn-danger:disabled {
   opacity: 0.55;
   cursor: not-allowed;
   box-shadow: none;
+  transform: none;
 }
 
 .btn-link {
@@ -439,6 +465,7 @@ button {
   text-align: left;
   word-break: break-all;
   box-shadow: none;
+  backdrop-filter: none;
   font-weight: 600;
 }
 
@@ -447,6 +474,7 @@ button {
   color: var(--accent-hover);
   text-decoration: underline;
   box-shadow: none;
+  transform: none;
 }
 
 .job-inline-status {
@@ -783,8 +811,8 @@ button {
   position: relative;
   overflow: hidden;
   background:
-    radial-gradient(ellipse 90% 60% at 15% -10%, rgba(37, 99, 235, 0.18), transparent 55%),
-    radial-gradient(ellipse 70% 50% at 95% 110%, rgba(14, 165, 233, 0.14), transparent 50%),
+    radial-gradient(ellipse 90% 60% at 15% -10%, rgba(8, 145, 178, 0.2), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 95% 110%, rgba(14, 165, 233, 0.16), transparent 50%),
     linear-gradient(165deg, #f8fafc 0%, #eef2f7 48%, #e8eef6 100%);
 }
 
