@@ -11,6 +11,7 @@ import JsonViewer from '@/components/JsonViewer'
 
 interface AuditLogRow {
   event_id: string
+  event_type?: string | null
   email?: string | null
   created_at?: string | null
   ip_address?: string | null
@@ -94,8 +95,9 @@ export default function AuditLogsPage() {
               <thead>
                 <tr>
                   <th>Event ID</th>
-                  <th>Email</th>
+                  <th>Event type</th>
                   <th>Created</th>
+                  <th>Email</th>
                   <th>IP address</th>
                   <th>URL path</th>
                 </tr>
@@ -113,8 +115,9 @@ export default function AuditLogsPage() {
                         {shortenId(String(row.event_id))}
                       </button>
                     </td>
-                    <td>{row.email || '—'}</td>
+                    <td>{row.event_type || '—'}</td>
                     <td>{formatCreated(row.created_at)}</td>
+                    <td>{row.email || '—'}</td>
                     <td>{row.ip_address || '—'}</td>
                     <td>{row.url_path || '—'}</td>
                   </tr>
