@@ -25,6 +25,7 @@ const FIELD_LABELS: Record<string, string> = {
   resource_type: 'Resource type',
   metric_name: 'Metric',
   resource_id: 'Resource ID',
+  resource_name: 'Resource',
   compartment_id: 'Compartment ID',
   mean_value: 'Mean',
   max_value: 'Max',

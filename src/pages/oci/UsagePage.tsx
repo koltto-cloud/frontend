@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { apiRequest, formatApiError } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
+import { loadResourceDisplayNames, resourceDisplayLabel } from '@/oci/resourceDisplayNames'
 import BarChart from '@/components/BarChart'
 import { Alert } from '@/components/Alert'
 
@@ -21,45 +22,11 @@ function formatUsd(amount: unknown) {
   return `$${value.toFixed(2)}`
 }
 
-const INVENTORY_LIST_PATHS = [
-  { segment: 'compute', resource: 'compute' },
-  { segment: 'block-storage', resource: 'block-storage' },
-  { segment: 'object-storage', resource: 'object-storage' },
-  { segment: 'file-storage', resource: 'file-storage' },
-  { segment: 'load-balancer', resource: 'load-balancers' },
-] as const
-
-async function loadResourceDisplayNames(
-  companyId: string,
-  connectionId: string,
-): Promise<Record<string, string>> {
-  const lists = await Promise.all(
-    INVENTORY_LIST_PATHS.map(({ segment, resource }) =>
-      apiRequest<{ resource_ocid?: string; display_name?: string | null }[]>(
-        `/api/v1/cloud/oci/${segment}/${companyId}/connections/${connectionId}/${resource}`,
-        { query: { limit: 500, offset: 0 } },
-      ).catch(() => []),
-    ),
-  )
-
-  const names: Record<string, string> = {}
-  for (const rows of lists) {
-    for (const row of rows) {
-      const ocid = row.resource_ocid
-      const name = row.display_name?.trim()
-      if (ocid && name) names[ocid] = name
-    }
-  }
-  return names
-}
-
 function topResourceLabel(
   item: { resource_id?: string; service?: string },
   names: Record<string, string>,
 ) {
-  const id = item.resource_id
-  if (id && names[id]) return names[id]
-  if (id) return id.length > 28 ? `${id.slice(0, 28)}…` : id
+  if (item.resource_id) return resourceDisplayLabel(item.resource_id, names, item.service ?? 'unknown')
   return item.service ?? 'unknown'
 }
 
