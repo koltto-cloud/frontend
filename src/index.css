@@ -1397,6 +1397,13 @@ button {
   margin-bottom: 0.75rem;
 }
 
+.dashboard-cost-updating {
+  margin: 0 0 0.5rem;
+  padding: 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
 .monitoring-chart-card {
   margin-bottom: 1.25rem;
 }

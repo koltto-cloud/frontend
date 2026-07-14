@@ -1,10 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { formatApiError } from '@/api/client'
 
+export type UseAsyncDataOptions = {
+  /** When true, keep showing the last successful data while deps change / reload. */
+  keepPreviousData?: boolean
+}
+
 export function useAsyncData<T>(
   fetcher: () => Promise<T>,
   deps: unknown[] = [],
+  options: UseAsyncDataOptions = {},
 ) {
+  const keepPreviousData = options.keepPreviousData === true
   const [data, setData] = useState<T | null>(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
@@ -27,11 +34,13 @@ export function useAsyncData<T>(
   }, deps)
 
   useEffect(() => {
-    hasDataRef.current = false
-    setData(null)
+    if (!keepPreviousData) {
+      hasDataRef.current = false
+      setData(null)
+    }
     setLoading(true)
     void reload()
-  }, [reload])
+  }, [reload, keepPreviousData])
 
   return { data, error, loading, reload, setData }
 }

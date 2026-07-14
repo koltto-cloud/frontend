@@ -97,6 +97,7 @@ export default function DashboardPage() {
       })
     },
     [costKey],
+    { keepPreviousData: true },
   )
 
   const chartPoints = useMemo(
@@ -223,16 +224,23 @@ export default function DashboardPage() {
 
           <Alert type="error">{costError}</Alert>
 
-          {costLoading ? (
+          {costLoading && !costSeries ? (
             <p className="loading">Loading cost series…</p>
           ) : (
-            <TimeSeriesChart
-              points={chartPoints}
-              valueLabel="Cost"
-              valuePrefix="$"
-              dateOnly
-              height={300}
-            />
+            <>
+              {costLoading && costSeries != null && (
+                <p className="dashboard-cost-updating" aria-live="polite">
+                  Updating…
+                </p>
+              )}
+              <TimeSeriesChart
+                points={chartPoints}
+                valueLabel="Cost"
+                valuePrefix="$"
+                dateOnly
+                height={300}
+              />
+            </>
           )}
         </section>
       )}
