@@ -198,6 +198,7 @@ export default function UsersPage() {
           <table className="data-table">
             <thead>
               <tr>
+                <th>User ID</th>
                 <th>Email</th>
                 <th>First name</th>
                 <th>Last name</th>
@@ -211,9 +212,10 @@ export default function UsersPage() {
                 <tr key={row.user_id}>
                   <td>
                     <button type="button" className="id-link" onClick={() => void openView(row.user_id)}>
-                      {row.email}
+                      {row.user_id.slice(0, 8)}…
                     </button>
                   </td>
+                  <td>{row.email}</td>
                   <td>{row.first_name}</td>
                   <td>{row.last_name}</td>
                   <td>{row.user_type}</td>

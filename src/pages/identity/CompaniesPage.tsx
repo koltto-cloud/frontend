@@ -202,6 +202,7 @@ export default function CompaniesPage() {
           <table className="data-table">
             <thead>
               <tr>
+                <th>Company ID</th>
                 <th>Name</th>
                 <th>Status</th>
                 <th>Actions</th>
@@ -216,9 +217,10 @@ export default function CompaniesPage() {
                       className="id-link"
                       onClick={() => void openView(row.company_id)}
                     >
-                      {row.name}
+                      {row.company_id.slice(0, 8)}…
                     </button>
                   </td>
+                  <td>{row.name}</td>
                   <td>{row.status}</td>
                   <td className="actions-cell">
                     <button type="button" className="btn btn-sm" onClick={() => openEdit(row)}>

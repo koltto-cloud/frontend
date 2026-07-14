@@ -190,7 +190,6 @@ export default function MembershipsPage() {
               <tr>
                 <th>User ID</th>
                 <th>User email</th>
-                <th>Company ID</th>
                 <th>Company</th>
                 <th>Role</th>
                 <th>Active</th>
@@ -210,7 +209,6 @@ export default function MembershipsPage() {
                     </button>
                   </td>
                   <td>{row.user.email}</td>
-                  <td>{row.company.company_id.slice(0, 8)}…</td>
                   <td>{row.company.name}</td>
                   <td>{row.role}</td>
                   <td>{row.active ? 'yes' : 'no'}</td>
