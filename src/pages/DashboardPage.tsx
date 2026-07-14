@@ -14,7 +14,6 @@ import {
   loadUnderutilizedOpportunities,
   type TopResourceItem,
 } from '@/dashboard/opportunities'
-import { loadResourceDisplayNames, resourceDisplayLabel } from '@/oci/resourceDisplayNames'
 import TimeSeriesChart from '@/components/TimeSeriesChart'
 import BarChart from '@/components/BarChart'
 import { Alert } from '@/components/Alert'
@@ -157,16 +156,10 @@ export default function DashboardPage() {
     loading: breakdownLoading,
   } = useAsyncData(
     async () => {
-      if (!usageBase || !companyId || !connectionId) return null
-      const query = { start_date: startDate, end_date: endDate }
-      const [byService, topResources, names] = await Promise.all([
-        apiRequest<UsageByServiceResponse>(`${usageBase}/summary/by-service`, { query }),
-        apiRequest<TopResourcesResponse>(`${usageBase}/summary/top-resources`, {
-          query: { ...query, limit: 10 },
-        }),
-        loadResourceDisplayNames(companyId, connectionId).catch(() => ({}) as Record<string, string>),
-      ])
-      return { byService, topResources, names }
+      if (!usageBase) return null
+      return apiRequest<UsageByServiceResponse>(`${usageBase}/summary/by-service`, {
+        query: { start_date: startDate, end_date: endDate },
+      })
     },
     [breakdownKey],
     { keepPreviousData: true },
@@ -192,7 +185,7 @@ export default function DashboardPage() {
     { keepPreviousData: true },
   )
 
-  const currency = costSeries?.currency ?? breakdown?.byService.currency ?? 'USD'
+  const currency = costSeries?.currency ?? breakdown?.currency ?? 'USD'
 
   const chartPoints = useMemo(
     () =>
@@ -212,22 +205,10 @@ export default function DashboardPage() {
   const dailyAverage = dayCount > 0 ? periodTotal / dayCount : null
 
   const serviceChart = useMemo(() => {
-    const items = breakdown?.byService.items ?? []
-    return items.map((i) => ({
+    const items = breakdown?.items ?? []
+    return items.slice(0, 10).map((i) => ({
       label: i.service ?? 'unknown',
       value: i.total_cost ?? 0,
-    }))
-  }, [breakdown])
-
-  const topResourceChart = useMemo(() => {
-    const items = breakdown?.topResources.items ?? []
-    const names = breakdown?.names ?? {}
-    return items.map((i) => ({
-      label: i.resource_id
-        ? resourceDisplayLabel(i.resource_id, names, i.service ?? 'unknown')
-        : (i.service ?? 'unknown'),
-      value: i.total_cost ?? 0,
-      title: i.resource_id ?? i.service ?? undefined,
     }))
   }, [breakdown])
 
@@ -390,7 +371,9 @@ export default function DashboardPage() {
           <section className="card dashboard-cost-card">
             <div className="dashboard-section-header">
               <h2>Cost breakdown</h2>
-              <p className="dashboard-cost-subtitle">Where spend goes in this range ({cloudLabel})</p>
+              <p className="dashboard-cost-subtitle">
+                Top 10 services by spend in this range ({cloudLabel})
+              </p>
             </div>
             <Alert type="error">{breakdownError}</Alert>
             {breakdownLoading && !breakdown ? (
@@ -402,19 +385,7 @@ export default function DashboardPage() {
                     Updating…
                   </p>
                 )}
-                <div className="dashboard-breakdown-grid">
-                  <div>
-                    <h3 className="dashboard-subsection-title">By service</h3>
-                    <BarChart items={serviceChart} formatValue={(v) => formatMoney(v, currency)} />
-                  </div>
-                  <div>
-                    <h3 className="dashboard-subsection-title">Top resources</h3>
-                    <BarChart
-                      items={topResourceChart}
-                      formatValue={(v) => formatMoney(v, currency)}
-                    />
-                  </div>
-                </div>
+                <BarChart items={serviceChart} formatValue={(v) => formatMoney(v, currency)} />
               </>
             )}
           </section>
@@ -503,7 +474,8 @@ export default function DashboardPage() {
             <div className="dashboard-section-header">
               <h2>Forecast &amp; budget</h2>
               <p className="dashboard-cost-subtitle">
-                Calendar month projection from recent daily spend (budget saved in this browser)
+                Calendar month projection from recent daily spend. Budget is stored only in this
+                browser (not synced to the server yet).
               </p>
             </div>
             <div className="dashboard-cost-stats">
