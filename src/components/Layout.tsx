@@ -39,6 +39,12 @@ const NAV = [
   },
 ]
 
+function topbarRoleClass(userType: string | undefined): string {
+  if (userType === 'super_admin') return ' topbar--super-admin'
+  if (userType === 'staff') return ' topbar--staff'
+  return ''
+}
+
 export default function Layout() {
   const { user, companies, activeCompany, connections, connection, switchCompany, switchConnection, logout } =
     useAuth()
@@ -67,7 +73,7 @@ export default function Layout() {
       </aside>
 
       <div className="main">
-        <header className="topbar">
+        <header className={`topbar${topbarRoleClass(user?.user_type)}`}>
           <div className="context-bar">
             {companies.length > 0 && (
               <label>

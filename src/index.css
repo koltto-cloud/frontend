@@ -147,6 +147,19 @@ button {
   z-index: 20;
 }
 
+/* Role cues for internal operators only; customers keep the default topbar. */
+.topbar--super-admin {
+  background:
+    linear-gradient(105deg, rgba(15, 118, 110, 0.22) 0%, rgba(8, 145, 178, 0.18) 45%, rgba(255, 255, 255, 0.82) 100%);
+  border-bottom-color: rgba(15, 118, 110, 0.28);
+}
+
+.topbar--staff {
+  background:
+    linear-gradient(105deg, rgba(180, 83, 9, 0.18) 0%, rgba(202, 138, 4, 0.14) 45%, rgba(255, 255, 255, 0.84) 100%);
+  border-bottom-color: rgba(180, 83, 9, 0.22);
+}
+
 .topbar-user {
   display: flex;
   align-items: center;
