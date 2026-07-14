@@ -46,7 +46,10 @@ export default function Layout() {
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <h1>KÖLTTÖ TESTER</h1>
+        <div className="sidebar-brand">
+          <p className="sidebar-brand-name">KÖLTTÖ</p>
+          <p className="sidebar-brand-sub">Tester</p>
+        </div>
         {NAV.map((group) => (
           <div key={group.section} className="nav-section">
             <p className="nav-section-title">{group.section}</p>
@@ -104,9 +107,8 @@ export default function Layout() {
                 <Link to="/profile" className="topbar-user-link">
                   {user.first_name} {user.last_name}
                 </Link>
-                <span className="topbar-user-meta"> ({user.user_type})</span>
-                {' · '}
-                <button type="button" className="btn" onClick={() => void logout()}>
+                <span className="topbar-user-chip">{user.user_type}</span>
+                <button type="button" className="btn btn-ghost" onClick={() => void logout()}>
                   Logout
                 </button>
               </>
