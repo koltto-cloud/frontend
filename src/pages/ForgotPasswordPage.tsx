@@ -30,30 +30,37 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="auth-page">
-      <div className="auth-card">
-        <h1>Forgot password</h1>
-        <Alert type="error">{error}</Alert>
-        <Alert type="success">{success}</Alert>
-        <form onSubmit={(e) => void handleSubmit(e)}>
-          <div className="form-field">
-            <label htmlFor="email">Email</label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-          <div className="form-actions">
-            <button type="submit" className="btn btn-primary" disabled={loading}>
-              Send reset link
-            </button>
-          </div>
-          <p style={{ marginTop: '1rem', fontSize: '0.85rem' }}>
-            <Link to="/login">Back to login</Link>
-          </p>
-        </form>
+      <div className="auth-shell">
+        <header className="auth-header">
+          <p className="auth-brand">KÖLTTÖ</p>
+          <p className="auth-tagline">Cloud cost & inventory tester</p>
+        </header>
+        <div className="auth-card">
+          <h1>Forgot password</h1>
+          <Alert type="error">{error}</Alert>
+          <Alert type="success">{success}</Alert>
+          <form onSubmit={(e) => void handleSubmit(e)}>
+            <div className="form-field">
+              <label htmlFor="email">Email</label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                placeholder="you@company.com"
+              />
+            </div>
+            <div className="form-actions">
+              <button type="submit" className="btn btn-primary auth-submit" disabled={loading}>
+                Send reset link
+              </button>
+            </div>
+            <p className="auth-footer-link">
+              <Link to="/login">Back to login</Link>
+            </p>
+          </form>
+        </div>
       </div>
     </div>
   )

@@ -32,34 +32,40 @@ export default function ResetPasswordPage() {
 
   return (
     <div className="auth-page">
-      <div className="auth-card">
-        <h1>Reset password</h1>
-        <Alert type="error">{error}</Alert>
-        <Alert type="success">{success}</Alert>
-        <form onSubmit={(e) => void handleSubmit(e)}>
-          <div className="form-field">
-            <label htmlFor="token">Reset token</label>
-            <input id="token" value={token} onChange={(e) => setToken(e.target.value)} required />
-          </div>
-          <div className="form-field">
-            <label htmlFor="password">New password</label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-          <div className="form-actions">
-            <button type="submit" className="btn btn-primary" disabled={loading}>
-              Reset password
-            </button>
-          </div>
-          <p style={{ marginTop: '1rem', fontSize: '0.85rem' }}>
-            <Link to="/login">Back to login</Link>
-          </p>
-        </form>
+      <div className="auth-shell">
+        <header className="auth-header">
+          <p className="auth-brand">KÖLTTÖ</p>
+          <p className="auth-tagline">Cloud cost & inventory tester</p>
+        </header>
+        <div className="auth-card">
+          <h1>Reset password</h1>
+          <Alert type="error">{error}</Alert>
+          <Alert type="success">{success}</Alert>
+          <form onSubmit={(e) => void handleSubmit(e)}>
+            <div className="form-field">
+              <label htmlFor="token">Reset token</label>
+              <input id="token" value={token} onChange={(e) => setToken(e.target.value)} required />
+            </div>
+            <div className="form-field">
+              <label htmlFor="password">New password</label>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            <div className="form-actions">
+              <button type="submit" className="btn btn-primary auth-submit" disabled={loading}>
+                Reset password
+              </button>
+            </div>
+            <p className="auth-footer-link">
+              <Link to="/login">Back to login</Link>
+            </p>
+          </form>
+        </div>
       </div>
     </div>
   )

@@ -69,66 +69,76 @@ export default function LoginPage() {
 
   return (
     <div className="auth-page">
-      <div className="auth-card">
-        <h1>Login</h1>
-        <Alert type="error">{error}</Alert>
+      <div className="auth-shell">
+        <header className="auth-header">
+          <p className="auth-brand">KÖLTTÖ</p>
+          <p className="auth-tagline">Cloud cost & inventory tester</p>
+        </header>
 
-        {!tempToken ? (
-          <form onSubmit={(e) => void handleLogin(e)}>
-            <div className="form-field">
-              <label htmlFor="email">Email</label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoComplete="username"
-              />
-            </div>
-            <div className="form-field">
-              <label htmlFor="password">Password</label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                autoComplete="current-password"
-              />
-            </div>
-            <div className="form-actions">
-              <button type="submit" className="btn btn-primary" disabled={loading}>
-                {loading ? 'Signing in…' : 'Sign in'}
-              </button>
-            </div>
-            <p style={{ marginTop: '1rem', fontSize: '0.85rem' }}>
-              <Link to="/forgot-password">Forgot password?</Link>
-            </p>
-          </form>
-        ) : (
-          <form onSubmit={(e) => void handleTotp(e)}>
-            <p className="alert alert-info">Enter your TOTP code to complete login.</p>
-            <div className="form-field">
-              <label htmlFor="totp">TOTP code</label>
-              <input
-                id="totp"
-                value={totpCode}
-                onChange={(e) => setTotpCode(e.target.value)}
-                required
-                autoComplete="one-time-code"
-              />
-            </div>
-            <div className="form-actions">
-              <button type="button" className="btn" onClick={() => setTempToken(null)}>
-                Back
-              </button>
-              <button type="submit" className="btn btn-primary" disabled={loading}>
-                Verify
-              </button>
-            </div>
-          </form>
-        )}
+        <div className="auth-card">
+          <h1>{tempToken ? 'Two-factor verification' : 'Sign in'}</h1>
+          <Alert type="error">{error}</Alert>
+
+          {!tempToken ? (
+            <form onSubmit={(e) => void handleLogin(e)}>
+              <div className="form-field">
+                <label htmlFor="email">Email</label>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  autoComplete="username"
+                  placeholder="you@company.com"
+                />
+              </div>
+              <div className="form-field">
+                <label htmlFor="password">Password</label>
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  autoComplete="current-password"
+                />
+              </div>
+              <div className="form-actions">
+                <button type="submit" className="btn btn-primary auth-submit" disabled={loading}>
+                  {loading ? 'Signing in…' : 'Sign in'}
+                </button>
+              </div>
+              <p className="auth-footer-link">
+                <Link to="/forgot-password">Forgot password?</Link>
+              </p>
+            </form>
+          ) : (
+            <form onSubmit={(e) => void handleTotp(e)}>
+              <p className="auth-hint">Enter the 6-digit code from your authenticator app.</p>
+              <div className="form-field">
+                <label htmlFor="totp">TOTP code</label>
+                <input
+                  id="totp"
+                  value={totpCode}
+                  onChange={(e) => setTotpCode(e.target.value)}
+                  required
+                  autoComplete="one-time-code"
+                  inputMode="numeric"
+                  placeholder="123456"
+                />
+              </div>
+              <div className="form-actions">
+                <button type="button" className="btn" onClick={() => setTempToken(null)}>
+                  Back
+                </button>
+                <button type="submit" className="btn btn-primary auth-submit" disabled={loading}>
+                  Verify
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
       </div>
     </div>
   )
