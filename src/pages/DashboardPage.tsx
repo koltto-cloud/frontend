@@ -7,7 +7,8 @@ import TimeSeriesChart from '@/components/TimeSeriesChart'
 import { Alert } from '@/components/Alert'
 
 type RangePreset = 'day' | '3m' | '12m' | 'custom'
-type CloudFilter = 'oci'
+/** `all` = sum across clouds (OCI only until AWS/GCP exist). */
+type CloudFilter = 'all' | 'oci'
 
 interface DailyCostItem {
   date: string
@@ -38,13 +39,21 @@ function rangeForPreset(preset: RangePreset): { start: string; end: string } {
   return { start: toIsoDate(start), end: toIsoDate(end) }
 }
 
+function daysInclusive(start: string, end: string): number {
+  const a = new Date(`${start}T00:00:00Z`)
+  const b = new Date(`${end}T00:00:00Z`)
+  if (Number.isNaN(a.getTime()) || Number.isNaN(b.getTime()) || b < a) return 0
+  return Math.floor((b.getTime() - a.getTime()) / 86_400_000) + 1
+}
+
 function formatMoney(amount: number | null | undefined, currency: string | null): string {
   if (amount == null || Number.isNaN(Number(amount))) return '—'
-  const code = currency && currency.trim() ? currency.trim().toUpperCase() : 'USD'
+  const raw = (currency && currency.trim() ? currency.trim() : 'USD').toUpperCase()
+  const code = raw === 'US$' || raw === 'USA' ? 'USD' : raw
   try {
     return Number(amount).toLocaleString(undefined, {
       style: 'currency',
-      currency: code,
+      currency: code.length === 3 ? code : 'USD',
       maximumFractionDigits: 2,
     })
   } catch {
@@ -58,7 +67,7 @@ export default function DashboardPage() {
   const [preset, setPreset] = useState<RangePreset>('3m')
   const [startDate, setStartDate] = useState(defaults.start)
   const [endDate, setEndDate] = useState(defaults.end)
-  const [cloud, setCloud] = useState<CloudFilter>('oci')
+  const [cloud, setCloud] = useState<CloudFilter>('all')
 
   const companyId = activeCompany?.company_id
   const connectionId = connection?.connection_id
@@ -85,8 +94,8 @@ export default function DashboardPage() {
       ? `/api/v1/cloud/oci/usage/${companyId}/connections/${connectionId}/usage`
       : null
 
-  const costKey =
-    usageBase && cloud === 'oci' ? `${usageBase}/by-date:${startDate}:${endDate}` : null
+  // OCI is the only cloud today; `all` uses the same series until AWS/GCP exist.
+  const costKey = usageBase ? `${usageBase}/by-date:${cloud}:${startDate}:${endDate}` : null
 
   const {
     data: costSeries,
@@ -94,9 +103,7 @@ export default function DashboardPage() {
     loading: costLoading,
   } = useAsyncData(
     () => {
-      if (!usageBase || cloud !== 'oci') {
-        return Promise.resolve(null)
-      }
+      if (!usageBase) return Promise.resolve(null)
       return apiRequest<UsageByDateResponse>(`${usageBase}/summary/by-date`, {
         query: { start_date: startDate, end_date: endDate },
       })
@@ -118,6 +125,9 @@ export default function DashboardPage() {
     [costSeries],
   )
 
+  const dayCount = daysInclusive(startDate, endDate)
+  const dailyAverage = dayCount > 0 ? periodTotal / dayCount : null
+
   function applyPreset(next: RangePreset) {
     setPreset(next)
     if (next === 'custom') return
@@ -125,6 +135,8 @@ export default function DashboardPage() {
     setStartDate(range.start)
     setEndDate(range.end)
   }
+
+  const cloudLabel = cloud === 'all' ? 'All clouds' : 'OCI'
 
   return (
     <>
@@ -177,15 +189,31 @@ export default function DashboardPage() {
             <div>
               <h2>Total cost</h2>
               <p className="dashboard-cost-subtitle">
-                Daily spend · {formatMoney(periodTotal, costSeries?.currency ?? 'USD')} in range
+                Daily spend ({cloudLabel})
               </p>
             </div>
             <label className="dashboard-cloud-filter">
               Cloud
               <select value={cloud} onChange={(e) => setCloud(e.target.value as CloudFilter)}>
+                <option value="all">All clouds</option>
                 <option value="oci">OCI</option>
               </select>
             </label>
+          </div>
+
+          <div className="dashboard-cost-stats">
+            <div className="dashboard-cost-stat">
+              <span className="dashboard-cost-stat-label">Period total</span>
+              <span className="dashboard-cost-stat-value">
+                {formatMoney(periodTotal, costSeries?.currency ?? 'USD')}
+              </span>
+            </div>
+            <div className="dashboard-cost-stat">
+              <span className="dashboard-cost-stat-label">Daily average</span>
+              <span className="dashboard-cost-stat-value">
+                {formatMoney(dailyAverage, costSeries?.currency ?? 'USD')}
+              </span>
+            </div>
           </div>
 
           <div className="dashboard-cost-presets" role="group" aria-label="Date range">

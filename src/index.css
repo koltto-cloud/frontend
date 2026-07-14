@@ -1367,6 +1367,38 @@ button {
   color: var(--muted);
 }
 
+.dashboard-cost-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  margin-bottom: 0.95rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.dashboard-cost-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 8rem;
+}
+
+.dashboard-cost-stat-label {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.dashboard-cost-stat-value {
+  font-size: 1.15rem;
+  font-weight: 600;
+  font-family: Sora, system-ui, sans-serif;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+}
+
 .dashboard-cloud-filter {
   display: flex;
   flex-direction: column;
