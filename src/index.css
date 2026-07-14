@@ -150,8 +150,43 @@ button {
 /* Role cues for internal operators only; customers keep the default topbar. */
 .topbar--super-admin {
   background:
-    linear-gradient(105deg, rgba(15, 118, 110, 0.22) 0%, rgba(8, 145, 178, 0.18) 45%, rgba(255, 255, 255, 0.82) 100%);
-  border-bottom-color: rgba(15, 118, 110, 0.28);
+    radial-gradient(ellipse 70% 140% at 0% 50%, rgba(56, 189, 248, 0.18), transparent 55%),
+    linear-gradient(180deg, #111827 0%, #0b1220 100%);
+  border-bottom-color: rgba(56, 189, 248, 0.35);
+  color: #e2e8f0;
+}
+
+.topbar--super-admin .context-bar label,
+.topbar--super-admin .topbar-user {
+  color: #94a3b8;
+}
+
+.topbar--super-admin .topbar-user-link {
+  color: #f8fafc;
+}
+
+.topbar--super-admin .topbar-user-link:hover {
+  color: #7dd3fc;
+}
+
+.topbar--super-admin .topbar-user-chip {
+  background: rgba(56, 189, 248, 0.16);
+  color: #7dd3fc;
+}
+
+.topbar--super-admin select {
+  background: rgba(15, 23, 42, 0.85);
+  color: #f1f5f9;
+  border-color: rgba(148, 163, 184, 0.35);
+}
+
+.topbar--super-admin .btn-ghost {
+  color: #cbd5e1;
+}
+
+.topbar--super-admin .btn-ghost:hover {
+  color: #f8fafc;
+  background: rgba(148, 163, 184, 0.12);
 }
 
 .topbar--staff {
