@@ -62,7 +62,7 @@ function formatMoney(amount: number | null | undefined, currency: string | null)
 }
 
 export default function DashboardPage() {
-  const { user, activeCompany, connection, connections } = useAuth()
+  const { user, activeCompany, connection } = useAuth()
   const defaults = rangeForPreset('3m')
   const [preset, setPreset] = useState<RangePreset>('3m')
   const [startDate, setStartDate] = useState(defaults.start)
@@ -76,18 +76,6 @@ export default function DashboardPage() {
   const greetingName = firstName || user?.email || 'there'
   const hasConnection = Boolean(connectionId)
   const hasCompany = Boolean(companyId)
-
-  let support =
-    'Explore OCI inventory, usage, and monitoring for the companies connected to this tester.'
-  if (hasCompany && hasConnection) {
-    support = `You’re viewing ${activeCompany!.name} through ${
-      connection!.name ?? 'your selected connection'
-    }. Sync inventory or pull usage to exercise the APIs.`
-  } else if (hasCompany && connections.length === 0) {
-    support = `${activeCompany!.name} is selected, but there’s no OCI connection yet. Add one to unlock inventory and usage sync.`
-  } else if (hasCompany) {
-    support = `${activeCompany!.name} is selected. Pick a connection in the top bar to work with OCI data.`
-  }
 
   const usageBase =
     companyId && connectionId
@@ -140,57 +128,27 @@ export default function DashboardPage() {
 
   return (
     <>
-      <section className="dashboard-welcome">
-        <h1 className="dashboard-greeting">Welcome back, {greetingName}</h1>
-        <p className="dashboard-support">{support}</p>
+      <header className="dashboard-header">
+        <h1 className="page-title dashboard-title">Dashboard</h1>
+        <p className="dashboard-greeting-line">Hi {greetingName} — here’s your cloud spend overview.</p>
+      </header>
 
-        {(hasCompany || hasConnection) && (
-          <p className="dashboard-context">
-            {hasCompany && (
-              <>
-                Company <strong>{activeCompany!.name}</strong>
-              </>
-            )}
-            {hasCompany && hasConnection && ' · '}
-            {hasConnection && (
-              <>
-                Connection <strong>{connection!.name ?? connection!.connection_id.slice(0, 8)}</strong>
-              </>
-            )}
-          </p>
-        )}
-
-        <div className="dashboard-actions">
-          {hasConnection ? (
+      {!hasCompany || !hasConnection ? (
+        <p className="empty">
+          Select a company and OCI connection in the top bar to view daily total cost.
+          {!hasConnection && hasCompany && (
             <>
-              <Link to="/oci/inventory" className="btn btn-primary">
-                Open inventory
-              </Link>
-              <Link to="/oci/usage" className="btn">
-                Usage & costs
-              </Link>
-            </>
-          ) : (
-            <>
-              <Link to="/oci/connections" className="btn btn-primary">
-                Set up a connection
-              </Link>
-              <Link to="/oci/inventory" className="btn">
-                Inventory
-              </Link>
+              {' '}
+              <Link to="/oci/connections">Set up a connection</Link>
             </>
           )}
-        </div>
-      </section>
-
-      {hasCompany && hasConnection ? (
+        </p>
+      ) : (
         <section className="card dashboard-cost-card">
           <div className="dashboard-cost-header">
             <div>
               <h2>Total cost</h2>
-              <p className="dashboard-cost-subtitle">
-                Daily spend ({cloudLabel})
-              </p>
+              <p className="dashboard-cost-subtitle">Daily spend ({cloudLabel})</p>
             </div>
             <label className="dashboard-cloud-filter">
               Cloud
@@ -277,8 +235,6 @@ export default function DashboardPage() {
             />
           )}
         </section>
-      ) : (
-        <p className="empty">Select a company and OCI connection to view daily total cost.</p>
       )}
     </>
   )
