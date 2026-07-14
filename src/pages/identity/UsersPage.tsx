@@ -198,13 +198,13 @@ export default function UsersPage() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>user_id</th>
-                <th>email</th>
-                <th>first_name</th>
-                <th>last_name</th>
-                <th>user_type</th>
-                <th>account_status</th>
-                <th>actions</th>
+                <th>User ID</th>
+                <th>Email</th>
+                <th>First name</th>
+                <th>Last name</th>
+                <th>User type</th>
+                <th>Account status</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>

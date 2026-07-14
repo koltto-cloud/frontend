@@ -202,10 +202,10 @@ export default function CompaniesPage() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>company_id</th>
-                <th>name</th>
-                <th>status</th>
-                <th>actions</th>
+                <th>Company ID</th>
+                <th>Name</th>
+                <th>Status</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>

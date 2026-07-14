@@ -79,7 +79,7 @@ export default function SubscriptionItemsPage() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>subscription_id</th><th>company</th><th>plan</th><th>feature</th><th>sku</th><th>status</th>
+                <th>Subscription ID</th><th>Company</th><th>Plan</th><th>Feature</th><th>SKU</th><th>Status</th>
               </tr>
             </thead>
             <tbody>

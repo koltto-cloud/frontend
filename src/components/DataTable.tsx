@@ -1,5 +1,6 @@
 import { useClientPagination } from '@/hooks/useClientPagination'
 import PaginationControls from '@/components/PaginationControls'
+import { formatColumnLabel } from '@/utils/formatLabel'
 
 function flattenValue(value: unknown): string {
   if (value === null || value === undefined) return ''
@@ -50,9 +51,9 @@ export default function DataTable({
         <table className="data-table">
           <thead>
             <tr>
-              {cols.map((col) => (
-                <th key={col}>{col}</th>
-              ))}
+            {cols.map((col) => (
+              <th key={col}>{formatColumnLabel(col)}</th>
+            ))}
             </tr>
           </thead>
           <tbody>

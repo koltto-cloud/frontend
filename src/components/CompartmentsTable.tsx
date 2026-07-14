@@ -328,9 +328,9 @@ export default function CompartmentsTable({
                   onChange={toggleAll}
                 />
               </th>
-              <th>compartment_ocid</th>
-              <th>name</th>
-              <th>sync</th>
+              <th>Compartment OCID</th>
+              <th>Name</th>
+              <th>Sync</th>
             </tr>
           </thead>
           <tbody>

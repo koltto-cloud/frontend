@@ -147,7 +147,7 @@ export default function SubscriptionsPage() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>subscription_id</th><th>company</th><th>status</th><th>start_date</th><th>end_date</th><th>actions</th>
+                <th>Subscription ID</th><th>Company</th><th>Status</th><th>Start date</th><th>End date</th><th>Actions</th>
               </tr>
             </thead>
             <tbody>

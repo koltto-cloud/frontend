@@ -154,7 +154,7 @@ export default function PlanFeaturesPage() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>plan_feature_id</th><th>plan_name</th><th>feature_name</th><th>sku</th><th>status</th><th>actions</th>
+                <th>Plan feature ID</th><th>Plan</th><th>Feature</th><th>SKU</th><th>Status</th><th>Actions</th>
               </tr>
             </thead>
             <tbody>

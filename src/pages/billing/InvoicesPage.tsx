@@ -155,7 +155,7 @@ export default function InvoicesPage() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>invoice_id</th><th>company</th><th>status</th><th>due_date</th><th>created_at</th><th>actions</th>
+                <th>Invoice ID</th><th>Company</th><th>Status</th><th>Due date</th><th>Created</th><th>Actions</th>
               </tr>
             </thead>
             <tbody>

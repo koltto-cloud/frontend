@@ -1,4 +1,5 @@
 import { Fragment, useMemo, useState } from 'react'
+import { formatColumnLabel } from '@/utils/formatLabel'
 
 export interface InventoryResourceRow {
   resource_ocid?: string | null
@@ -106,11 +107,11 @@ export default function InventoryResourceTable({
         <thead>
           <tr>
             <th className="col-expand" aria-label="Expand" />
-            <th>display_name</th>
-            <th>compartment</th>
-            <th>status</th>
-            <th>time_created</th>
-            <th>synced_at</th>
+            <th>Display name</th>
+            <th>Compartment</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Synced</th>
           </tr>
         </thead>
         <tbody>
@@ -144,7 +145,7 @@ export default function InventoryResourceTable({
                       <dl className="resource-detail-list">
                         {detailFields.map((field) => (
                           <div key={field} className="resource-detail-item">
-                            <dt>{field}</dt>
+                            <dt>{formatColumnLabel(field)}</dt>
                             <dd>{formatValue(row[field])}</dd>
                           </div>
                         ))}

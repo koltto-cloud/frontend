@@ -188,13 +188,13 @@ export default function MembershipsPage() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>user_id</th>
-                <th>user_email</th>
-                <th>company_id</th>
-                <th>company_name</th>
-                <th>role</th>
-                <th>active</th>
-                <th>actions</th>
+                <th>User ID</th>
+                <th>User email</th>
+                <th>Company ID</th>
+                <th>Company</th>
+                <th>Role</th>
+                <th>Active</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>

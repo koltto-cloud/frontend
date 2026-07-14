@@ -145,7 +145,7 @@ export default function FeaturesPage() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>feature_id</th><th>name</th><th>description</th><th>price</th><th>status</th><th>actions</th>
+                <th>Feature ID</th><th>Name</th><th>Description</th><th>Price</th><th>Status</th><th>Actions</th>
               </tr>
             </thead>
             <tbody>

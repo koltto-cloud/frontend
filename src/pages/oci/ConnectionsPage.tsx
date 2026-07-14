@@ -180,12 +180,12 @@ export default function ConnectionsPage() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>connection_id</th>
-                <th>name</th>
-                <th>tenancy</th>
-                <th>user</th>
-                <th>region</th>
-                <th>actions</th>
+                <th>Connection ID</th>
+                <th>Name</th>
+                <th>Tenancy</th>
+                <th>User</th>
+                <th>Region</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>

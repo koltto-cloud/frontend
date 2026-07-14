@@ -147,12 +147,12 @@ function SyncStepsTable({ steps }: { steps: SyncStepRead[] }) {
       <table className="data-table sync-steps-table">
         <thead>
           <tr>
-            <th>resource</th>
-            <th>compartment</th>
+            <th>Resource</th>
+            <th>Compartment</th>
             <th>AD</th>
-            <th>job</th>
-            <th>synced</th>
-            <th>error</th>
+            <th>Job</th>
+            <th>Synced</th>
+            <th>Error</th>
           </tr>
         </thead>
         <tbody>

@@ -104,7 +104,7 @@ export default function InvoiceItemsPage() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>invoice_item_id</th><th>sku</th><th>name</th><th>qty</th><th>price</th><th>discount</th>
+                <th>Invoice item ID</th><th>SKU</th><th>Name</th><th>Qty</th><th>Price</th><th>Discount</th>
               </tr>
             </thead>
             <tbody>

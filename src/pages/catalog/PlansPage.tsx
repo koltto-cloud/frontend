@@ -180,13 +180,13 @@ export default function PlansPage() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>plan_id</th>
-                <th>plan_type</th>
-                <th>name</th>
-                <th>description</th>
-                <th>price</th>
-                <th>status</th>
-                <th>actions</th>
+                <th>Plan ID</th>
+                <th>Plan type</th>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Price</th>
+                <th>Status</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>

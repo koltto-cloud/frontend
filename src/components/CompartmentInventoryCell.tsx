@@ -88,11 +88,11 @@ function CompartmentStepsTable({ steps }: { steps: SyncStepRead[] }) {
     <table className="compartment-steps-table">
       <thead>
         <tr>
-          <th>resource</th>
+          <th>Resource</th>
           <th>AD</th>
-          <th>job</th>
-          <th>synced</th>
-          <th>error</th>
+          <th>Job</th>
+          <th>Synced</th>
+          <th>Error</th>
         </tr>
       </thead>
       <tbody>
