@@ -13,10 +13,7 @@ const NAV = [
   },
   {
     section: 'Auth & Audit',
-    links: [
-      { to: '/audit', label: 'Audit Logs' },
-      { to: '/profile', label: 'Profile & TOTP' },
-    ],
+    links: [{ to: '/audit', label: 'Audit Logs' }],
   },
   {
     section: 'Catalog & Billing',
