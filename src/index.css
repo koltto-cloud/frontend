@@ -792,6 +792,14 @@ button {
   color: var(--accent-hover);
 }
 
+.alert-muted {
+  background: linear-gradient(90deg, #f4f4f5, rgba(255, 255, 255, 0.95));
+  border-color: rgba(113, 113, 122, 0.25);
+  border-left-color: #71717a;
+  color: #52525b;
+  font-weight: 500;
+}
+
 .loading,
 .empty {
   color: #71717a;

@@ -16,6 +16,7 @@ import { Alert } from '@/components/Alert'
 import CompartmentInventoryCell from '@/components/CompartmentInventoryCell'
 import OciSyncRunPanel from '@/components/OciSyncRunPanel'
 import PaginationControls from '@/components/PaginationControls'
+import { useSyncsPaused } from '@/hooks/useSyncsPaused'
 
 const COMPARTMENT_DETAIL_FIELDS = [
   'compartment_ocid',
@@ -89,7 +90,9 @@ export default function CompartmentsTable({
   const inventorySync = useOciSyncRun(companyId, connectionId, {
     onComplete: onInventorySynced,
   })
+  const { syncsPaused } = useSyncsPaused()
 
+  const syncDisabled = syncsPaused
   const usageBase = `/api/v1/cloud/oci/usage/${companyId}/connections/${connectionId}/usage`
   const monitoringBase = `/api/v1/cloud/oci/monitoring/${companyId}/connections/${connectionId}/monitoring`
 
@@ -250,7 +253,7 @@ export default function CompartmentsTable({
           <button
             type="button"
             className="btn btn-primary"
-            disabled={compartmentSyncing}
+            disabled={syncDisabled || compartmentSyncing}
             onClick={() => void handleSyncCompartments()}
           >
             {compartmentSyncing ? 'Syncing…' : 'Sync compartments'}
@@ -277,7 +280,7 @@ export default function CompartmentsTable({
         <button
           type="button"
           className="btn btn-primary"
-          disabled={!someSelected || inventorySync.starting}
+          disabled={syncDisabled || !someSelected || inventorySync.starting}
           onClick={() => void handleSyncInventory()}
         >
           {inventorySync.starting
@@ -287,7 +290,7 @@ export default function CompartmentsTable({
         <button
           type="button"
           className="btn"
-          disabled={!someSelected || usageSyncing}
+          disabled={syncDisabled || !someSelected || usageSyncing}
           onClick={() => void handleSyncUsage()}
         >
           {usageSyncing ? 'Queueing…' : `Sync usage (${selected.size} selected)`}
@@ -295,7 +298,7 @@ export default function CompartmentsTable({
         <button
           type="button"
           className="btn"
-          disabled={!someSelected || monitoringSyncing}
+          disabled={syncDisabled || !someSelected || monitoringSyncing}
           onClick={() => void handleSyncMonitoring()}
         >
           {monitoringSyncing
@@ -308,7 +311,7 @@ export default function CompartmentsTable({
         <button
           type="button"
           className="btn"
-          disabled={compartmentSyncing}
+          disabled={syncDisabled || compartmentSyncing}
           onClick={() => void handleSyncCompartments()}
         >
           {compartmentSyncing ? 'Syncing…' : 'Sync compartments'}

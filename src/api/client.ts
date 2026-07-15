@@ -80,9 +80,16 @@ export class RequestError extends Error {
   }
 }
 
+function isNetworkError(err: unknown): boolean {
+  if (!(err instanceof TypeError)) return false
+  const msg = err.message.toLowerCase()
+  // Chrome: "Failed to fetch"; Safari/WebKit: "Load failed"; Firefox: "NetworkError when attempting to fetch resource"
+  return msg.includes('fetch') || msg.includes('load failed') || msg.includes('networkerror')
+}
+
 export function formatApiError(err: unknown): string {
-  if (err instanceof TypeError && err.message.includes('fetch')) {
-    return 'Network error — could not reach the API. Check that the dev server is running and the backend is up.'
+  if (isNetworkError(err)) {
+    return 'Network error — could not reach the API. The backend may be redeploying or temporarily unavailable.'
   }
   if (err instanceof RequestError) {
     const body = err.body as ApiError

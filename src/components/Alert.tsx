@@ -4,7 +4,7 @@ export function Alert({
   type,
   children,
 }: {
-  type: 'error' | 'success' | 'info' | 'warning'
+  type: 'error' | 'success' | 'info' | 'warning' | 'muted'
   children: ReactNode
 }) {
   if (!children) return null

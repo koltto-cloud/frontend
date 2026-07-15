@@ -1,5 +1,7 @@
-import { Link, NavLink, Outlet } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
+import { useSyncsPaused } from '@/hooks/useSyncsPaused'
+import SyncsPausedBanner from '@/components/SyncsPausedBanner'
 
 const NAV = [
   { section: 'General', links: [{ to: '/', label: 'Dashboard' }] },
@@ -59,6 +61,9 @@ function topbarRoleClass(userType: string | undefined): string {
 export default function Layout() {
   const { user, companies, activeCompany, connections, connection, switchCompany, switchConnection, logout } =
     useAuth()
+  const location = useLocation()
+  const onOciPage = location.pathname.startsWith('/oci')
+  const { syncsPaused, message: syncsPausedMessage } = useSyncsPaused(onOciPage)
 
   const navGroups = isStaff(user?.user_type) ? [...NAV, ...STAFF_NAV] : NAV
 
@@ -135,6 +140,7 @@ export default function Layout() {
         </header>
 
         <main className="content">
+          {onOciPage && syncsPaused ? <SyncsPausedBanner message={syncsPausedMessage} /> : null}
           <Outlet />
         </main>
       </div>
