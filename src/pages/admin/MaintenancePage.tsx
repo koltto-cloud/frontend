@@ -116,7 +116,7 @@ export default function MaintenancePage() {
     try {
       const data = await apiRequest<MaintenanceStatus>('/api/v1/admin/maintenance', {
         method: 'PUT',
-        body: JSON.stringify({ syncs_paused }),
+        body: { syncs_paused },
       })
       setStatus(data)
       setSuccess(
@@ -147,7 +147,7 @@ export default function MaintenancePage() {
       }
       await apiRequest<CancelResult>('/api/v1/admin/maintenance/active-syncs/cancel', {
         method: 'POST',
-        body: JSON.stringify(body),
+        body,
       })
       setSuccess(`Cancelled ${syncTypeLabel(s.sync_type)}.`)
       await load()
