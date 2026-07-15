@@ -11,6 +11,9 @@ interface CompanyRow {
   company_id: string
   name: string
   status: string
+  schema_revision: string | null
+  expected_schema_revision: string
+  schema_up_to_date: boolean
 }
 
 const COMPANY_STATUSES = ['active', 'inactive', 'pending'] as const
@@ -37,15 +40,16 @@ export default function CompaniesPage() {
   const { data, error, loading, reload } = useAsyncData(
     () =>
       apiRequest<CompanyRow[]>('/api/v1/identity/companies/list', {
-        query: { name, company_status: status },
+        query: { name, company_status: status, integration },
       }),
-    [name, status],
+    [name, status, integration],
   )
 
   const rows = data ?? []
   const { page, pageSize, pageItems, totalItems, setPage, setPageSize } =
     useClientPagination(rows)
 
+  const expectedRev = rows[0]?.expected_schema_revision
 
   const openView = async (companyId: string) => {
     setViewId(companyId)
@@ -124,12 +128,12 @@ export default function CompaniesPage() {
     setErr('')
     setMsg('')
     try {
-      const result = await apiRequest<Record<string, unknown>>(
+      await apiRequest<Record<string, unknown>>(
         `/api/v1/identity/companies/${row.company_id}/deploy/${integration}`,
         { method: 'POST' },
       )
       setMsg(`Deployed ${integration} for "${row.name}".`)
-      console.log(result)
+      void reload()
     } catch (e) {
       setErr(formatApiError(e))
     }
@@ -141,7 +145,8 @@ export default function CompaniesPage() {
     setMsg('')
     try {
       await apiRequest(`/api/v1/identity/companies/deploy-all/${integration}`, { method: 'POST' })
-      setMsg(`Bulk deploy ${integration} triggered.`)
+      setMsg(`Bulk deploy ${integration} finished.`)
+      void reload()
     } catch (e) {
       setErr(formatApiError(e))
     }
@@ -168,6 +173,11 @@ export default function CompaniesPage() {
         <button type="button" className="btn" onClick={() => void handleDeployAll()}>
           Deploy all
         </button>
+        {expectedRev && (
+          <span title="alembic_tenant head in this API build">
+            Expected schema: {expectedRev}
+          </span>
+        )}
       </div>
 
       <div className="filters">
@@ -205,6 +215,7 @@ export default function CompaniesPage() {
                 <th>Company ID</th>
                 <th>Name</th>
                 <th>Status</th>
+                <th>Schema ({integration})</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -222,6 +233,16 @@ export default function CompaniesPage() {
                   </td>
                   <td>{row.name}</td>
                   <td>{row.status}</td>
+                  <td>
+                    {row.schema_up_to_date ? (
+                      <span title={row.schema_revision ?? undefined}>Up to date</span>
+                    ) : (
+                      <span title={row.schema_revision ?? 'never deployed'}>
+                        Needs deploy
+                        {row.schema_revision ? ` (${row.schema_revision})` : ''}
+                      </span>
+                    )}
+                  </td>
                   <td className="actions-cell">
                     <button type="button" className="btn btn-sm" onClick={() => openEdit(row)}>
                       Edit
