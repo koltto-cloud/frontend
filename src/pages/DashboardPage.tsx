@@ -43,6 +43,17 @@ interface UsageByServiceResponse {
   items: { service: string | null; total_cost: number }[]
 }
 
+interface UsageByCompartmentResponse {
+  start_date: string
+  end_date: string
+  currency: string | null
+  items: {
+    compartment_id: string | null
+    compartment_name: string | null
+    total_cost: number
+  }[]
+}
+
 interface TopResourcesResponse {
   start_date: string
   end_date: string
@@ -125,6 +136,8 @@ export default function DashboardPage() {
   const rangeKey = usageBase ? `${cloud}:${startDate}:${endDate}` : null
   const costKey = usageBase && rangeKey ? `${usageBase}/by-date:${rangeKey}` : null
   const breakdownKey = usageBase && rangeKey ? `${usageBase}/breakdown:${rangeKey}` : null
+  const compartmentKey =
+    usageBase && rangeKey ? `${usageBase}/by-compartment:${rangeKey}` : null
   const opportunitiesKey =
     usageBase && companyId && connectionId && rangeKey && opportunitiesEnabled
       ? `${usageBase}/opportunities:${rangeKey}`
@@ -176,6 +189,21 @@ export default function DashboardPage() {
   )
 
   const {
+    data: compartmentBreakdown,
+    error: compartmentError,
+    loading: compartmentLoading,
+  } = useAsyncData(
+    async () => {
+      if (!usageBase) return null
+      return apiRequest<UsageByCompartmentResponse>(`${usageBase}/summary/by-compartment`, {
+        query: { start_date: startDate, end_date: endDate, limit: 10 },
+      })
+    },
+    [compartmentKey],
+    { keepPreviousData: true },
+  )
+
+  const {
     data: opportunities,
     error: opportunitiesError,
     loading: opportunitiesLoading,
@@ -195,7 +223,8 @@ export default function DashboardPage() {
     { keepPreviousData: true },
   )
 
-  const currency = costSeries?.currency ?? breakdown?.currency ?? 'USD'
+  const currency =
+    costSeries?.currency ?? breakdown?.currency ?? compartmentBreakdown?.currency ?? 'USD'
 
   const chartPoints = useMemo(
     () =>
@@ -220,6 +249,19 @@ export default function DashboardPage() {
     }))
   }, [breakdown])
 
+  const compartmentChart = useMemo(() => {
+    const items = compartmentBreakdown?.items ?? []
+    return items.slice(0, 10).map((i) => {
+      const name = i.compartment_name?.trim()
+      const id = i.compartment_id
+      const shortId = id && id.length > 18 ? `${id.slice(0, 18)}…` : id
+      return {
+        label: name || shortId || 'unknown',
+        value: i.total_cost ?? 0,
+        title: id ?? name ?? undefined,
+      }
+    })
+  }, [compartmentBreakdown])
   const spikes = useMemo(
     () => notableDayOverDaySpikes(costSeries?.items ?? [], 5),
     [costSeries],
@@ -399,6 +441,31 @@ export default function DashboardPage() {
                   </p>
                 )}
                 <BarChart items={serviceChart} formatValue={(v) => formatMoney(v, currency)} />
+              </>
+            )}
+          </section>
+
+          <section className="card dashboard-cost-card">
+            <div className="dashboard-section-header">
+              <h2>Top compartments</h2>
+              <p className="dashboard-cost-subtitle">
+                Top 10 compartments by spend in this range ({cloudLabel})
+              </p>
+            </div>
+            <Alert type="error">{compartmentError}</Alert>
+            {compartmentLoading && !compartmentBreakdown ? (
+              <p className="loading">Loading compartments…</p>
+            ) : (
+              <>
+                {compartmentLoading && compartmentBreakdown != null && (
+                  <p className="dashboard-cost-updating" aria-live="polite">
+                    Updating…
+                  </p>
+                )}
+                <BarChart
+                  items={compartmentChart}
+                  formatValue={(v) => formatMoney(v, currency)}
+                />
               </>
             )}
           </section>
