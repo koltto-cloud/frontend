@@ -7,20 +7,45 @@ interface MaintenanceStatus {
 }
 
 interface ActiveSync {
-  company_id: string
-  company_name: string
-  connection_id: string
-  connection_name: string | null
-  sync_run_id: string
+  sync_type: string
   status: string
-  total_steps: number
-  completed_steps: number
-  failed_steps: number
-  started_at: string | null
-  created_at: string
+  company_id: string | null
+  company_name: string | null
+  connection_id: string | null
+  connection_name: string | null
+  sync_run_id: string | null
+  job_id: string | null
+  total_steps: number | null
+  completed_steps: number | null
+  failed_steps: number | null
+  detail: string | null
+  created_at: string | null
 }
 
 const POLL_MS = 10000
+
+function syncTypeLabel(type: string): string {
+  const labels: Record<string, string> = {
+    inventory: 'Inventory',
+    oci_usage: 'Usage',
+    oci_monitoring: 'Monitoring',
+    oci_compartments: 'Compartments',
+    oci_compute: 'Compute',
+    oci_block_storage: 'Block storage',
+    oci_object_storage: 'Object storage',
+    oci_file_storage: 'File storage',
+    oci_load_balancer: 'Load balancer',
+  }
+  return labels[type] ?? type
+}
+
+function progressLabel(s: ActiveSync): string {
+  if (s.sync_type === 'inventory' && s.total_steps != null) {
+    const done = (s.completed_steps ?? 0) + (s.failed_steps ?? 0)
+    return `${done}/${s.total_steps}${s.failed_steps ? ` (${s.failed_steps} failed)` : ''}`
+  }
+  return s.detail ?? '—'
+}
 
 export default function MaintenancePage() {
   const [status, setStatus] = useState<MaintenanceStatus | null>(null)
@@ -61,7 +86,7 @@ export default function MaintenancePage() {
       setStatus(data)
       setSuccess(
         data.syncs_paused
-          ? 'New OCI syncs are paused. In-flight jobs will finish. Redeploy when the queue is quiet.'
+          ? 'New OCI syncs are paused (usage, monitoring, inventory, …). In-flight jobs will finish. Redeploy when the list below is empty.'
           : 'OCI syncs are open again.',
       )
       await load()
@@ -76,8 +101,9 @@ export default function MaintenancePage() {
     <div className="page">
       <h1>Maintenance</h1>
       <p className="page-lead">
-        Pause <strong>new</strong> OCI sync starts (usage, monitoring, inventory) before a worker
-        redeploy. Jobs already running or queued keep going until they finish.
+        Pause <strong>new</strong> OCI sync starts (usage, monitoring, inventory, compartments, and
+        ad-hoc resource syncs) before a worker redeploy. Jobs already running or queued keep going
+        until they finish.
       </p>
 
       {error ? <Alert type="error">{error}</Alert> : null}
@@ -111,10 +137,11 @@ export default function MaintenancePage() {
       </div>
 
       <section style={{ marginTop: 32 }}>
-        <h2>Open inventory syncs</h2>
+        <h2>Open syncs</h2>
         <p className="page-lead" style={{ marginTop: 4 }}>
-          Queued or running across all customers. Refreshes every {POLL_MS / 1000}s. Safe to
-          redeploy the worker when this list is empty (after pausing new syncs).
+          Inventory runs plus usage / monitoring / other ARQ jobs across all customers. Refreshes
+          every {POLL_MS / 1000}s. Safe to redeploy the worker when this list is empty (after
+          pausing new syncs).
         </p>
 
         {activeSyncs === null ? (
@@ -128,31 +155,27 @@ export default function MaintenancePage() {
             <table className="data-table">
               <thead>
                 <tr>
+                  <th>Type</th>
                   <th>Company</th>
                   <th>Connection</th>
                   <th>Status</th>
-                  <th>Progress</th>
-                  <th>Started</th>
-                  <th>Sync run</th>
+                  <th>Detail</th>
+                  <th>Started / enqueued</th>
                 </tr>
               </thead>
               <tbody>
                 {activeSyncs.map((s) => (
-                  <tr key={s.sync_run_id}>
-                    <td>{s.company_name}</td>
-                    <td>{s.connection_name ?? s.connection_id.slice(0, 8)}</td>
+                  <tr key={s.sync_run_id ?? s.job_id ?? `${s.sync_type}-${s.created_at}`}>
+                    <td>{syncTypeLabel(s.sync_type)}</td>
+                    <td>{s.company_name ?? s.company_id?.slice(0, 8) ?? '—'}</td>
+                    <td>
+                      {s.connection_name ??
+                        (s.connection_id ? s.connection_id.slice(0, 8) : '—')}
+                    </td>
                     <td>{s.status}</td>
+                    <td>{progressLabel(s)}</td>
                     <td>
-                      {s.completed_steps + s.failed_steps}/{s.total_steps}
-                      {s.failed_steps > 0 ? ` (${s.failed_steps} failed)` : ''}
-                    </td>
-                    <td>
-                      {s.started_at
-                        ? new Date(s.started_at).toLocaleString()
-                        : new Date(s.created_at).toLocaleString()}
-                    </td>
-                    <td>
-                      <code style={{ fontSize: '0.85em' }}>{s.sync_run_id.slice(0, 13)}…</code>
+                      {s.created_at ? new Date(s.created_at).toLocaleString() : '—'}
                     </td>
                   </tr>
                 ))}
