@@ -48,6 +48,14 @@ const ACTIVE_STATUSES = new Set(['queued', 'running'])
 const TERMINAL_STATUSES = new Set(['completed', 'completed_with_errors', 'failed', 'cancelled'])
 const POLL_INTERVAL_MS = 2500
 
+function hasActiveSteps(run: SyncRunDetail): boolean {
+  return run.steps.some((s) => ACTIVE_STATUSES.has(s.status))
+}
+
+function isRunFullyTerminal(run: SyncRunDetail): boolean {
+  return TERMINAL_STATUSES.has(run.status) && !hasActiveSteps(run)
+}
+
 export function ociSyncRunPaths(companyId: string, connectionId: string) {
   const base = `/api/v1/cloud/oci/sync-runs/${companyId}`
   return {
@@ -126,20 +134,22 @@ export function getCompartmentInventoryDisplay(
 ): CompartmentInventorySnapshot | null {
   const scoped = scopedCompartmentIds(run)
   const liveSteps = run ? run.steps.filter((s) => s.compartment_id === ocid) : []
+  // Treat run as live if status is active OR any step is still queued/running
+  // (guards against backend marking the run terminal while steps lag).
+  const runLooksActive =
+    run !== null && (ACTIVE_STATUSES.has(run.status) || hasActiveSteps(run))
   const inActiveScope =
-    run !== null &&
-    ACTIVE_STATUSES.has(run.status) &&
-    (scoped?.includes(ocid) ?? liveSteps.length > 0)
+    runLooksActive && (scoped?.includes(ocid) ?? liveSteps.length > 0)
 
   if (inActiveScope) {
     return {
       syncRunId: run!.sync_run_id,
-      runStatus: run!.status,
+      runStatus: hasActiveSteps(run!) ? 'running' : run!.status,
       steps: liveSteps,
     }
   }
 
-  if (run && TERMINAL_STATUSES.has(run.status) && liveSteps.length > 0) {
+  if (run && isRunFullyTerminal(run) && liveSteps.length > 0) {
     return {
       syncRunId: run.sync_run_id,
       runStatus: run.status,
@@ -192,7 +202,7 @@ export function useOciSyncRun(
 
   const applyRun = useCallback((detail: SyncRunDetail) => {
     setRun((prev) => (shouldUpdateRun(prev, detail) ? detail : prev))
-    if (TERMINAL_STATUSES.has(detail.status)) {
+    if (isRunFullyTerminal(detail)) {
       setCompartmentInventory((prev) => mergeRunIntoInventory(prev, detail, false))
     }
   }, [])
@@ -222,7 +232,7 @@ export function useOciSyncRun(
 
         applyRun(detail)
 
-        if (TERMINAL_STATUSES.has(detail.status)) {
+        if (isRunFullyTerminal(detail)) {
           stopPolling()
           if (completedRef.current !== syncRunId) {
             completedRef.current = syncRunId
@@ -249,7 +259,7 @@ export function useOciSyncRun(
       const detail = await fetchDetail(syncRunId)
       if (!detail) return
       applyRun(detail)
-      if (!TERMINAL_STATUSES.has(detail.status)) {
+      if (!isRunFullyTerminal(detail)) {
         setPolling(true)
         pollTimerRef.current = setTimeout(() => void pollRun(syncRunId), POLL_INTERVAL_MS)
       }
@@ -343,13 +353,14 @@ export function useOciSyncRun(
   }, [paths, run, trackRun])
 
   const dismiss = useCallback(() => {
-    if (run && ACTIVE_STATUSES.has(run.status)) return
+    if (run && (ACTIVE_STATUSES.has(run.status) || hasActiveSteps(run))) return
     setPanelDismissed(true)
     setError('')
   }, [run])
 
   const showPanel =
-    run !== null && (!panelDismissed || ACTIVE_STATUSES.has(run.status))
+    run !== null &&
+    (!panelDismissed || ACTIVE_STATUSES.has(run.status) || hasActiveSteps(run))
 
   const getCompartmentDisplay = useCallback(
     (ocid: string) => getCompartmentInventoryDisplay(ocid, run, compartmentInventory),
