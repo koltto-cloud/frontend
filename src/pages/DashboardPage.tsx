@@ -423,132 +423,141 @@ export default function DashboardPage() {
             )}
           </section>
 
-          <section className="card dashboard-cost-card">
-            <div className="dashboard-section-header">
-              <h2>Cost breakdown</h2>
-              <p className="dashboard-cost-subtitle">
-                Top 10 services by spend in this range ({cloudLabel})
-              </p>
-            </div>
-            <Alert type="error">{breakdownError}</Alert>
-            {breakdownLoading && !breakdown ? (
-              <p className="loading">Loading breakdown…</p>
-            ) : (
-              <>
-                {breakdownLoading && breakdown != null && (
-                  <p className="dashboard-cost-updating" aria-live="polite">
-                    Updating…
-                  </p>
-                )}
-                <BarChart items={serviceChart} formatValue={(v) => formatMoney(v, currency)} />
-              </>
-            )}
-          </section>
+          <div className="dashboard-breakdown-grid">
+            <section className="card dashboard-cost-card dashboard-panel">
+              <div className="dashboard-section-header">
+                <h2>By service</h2>
+                <p className="dashboard-cost-subtitle">
+                  Top 10 services ({cloudLabel})
+                </p>
+              </div>
+              <Alert type="error">{breakdownError}</Alert>
+              {breakdownLoading && !breakdown ? (
+                <p className="loading">Loading…</p>
+              ) : (
+                <>
+                  {breakdownLoading && breakdown != null && (
+                    <p className="dashboard-cost-updating" aria-live="polite">
+                      Updating…
+                    </p>
+                  )}
+                  <BarChart
+                    variant="dashboard"
+                    items={serviceChart}
+                    formatValue={(v) => formatMoney(v, currency)}
+                  />
+                </>
+              )}
+            </section>
 
-          <section className="card dashboard-cost-card">
-            <div className="dashboard-section-header">
-              <h2>Top compartments</h2>
-              <p className="dashboard-cost-subtitle">
-                Top 10 compartments by spend in this range ({cloudLabel})
-              </p>
-            </div>
-            <Alert type="error">{compartmentError}</Alert>
-            {compartmentLoading && !compartmentBreakdown ? (
-              <p className="loading">Loading compartments…</p>
-            ) : (
-              <>
-                {compartmentLoading && compartmentBreakdown != null && (
-                  <p className="dashboard-cost-updating" aria-live="polite">
-                    Updating…
-                  </p>
-                )}
-                <BarChart
-                  items={compartmentChart}
-                  formatValue={(v) => formatMoney(v, currency)}
-                />
-              </>
-            )}
-          </section>
+            <section className="card dashboard-cost-card dashboard-panel">
+              <div className="dashboard-section-header">
+                <h2>By compartment</h2>
+                <p className="dashboard-cost-subtitle">
+                  Top 10 compartments ({cloudLabel})
+                </p>
+              </div>
+              <Alert type="error">{compartmentError}</Alert>
+              {compartmentLoading && !compartmentBreakdown ? (
+                <p className="loading">Loading…</p>
+              ) : (
+                <>
+                  {compartmentLoading && compartmentBreakdown != null && (
+                    <p className="dashboard-cost-updating" aria-live="polite">
+                      Updating…
+                    </p>
+                  )}
+                  <BarChart
+                    variant="dashboard"
+                    items={compartmentChart}
+                    formatValue={(v) => formatMoney(v, currency)}
+                  />
+                </>
+              )}
+            </section>
+          </div>
 
-          <section className="card dashboard-cost-card">
-            <div className="dashboard-section-header">
-              <h2>Opportunities</h2>
-              <p className="dashboard-cost-subtitle">
-                Underutilized compute among top spenders (last 14 days utilization)
-              </p>
-            </div>
-            {opportunitiesError ? <Alert type="error">{opportunitiesError}</Alert> : null}
-            {!opportunitiesEnabled || (opportunitiesLoading && opportunities == null) ? (
-              <p className="loading">Loading opportunities…</p>
-            ) : (
-              <>
-                {opportunitiesLoading && opportunities != null && (
-                  <p className="dashboard-cost-updating" aria-live="polite">
-                    Updating…
-                  </p>
-                )}
-                {opportunityRows.length === 0 ? (
-                  <p className="empty">
-                    No underutilized high-cost compute in the top spenders.
-                  </p>
-                ) : (
-                  <ul className="dashboard-opportunity-list">
-                    {opportunityRows.map((row) => (
-                      <li key={row.resourceId} className="dashboard-opportunity-row">
-                        <div className="dashboard-opportunity-main">
-                          <Link
-                            to="/oci/monitoring"
-                            className="dashboard-opportunity-name"
-                            title={row.resourceId}
-                          >
-                            {row.name}
-                          </Link>
-                          <span className="util-badge util-badge-under">{row.statusLabel}</span>
-                        </div>
-                        <div className="dashboard-opportunity-meta">
-                          <span>{formatMoney(row.totalCost, currency)}</span>
-                          <span>CPU {formatUtilPct(row.cpuMean)}</span>
-                          <span>Mem {formatUtilPct(row.memMean)}</span>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </>
-            )}
-          </section>
+          <div className="dashboard-breakdown-grid">
+            <section className="card dashboard-cost-card dashboard-panel">
+              <div className="dashboard-section-header">
+                <h2>Opportunities</h2>
+                <p className="dashboard-cost-subtitle">
+                  Underutilized compute among top spenders
+                </p>
+              </div>
+              {opportunitiesError ? <Alert type="error">{opportunitiesError}</Alert> : null}
+              {!opportunitiesEnabled || (opportunitiesLoading && opportunities == null) ? (
+                <p className="loading">Loading opportunities…</p>
+              ) : (
+                <>
+                  {opportunitiesLoading && opportunities != null && (
+                    <p className="dashboard-cost-updating" aria-live="polite">
+                      Updating…
+                    </p>
+                  )}
+                  {opportunityRows.length === 0 ? (
+                    <p className="empty">
+                      No underutilized high-cost compute in the top spenders.
+                    </p>
+                  ) : (
+                    <ul className="dashboard-opportunity-list">
+                      {opportunityRows.map((row) => (
+                        <li key={row.resourceId} className="dashboard-opportunity-row">
+                          <div className="dashboard-opportunity-main">
+                            <Link
+                              to="/oci/monitoring"
+                              className="dashboard-opportunity-name"
+                              title={row.resourceId}
+                            >
+                              {row.name}
+                            </Link>
+                            <span className="util-badge util-badge-under">{row.statusLabel}</span>
+                          </div>
+                          <div className="dashboard-opportunity-meta">
+                            <span>{formatMoney(row.totalCost, currency)}</span>
+                            <span>CPU {formatUtilPct(row.cpuMean)}</span>
+                            <span>Mem {formatUtilPct(row.memMean)}</span>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </>
+              )}
+            </section>
 
-          <section className="card dashboard-cost-card">
-            <div className="dashboard-section-header">
-              <h2>Notable changes</h2>
-              <p className="dashboard-cost-subtitle">Biggest day-over-day spend increases in this range</p>
-            </div>
-            {costLoading && !costSeries ? (
-              <p className="loading">Loading…</p>
-            ) : spikes.length === 0 ? (
-              <p className="empty">No notable daily increases in this range.</p>
-            ) : (
-              <ul className="dashboard-spike-list">
-                {spikes.map((spike) => (
-                  <li key={spike.date} className="dashboard-spike-row">
-                    <div className="dashboard-spike-main">
-                      <span className="dashboard-spike-date">{spike.date}</span>
-                      <span className="dashboard-spike-delta">
-                        +{formatMoney(spike.delta, currency)}
-                      </span>
-                    </div>
-                    <div className="dashboard-spike-meta">
-                      <span>
-                        {formatMoney(spike.previousCost, currency)} →{' '}
-                        {formatMoney(spike.cost, currency)}
-                      </span>
-                      <span>{formatPct(spike.pctChange)}</span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+            <section className="card dashboard-cost-card dashboard-panel">
+              <div className="dashboard-section-header">
+                <h2>Notable changes</h2>
+                <p className="dashboard-cost-subtitle">Biggest day-over-day spend increases</p>
+              </div>
+              {costLoading && !costSeries ? (
+                <p className="loading">Loading…</p>
+              ) : spikes.length === 0 ? (
+                <p className="empty">No notable daily increases in this range.</p>
+              ) : (
+                <ul className="dashboard-spike-list">
+                  {spikes.map((spike) => (
+                    <li key={spike.date} className="dashboard-spike-row">
+                      <div className="dashboard-spike-main">
+                        <span className="dashboard-spike-date">{spike.date}</span>
+                        <span className="dashboard-spike-delta">
+                          +{formatMoney(spike.delta, currency)}
+                        </span>
+                      </div>
+                      <div className="dashboard-spike-meta">
+                        <span>
+                          {formatMoney(spike.previousCost, currency)} →{' '}
+                          {formatMoney(spike.cost, currency)}
+                        </span>
+                        <span>{formatPct(spike.pctChange)}</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          </div>
 
           <section className="card dashboard-cost-card">
             <div className="dashboard-section-header">
