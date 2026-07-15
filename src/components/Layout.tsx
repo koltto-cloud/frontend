@@ -39,6 +39,17 @@ const NAV = [
   },
 ]
 
+const STAFF_NAV = [
+  {
+    section: 'Platform',
+    links: [{ to: '/admin/maintenance', label: 'Maintenance' }],
+  },
+]
+
+function isStaff(userType: string | undefined): boolean {
+  return userType === 'staff' || userType === 'super_admin'
+}
+
 function topbarRoleClass(userType: string | undefined): string {
   if (userType === 'super_admin') return ' topbar--super-admin'
   if (userType === 'staff') return ' topbar--staff'
@@ -49,13 +60,15 @@ export default function Layout() {
   const { user, companies, activeCompany, connections, connection, switchCompany, switchConnection, logout } =
     useAuth()
 
+  const navGroups = isStaff(user?.user_type) ? [...NAV, ...STAFF_NAV] : NAV
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
         <div className="sidebar-brand">
           <p className="sidebar-brand-name">KÖLTTÖ</p>
         </div>
-        {NAV.map((group) => (
+        {navGroups.map((group) => (
           <div key={group.section} className="nav-section">
             <p className="nav-section-title">{group.section}</p>
             {group.links.map((link) => (

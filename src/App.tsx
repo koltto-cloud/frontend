@@ -23,6 +23,7 @@ import UsagePage from '@/pages/oci/UsagePage'
 import InventoryPage from '@/pages/oci/InventoryPage'
 import MonitoringPage from '@/pages/oci/MonitoringPage'
 import PricingPage from '@/pages/oci/PricingPage'
+import MaintenancePage from '@/pages/admin/MaintenancePage'
 
 export default function App() {
   return (
@@ -41,6 +42,7 @@ export default function App() {
               <Route path="/memberships" element={<MembershipsPage />} />
               <Route path="/audit" element={<AuditLogsPage />} />
               <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/admin/maintenance" element={<MaintenancePage />} />
               <Route path="/catalog/plans" element={<PlansPage />} />
               <Route path="/catalog/features" element={<FeaturesPage />} />
               <Route path="/catalog/plan-features" element={<PlanFeaturesPage />} />
