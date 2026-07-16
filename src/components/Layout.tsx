@@ -3,8 +3,25 @@ import { useAuth } from '@/context/AuthContext'
 import { useSyncsPaused } from '@/hooks/useSyncsPaused'
 import SyncsPausedBanner from '@/components/SyncsPausedBanner'
 
-const NAV = [
+type NavLinkItem = { to: string; label: string }
+type NavSection = { section: string; links: NavLinkItem[] }
+
+/** Customer-facing: workspace + cloud products */
+const CUSTOMER_NAV: NavSection[] = [
   { section: 'General', links: [{ to: '/', label: 'Dashboard' }] },
+  {
+    section: 'OCI Cloud',
+    links: [
+      { to: '/oci/connections', label: 'Connections' },
+      { to: '/oci/usage', label: 'Usage & Costs' },
+      { to: '/oci/inventory', label: 'Inventory' },
+      { to: '/oci/monitoring', label: 'Monitoring' },
+    ],
+  },
+]
+
+/** Staff / internal ops — not shown to customers */
+const INTERNAL_NAV: NavSection[] = [
   {
     section: 'Identity',
     links: [
@@ -26,18 +43,6 @@ const NAV = [
     ],
   },
   {
-    section: 'OCI Cloud',
-    links: [
-      { to: '/oci/connections', label: 'Connections' },
-      { to: '/oci/usage', label: 'Usage & Costs' },
-      { to: '/oci/inventory', label: 'Inventory' },
-      { to: '/oci/monitoring', label: 'Monitoring' },
-    ],
-  },
-]
-
-const STAFF_NAV = [
-  {
     section: 'Admin',
     links: [
       { to: '/audit', label: 'Audit Logs' },
@@ -57,14 +62,35 @@ function topbarRoleClass(userType: string | undefined): string {
   return ''
 }
 
+function NavSections({ groups }: { groups: NavSection[] }) {
+  return (
+    <>
+      {groups.map((group) => (
+        <div key={group.section} className="nav-section">
+          <p className="nav-section-title">{group.section}</p>
+          {group.links.map((link) => (
+            <NavLink
+              key={link.to}
+              to={link.to}
+              className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+              end={link.to === '/'}
+            >
+              {link.label}
+            </NavLink>
+          ))}
+        </div>
+      ))}
+    </>
+  )
+}
+
 export default function Layout() {
   const { user, companies, activeCompany, connections, connection, switchCompany, switchConnection, logout } =
     useAuth()
   const location = useLocation()
   const onOciPage = location.pathname.startsWith('/oci')
   const { syncsPaused, message: syncsPausedMessage } = useSyncsPaused(onOciPage)
-
-  const navGroups = isStaff(user?.user_type) ? [...NAV, ...STAFF_NAV] : NAV
+  const staff = isStaff(user?.user_type)
 
   return (
     <div className="app-shell">
@@ -72,21 +98,21 @@ export default function Layout() {
         <div className="sidebar-brand">
           <p className="sidebar-brand-name">KÖLTTÖ</p>
         </div>
-        {navGroups.map((group) => (
-          <div key={group.section} className="nav-section">
-            <p className="nav-section-title">{group.section}</p>
-            {group.links.map((link) => (
-              <NavLink
-                key={link.to}
-                to={link.to}
-                className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
-                end={link.to === '/'}
-              >
-                {link.label}
-              </NavLink>
-            ))}
-          </div>
-        ))}
+
+        <div className="nav-band">
+          <NavSections groups={CUSTOMER_NAV} />
+        </div>
+
+        {staff ? (
+          <>
+            <div className="nav-band-divider" role="separator" aria-label="Internal">
+              <span className="nav-band-divider-label">Internal</span>
+            </div>
+            <div className="nav-band nav-band--internal">
+              <NavSections groups={INTERNAL_NAV} />
+            </div>
+          </>
+        ) : null}
       </aside>
 
       <div className="main">
