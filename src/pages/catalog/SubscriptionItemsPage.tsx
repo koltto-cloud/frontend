@@ -42,7 +42,7 @@ export default function SubscriptionItemsPage() {
 
 
   const openView = async (subId: string) => {
-    const pfId = prompt('Enter plan_feature_id for this subscription item:')
+    const pfId = prompt('Enter service bundle ID (plan_feature_id) for this subscription item:')
     if (!pfId) return
     setViewKey({ subscriptionId: subId, planFeatureId: pfId })
     setViewData(null)
@@ -63,13 +63,13 @@ export default function SubscriptionItemsPage() {
       <h1 className="page-title">Subscription Items</h1>
       <p className="alert alert-info" style={{ marginTop: 0 }}>
         Subscription items are <strong>not created directly</strong>. They are auto-generated when you
-        create a subscription: the backend copies every plan feature from the selected plan into
-        subscription items. Flow: Features → Plan → Plan Features →{' '}
+        create a subscription: the backend copies every service bundle from the selected plan into
+        subscription items. Flow: Services → Plan → Service Bundles →{' '}
         <a href="/billing/subscriptions">Create subscription</a> → view items here.
       </p>
       <div className="filters">
         <label>Subscription ID <input value={subscriptionId} onChange={(e) => setSubscriptionId(e.target.value)} /></label>
-        <label>Plan feature ID <input value={planFeatureId} onChange={(e) => setPlanFeatureId(e.target.value)} /></label>
+        <label>Bundle ID <input value={planFeatureId} onChange={(e) => setPlanFeatureId(e.target.value)} /></label>
         <button type="button" className="btn btn-primary" onClick={() => void reload()}>Search</button>
       </div>
       <Alert type="error">{error || err}</Alert>
@@ -79,7 +79,7 @@ export default function SubscriptionItemsPage() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>Subscription ID</th><th>Company</th><th>Plan</th><th>Feature</th><th>SKU</th><th>Status</th>
+                <th>Subscription ID</th><th>Company</th><th>Plan</th><th>Service</th><th>SKU</th><th>Status</th>
               </tr>
             </thead>
             <tbody>

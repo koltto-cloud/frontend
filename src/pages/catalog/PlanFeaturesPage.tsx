@@ -118,7 +118,7 @@ export default function PlanFeaturesPage() {
         method: 'PUT',
         body: { sku: editForm.sku, status: editForm.status, notes: editForm.notes || null },
       })
-      setMsg('Plan feature updated.')
+      setMsg('Service bundle updated.')
       setEditRow(null)
       void reload()
     } catch (e) {
@@ -135,7 +135,7 @@ export default function PlanFeaturesPage() {
         method: 'POST',
         body: { ...createForm, notes: createForm.notes || null },
       })
-      setMsg('Plan feature created.')
+      setMsg('Service bundle created.')
       setShowCreate(false)
       setCreateForm(emptyCreateForm)
       void reload()
@@ -145,12 +145,12 @@ export default function PlanFeaturesPage() {
   }
 
   const handleDelete = async (row: PlanFeatureRow) => {
-    if (!confirm(`Delete plan feature ${row.sku}?`)) return
+    if (!confirm(`Delete service bundle ${row.sku}?`)) return
     setErr('')
     setMsg('')
     try {
       await apiRequest(`/api/v1/catalog/plan_feature/${row.plan_feature_id}`, { method: 'DELETE' })
-      setMsg('Plan feature deleted.')
+      setMsg('Service bundle deleted.')
       void reload()
     } catch (e) {
       setErr(formatApiError(e))
@@ -159,7 +159,7 @@ export default function PlanFeaturesPage() {
 
   return (
     <>
-      <h1 className="page-title">Plan Features</h1>
+      <h1 className="page-title">Service Bundles</h1>
       <div className="toolbar">
         <button
           type="button"
@@ -169,7 +169,7 @@ export default function PlanFeaturesPage() {
             setShowCreate(true)
           }}
         >
-          Create plan feature
+          Create service bundle
         </button>
       </div>
       <div className="filters">
@@ -183,7 +183,7 @@ export default function PlanFeaturesPage() {
           </select>
         </label>
         <label>
-          Feature
+          Service
           <select value={featureId} onChange={(e) => setFeatureId(e.target.value)}>
             <option value="">All</option>
             {featureOptions.map((f) => (
@@ -209,7 +209,7 @@ export default function PlanFeaturesPage() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>Plan feature ID</th><th>Plan</th><th>Feature</th><th>SKU</th><th>Status</th><th>Actions</th>
+                <th>Bundle ID</th><th>Plan</th><th>Service</th><th>SKU</th><th>Status</th><th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -247,7 +247,7 @@ export default function PlanFeaturesPage() {
         </>
       )}
       {showCreate && (
-        <Modal title="Create plan feature" onClose={() => setShowCreate(false)}>
+        <Modal title="Create service bundle" onClose={() => setShowCreate(false)}>
           <form className="inline-form" onSubmit={(e) => void handleCreate(e)}>
             <div className="form-field">
               <label>Plan</label>
@@ -263,13 +263,13 @@ export default function PlanFeaturesPage() {
               </select>
             </div>
             <div className="form-field">
-              <label>Feature</label>
+              <label>Service</label>
               <select
                 value={createForm.feature_id}
                 onChange={(e) => setCreateForm({ ...createForm, feature_id: e.target.value })}
                 required
               >
-                <option value="">Select feature…</option>
+                <option value="">Select service…</option>
                 {featureOptions.map((f) => (
                   <option key={f.feature_id} value={f.feature_id}>{f.name}</option>
                 ))}
@@ -303,7 +303,7 @@ export default function PlanFeaturesPage() {
         </Modal>
       )}
       {viewId && (
-        <Modal title="Plan feature details" onClose={() => setViewId(null)} wide>
+        <Modal title="Service bundle details" onClose={() => setViewId(null)} wide>
           {viewLoading ? <p className="loading">Loading…</p> : viewData && <JsonViewer data={viewData} />}
         </Modal>
       )}

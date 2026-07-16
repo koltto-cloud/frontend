@@ -34,8 +34,8 @@ const INTERNAL_NAV: NavSection[] = [
     section: 'Catalog & Billing',
     links: [
       { to: '/catalog/plans', label: 'Plans' },
-      { to: '/catalog/features', label: 'Features' },
-      { to: '/catalog/plan-features', label: 'Plan Features' },
+      { to: '/catalog/features', label: 'Services' },
+      { to: '/catalog/plan-features', label: 'Service Bundles' },
       { to: '/catalog/subscription-items', label: 'Subscription Items' },
       { to: '/billing/subscriptions', label: 'Subscriptions' },
       { to: '/billing/invoices', label: 'Invoices' },

@@ -16,6 +16,16 @@ interface SubscriptionRow {
   end_date?: string | null
 }
 
+interface CompanyOption {
+  company_id: string
+  name: string
+}
+
+interface PlanOption {
+  plan_id: string
+  name: string
+}
+
 export default function SubscriptionsPage() {
   const [companyId, setCompanyId] = useState('')
   const [subStatus, setSubStatus] = useState('')
@@ -37,6 +47,18 @@ export default function SubscriptionsPage() {
     end_date: '',
   })
 
+  const { data: companies } = useAsyncData(
+    () => apiRequest<CompanyOption[]>('/api/v1/identity/companies/list'),
+    [],
+  )
+  const { data: plans } = useAsyncData(
+    () =>
+      apiRequest<PlanOption[]>('/api/v1/catalog/plan/list', {
+        query: { plan_status: 'active' },
+      }),
+    [],
+  )
+
   const { data, error, loading, reload } = useAsyncData(
     () =>
       apiRequest<SubscriptionRow[]>('/api/v1/billing/subscription/list', {
@@ -46,6 +68,8 @@ export default function SubscriptionsPage() {
   )
 
   const rows = data ?? []
+  const companyOptions = companies ?? []
+  const planOptions = plans ?? []
   const { page, pageSize, pageItems, totalItems, setPage, setPageSize } =
     useClientPagination(rows)
 
@@ -126,10 +150,18 @@ export default function SubscriptionsPage() {
         <button type="button" className="btn btn-primary" onClick={() => setShowCreate(true)}>Create subscription</button>
       </div>
       <p className="alert alert-info">
-        Creating a subscription also creates its subscription items automatically (one per plan feature on the plan).
+        Creating a subscription also creates its subscription items automatically (one per service bundle on the plan).
       </p>
       <div className="filters">
-        <label>Company ID <input value={companyId} onChange={(e) => setCompanyId(e.target.value)} /></label>
+        <label>
+          Company
+          <select value={companyId} onChange={(e) => setCompanyId(e.target.value)}>
+            <option value="">All</option>
+            {companyOptions.map((c) => (
+              <option key={c.company_id} value={c.company_id}>{c.name}</option>
+            ))}
+          </select>
+        </label>
         <label>
           Status
           <select value={subStatus} onChange={(e) => setSubStatus(e.target.value)}>
@@ -186,8 +218,32 @@ export default function SubscriptionsPage() {
       {showCreate && (
         <Modal title="Create subscription" onClose={() => setShowCreate(false)}>
           <form className="inline-form" onSubmit={(e) => void handleCreate(e)}>
-            <div className="form-field"><label>Company ID</label><input value={createForm.company_id} onChange={(e) => setCreateForm({ ...createForm, company_id: e.target.value })} required /></div>
-            <div className="form-field"><label>Plan ID</label><input value={createForm.plan_id} onChange={(e) => setCreateForm({ ...createForm, plan_id: e.target.value })} required /></div>
+            <div className="form-field">
+              <label>Company</label>
+              <select
+                value={createForm.company_id}
+                onChange={(e) => setCreateForm({ ...createForm, company_id: e.target.value })}
+                required
+              >
+                <option value="">Select company…</option>
+                {companyOptions.map((c) => (
+                  <option key={c.company_id} value={c.company_id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="form-field">
+              <label>Plan</label>
+              <select
+                value={createForm.plan_id}
+                onChange={(e) => setCreateForm({ ...createForm, plan_id: e.target.value })}
+                required
+              >
+                <option value="">Select plan…</option>
+                {planOptions.map((p) => (
+                  <option key={p.plan_id} value={p.plan_id}>{p.name}</option>
+                ))}
+              </select>
+            </div>
             <div className="form-field"><label>Start date</label><input type="datetime-local" value={createForm.start_date} onChange={(e) => setCreateForm({ ...createForm, start_date: e.target.value })} required /></div>
             <div className="form-field"><label>End date (optional)</label><input type="datetime-local" value={createForm.end_date} onChange={(e) => setCreateForm({ ...createForm, end_date: e.target.value })} /></div>
             <button type="submit" className="btn btn-primary">Create</button>

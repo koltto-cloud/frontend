@@ -40,6 +40,17 @@ export default function MembershipsPage() {
     active: true,
   })
 
+  const { data: users } = useAsyncData(
+    () => apiRequest<{ user_id: string; email: string; first_name: string; last_name: string }[]>(
+      '/api/v1/identity/users/list',
+    ),
+    [],
+  )
+  const { data: companies } = useAsyncData(
+    () => apiRequest<{ company_id: string; name: string }[]>('/api/v1/identity/companies/list'),
+    [],
+  )
+
   const { data, error, loading, reload } = useAsyncData(
     () =>
       apiRequest<MembershipRow[]>('/api/v1/identity/memberships/list', {
@@ -54,6 +65,8 @@ export default function MembershipsPage() {
   )
 
   const rows = data ?? []
+  const userOptions = users ?? []
+  const companyOptions = companies ?? []
   const { page, pageSize, pageItems, totalItems, setPage, setPageSize } =
     useClientPagination(rows)
 
@@ -248,20 +261,34 @@ export default function MembershipsPage() {
         <Modal title="Create membership" onClose={() => setShowCreate(false)}>
           <form className="inline-form" onSubmit={(e) => void handleCreate(e)}>
             <div className="form-field">
-              <label>User ID</label>
-              <input
+              <label>User</label>
+              <select
                 value={createForm.user_id}
                 onChange={(e) => setCreateForm({ ...createForm, user_id: e.target.value })}
                 required
-              />
+              >
+                <option value="">Select user…</option>
+                {userOptions.map((u) => (
+                  <option key={u.user_id} value={u.user_id}>
+                    {u.email} ({u.first_name} {u.last_name})
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="form-field">
-              <label>Company ID</label>
-              <input
+              <label>Company</label>
+              <select
                 value={createForm.company_id}
                 onChange={(e) => setCreateForm({ ...createForm, company_id: e.target.value })}
                 required
-              />
+              >
+                <option value="">Select company…</option>
+                {companyOptions.map((c) => (
+                  <option key={c.company_id} value={c.company_id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="form-field">
               <label>Role</label>
