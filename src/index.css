@@ -107,6 +107,43 @@ button {
   margin-bottom: 1.1rem;
 }
 
+.nav-band {
+  padding-bottom: 0.15rem;
+}
+
+.nav-band-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin: 0.35rem 0.85rem 1rem;
+}
+
+.nav-band-divider::before,
+.nav-band-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(148, 163, 184, 0.35),
+    transparent
+  );
+}
+
+.nav-band-divider-label {
+  flex-shrink: 0;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.nav-band--internal .nav-section-title {
+  color: #7c8aa0;
+}
+
 .nav-section-title {
   font-size: 0.68rem;
   text-transform: uppercase;
