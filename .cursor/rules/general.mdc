@@ -8,27 +8,26 @@ alwaysApply: false
 # Markdown Rules
 
 ## File Organization
-**STRICT: Prefer only this repo’s `README.md` for markdown docs** (plus allowed `documentation/` files covered by `documentation.mdc`).
+Prefer only this repo’s `README.md` for markdown docs. Do not invent extra guides.
 
-Do not invent extra markdown guides. Sibling repos keep their own README.
+(Product tracker / ARCHITECTURE / DEPLOYMENT live in the sibling backend repo — leave those alone from frontend work unless the user asks.)
 
 ## Documentation Updates
 - **NEVER automatically update README files when code changes**
 - Always ask first: "Should I update the README to reflect this change?"
 - Only update after explicit confirmation
-- Documentation should lag behind code (prototype pace)
 
 ## Content Guidelines
 
 ### README.md
-- How to run this repo locally
+- How to run locally
 - Start/stop commands
 - Project structure
-- Key commands
+- Key commands (`npm run dev`, build, lint)
 
 ## Formatting
 - ATX-style headers (# ## ###)
 - One blank line between sections
-- Code blocks with language: ```python
+- Code blocks with language: ```ts
 - Lists: `-` for unordered, `1.` for ordered
 - Keep it scannable and concise

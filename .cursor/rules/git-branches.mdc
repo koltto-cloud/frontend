@@ -10,23 +10,22 @@ Do **not** commit Sentry fixes or features straight to `main`. Use a branch, fin
 ## Sentry fixes
 
 - **Branch:** `fix/sentry-<ID>-<short-slug>`
-  - Example: `fix/sentry-7-account-status-filter`
-  - `<ID>` is the Sentry short id (`7`, `X`, `PYTHON-FASTAPI-6`, etc.)
+  - Example: `fix/sentry-7-company-switcher-crash`
+  - `<ID>` is the Sentry short id (`7`, `X`, etc.)
 - **Commits:** every commit subject includes the same id + short message
-  - Example: `fix(sentry-7): compare AccountStatus as enum in filters`
-  - Example: `fix(PYTHON-FASTAPI-X): skip missing ARQ keys when listing syncs`
-- One Sentry issue → one branch when practical; related twins (K/J) may share a branch if the fix is one change.
+  - Example: `fix(sentry-7): guard null company when switching connections`
+- One Sentry issue → one branch when practical; related twins may share a branch if the fix is one change.
 
 ## Features
 
 - **Branch:** `feat/<short-slug>`
-  - Example: `feat/company-schema-revision`
+  - Example: `feat/dashboard-cost-breakdown`
 - **Commits:** prefer `feat:` (or clear subject starting with the feature intent)
-  - Example: `feat: stamp tenant alembic revision on company integrations`
+  - Example: `feat: add compartment cost bars on the dashboard`
 
 ## Merge when complete
 
-1. Finish the fix/feature on its branch (tests / smoke as needed).
+1. Finish the fix/feature on its branch (smoke in browser / preview as needed).
 2. Open a PR into `main` (or merge the branch into `main` when the user asks).
 3. Do not leave finished Sentry/feature work only on a long-lived branch with no merge plan.
 

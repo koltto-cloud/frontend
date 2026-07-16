@@ -1,5 +1,5 @@
 ---
-description: Frontend development rules for Cloudey.app
+description: Frontend development rules for the Cloudey / Koltto React app
 globs:
   - "**/*.{jsx,tsx,js,ts,css}"
   - "package.json"
@@ -10,21 +10,29 @@ alwaysApply: false
 # Frontend Development Rules
 
 ## Tech Stack
-- React + Vite
-- Tailwind CSS for styling (no custom CSS unless absolutely necessary)
-- Framer Motion for animations
+- React 19 + Vite + TypeScript
+- React Router for routing
+- Recharts for charts
+- Styling via `src/index.css` (custom CSS variables/classes — not Tailwind)
+- Path alias `@/` → `src/`
 
 ## Code Style
-- Use functional components with hooks
-- Component names: PascalCase (e.g., `CostDashboard.jsx`)
-- Keep components small and focused (KISS principle)
-- Type safety with PropTypes or TypeScript
+- Functional components with hooks
+- Component / page names: PascalCase (e.g. `DashboardPage.tsx`, `DataTable.tsx`)
+- Keep components small and focused
+- Prefer TypeScript types over loose `any`
+- Reuse existing hooks (`useAsyncData`, `useClientPagination`, OCI job hooks) before inventing new ones
 
 ## Project Structure
-- Components in `src/components/`
-- Pages/views in `src/pages/`
-- Utilities in `src/utils/`
+- Pages → `src/pages/<domain>/`
+- Shared UI → `src/components/`
+- Hooks → `src/hooks/`
+- Auth → `src/context/AuthContext.tsx`
+- API client / types → `src/api/client.ts`
+- OCI / dashboard domain logic → `src/oci/`, `src/dashboard/`
+- Routes → `src/App.tsx`; shell / nav → `src/components/Layout.tsx`
 
 ## Development
-- This is not the priority—backend first
-- Build frontend only after backend is validated
+- Local: `npm run dev` (Vite proxies `/api` per `vite.config.ts`)
+- API base: `VITE_API_URL` (see `src/api/client.ts`)
+- Edit `src/` directly; `old_files/` is archived BSS pipeline — not the edit path

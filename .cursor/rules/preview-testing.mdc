@@ -1,37 +1,34 @@
 ---
-description: Safe preview testing with Neon / Railway / Vercel MCPs — keep prod untouched and costs low
+description: Safe frontend preview testing with Vercel — keep prod untouched and costs low
 alwaysApply: true
 ---
 
 # Preview testing (prod-safe)
 
-When testing a `fix/sentry-…` or `feat/…` branch, **do not point preview work at production Neon / Railway prod / Vercel Production** unless the user explicitly asks to deploy to prod.
+When testing a `fix/sentry-…` or `feat/…` branch, **do not promote to Vercel Production** unless the user explicitly asks.
 
-## Default stack for a cloud test
+## Default stack for a frontend cloud test
 
 1. **Git** — work on the named branch; open a PR when ready to preview.
-2. **Neon (platform DB)** — `create_branch` from prod/default with a short name (`preview/sentry-7`) and **`expiresAt`** (e.g. 48–72h). Use `get_connection_string` for that branch only.
-3. **Railway** — prefer a **staging** service/env or a **PR Environment** wired to the preview Neon URL. Use `railway-agent` / logs / status to verify. Never set preview `DATABASE_URL` to prod.
-4. **Vercel** — use the PR **Preview** deployment; set preview `VITE_*` / API base URL to the **preview Railway** URL, not production API.
-5. **Cleanup** — after merge/close: delete Neon preview branch (`delete_branch`, ask first), confirm Railway PR env is gone, leave Vercel preview to expire.
+2. **Vercel** — PR workflow (`.github/workflows/preview-vercel.yml`) builds and aliases to `STAGING_FRONTEND_URL` (e.g. `https://stg-portal.koltto.com`). Test there, not a random `*.vercel.app` URL.
+3. **API URL** — CI sets `VITE_API_URL` at build time:
+   - Frontend-only PR → production Railway API
+   - Same branch name as an open **backend** PR → that PR’s preview Railway API (from the backend PR comment)
+4. Do **not** add `VITE_API_URL` to Vercel Preview env vars for Git-triggered builds (`vercel.json` skips those). Prefer the CI path above.
 
-## Neon MCP notes
+## What this repo does *not* own
 
-- Safe migrate path: `prepare_database_migration` → verify with `run_sql` on the **temp** branch → user approves → `complete_database_migration`.
-- Tenant DBs are **separate Neon projects** per company. For tenant schema tests, branch **one** staging/tenant project — do not branch every customer Neon.
-- Prefer **one** reusable `dev`/`staging` platform branch over many long-lived previews.
+Neon branches, Railway PR envs, and DB migrations are backend concerns. Prefer **local** `npm run dev` for small UI fixes. Use a cloud preview when you need the staging alias, auth against a real API, or a paired backend PR.
 
-## Cost guardrails (agent must follow)
+## Cost / safety guardrails
 
-- **Cap concurrent cloud previews:** usually **0–1** active Neon preview branch + **0–1** Railway PR/staging stack.
-- Always set Neon `expiresAt` on disposable branches.
-- Do not leave Railway PR environments running after the PR closes.
-- Prefer **local** pytest / frontend for small Sentry fixes; use cloud preview when the change touches schema, deploy, auth, or multi-service behavior.
-- Never “Deploy all” companies from a preview API that still has prod tenant connection strings.
+- Prefer local Vite for small UI/Sentry fixes.
+- Cap concurrent cloud experiments: usually **0–1** active FE preview stack you care about.
+- Never “Deploy all” / mutate prod tenants from a preview that still points at prod APIs unless the user explicitly wants that.
+- Do not promote a Vercel deployment to Production without asking.
 
 ## Ask before
 
-- Creating/deleting Neon branches or projects
-- Applying migrations to main/prod (`complete_database_migration`)
-- Redeploying Railway production
 - Promoting a Vercel deployment to Production
+- Changing preview secrets / `STAGING_FRONTEND_URL` / production API URL vars
+- Pointing a preview build at an API the user did not intend (especially prod)
