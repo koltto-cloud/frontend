@@ -13,7 +13,6 @@ import AuditLogsPage from '@/pages/audit/AuditLogsPage'
 import ProfilePage from '@/pages/ProfilePage'
 import PlansPage from '@/pages/catalog/PlansPage'
 import FeaturesPage from '@/pages/catalog/FeaturesPage'
-import SubscriptionItemsPage from '@/pages/catalog/SubscriptionItemsPage'
 import SubscriptionsPage from '@/pages/billing/SubscriptionsPage'
 import InvoicesPage from '@/pages/billing/InvoicesPage'
 import ConnectionsPage from '@/pages/oci/ConnectionsPage'
@@ -44,7 +43,7 @@ export default function App() {
               <Route path="/catalog/plans" element={<PlansPage />} />
               <Route path="/catalog/features" element={<FeaturesPage />} />
               <Route path="/catalog/plan-features" element={<Navigate to="/catalog/plans" replace />} />
-              <Route path="/catalog/subscription-items" element={<SubscriptionItemsPage />} />
+              <Route path="/catalog/subscription-items" element={<Navigate to="/billing/subscriptions" replace />} />
               <Route path="/billing/subscriptions" element={<SubscriptionsPage />} />
               <Route path="/billing/invoices" element={<InvoicesPage />} />
               <Route path="/billing/invoice-items" element={<Navigate to="/billing/invoices" replace />} />

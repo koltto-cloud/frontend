@@ -733,7 +733,8 @@ button {
 }
 
 .data-table tr.row-plan-expanded td,
-.data-table tr.row-invoice-expanded td {
+.data-table tr.row-invoice-expanded td,
+.data-table tr.row-subscription-expanded td {
   background: #f1f5f9;
 }
 
