@@ -215,7 +215,8 @@ export default function CompaniesPage() {
                 <th>Company ID</th>
                 <th>Name</th>
                 <th>Status</th>
-                <th>Schema ({integration})</th>
+                <th>Current schema</th>
+                <th>Deploy</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -233,16 +234,8 @@ export default function CompaniesPage() {
                   </td>
                   <td>{row.name}</td>
                   <td>{row.status}</td>
-                  <td>
-                    {row.schema_up_to_date ? (
-                      <span title={row.schema_revision ?? undefined}>Up to date</span>
-                    ) : (
-                      <span title={row.schema_revision ?? 'never deployed'}>
-                        Needs deploy
-                        {row.schema_revision ? ` (${row.schema_revision})` : ''}
-                      </span>
-                    )}
-                  </td>
+                  <td title={integration}>{row.schema_revision ?? '—'}</td>
+                  <td>{row.schema_up_to_date ? 'Up to date' : 'Needs deploy'}</td>
                   <td className="actions-cell">
                     <button type="button" className="btn btn-sm" onClick={() => openEdit(row)}>
                       Edit
