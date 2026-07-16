@@ -318,7 +318,7 @@ export default function SubscriptionsPage() {
                                               type="button"
                                               className="id-link"
                                               onClick={() =>
-                                                void openViewItem(item.subscription_id, item.plan_feature_id)
+                                                void openViewItem(item.subscription_id, item.plan_feature_id!)
                                               }
                                             >
                                               {shortId(item.plan_feature_id)}
