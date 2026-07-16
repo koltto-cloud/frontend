@@ -55,10 +55,6 @@ export default function SubscriptionsPage() {
   const [viewData, setViewData] = useState<Record<string, unknown> | null>(null)
   const [viewLoading, setViewLoading] = useState(false)
 
-  const [viewItemKey, setViewItemKey] = useState<{ subscriptionId: string; planFeatureId: string } | null>(null)
-  const [viewItemData, setViewItemData] = useState<Record<string, unknown> | null>(null)
-  const [viewItemLoading, setViewItemLoading] = useState(false)
-
   const [editRow, setEditRow] = useState<SubscriptionRow | null>(null)
   const [editForm, setEditForm] = useState({ status: 'active', start_date: '', end_date: '' })
 
@@ -132,23 +128,6 @@ export default function SubscriptionsPage() {
       setViewId(null)
     } finally {
       setViewLoading(false)
-    }
-  }
-
-  const openViewItem = async (subscriptionId: string, planFeatureId: string) => {
-    setViewItemKey({ subscriptionId, planFeatureId })
-    setViewItemData(null)
-    setViewItemLoading(true)
-    setErr('')
-    try {
-      setViewItemData(
-        await apiRequest(`/api/v1/catalog/subscription_item/${subscriptionId}/${planFeatureId}`),
-      )
-    } catch (e) {
-      setErr(formatApiError(e))
-      setViewItemKey(null)
-    } finally {
-      setViewItemLoading(false)
     }
   }
 
@@ -302,7 +281,6 @@ export default function SubscriptionsPage() {
                                 <table className="nested-table">
                                   <thead>
                                     <tr>
-                                      <th>Bundle ID</th>
                                       <th>Plan</th>
                                       <th>Service</th>
                                       <th>SKU</th>
@@ -312,21 +290,6 @@ export default function SubscriptionsPage() {
                                   <tbody>
                                     {items.map((item, idx) => (
                                       <tr key={item.plan_feature_id || `${item.subscription_id}-${idx}`}>
-                                        <td>
-                                          {item.plan_feature_id ? (
-                                            <button
-                                              type="button"
-                                              className="id-link"
-                                              onClick={() =>
-                                                void openViewItem(item.subscription_id, item.plan_feature_id!)
-                                              }
-                                            >
-                                              {shortId(item.plan_feature_id)}
-                                            </button>
-                                          ) : (
-                                            '—'
-                                          )}
-                                        </td>
                                         <td>{item.plan_name}</td>
                                         <td>{item.feature_name}</td>
                                         <td>{item.sku}</td>
@@ -412,11 +375,6 @@ export default function SubscriptionsPage() {
       {viewId && (
         <Modal title="Subscription details" onClose={() => setViewId(null)} wide>
           {viewLoading ? <p className="loading">Loading…</p> : viewData && <JsonViewer data={viewData} />}
-        </Modal>
-      )}
-      {viewItemKey && (
-        <Modal title="Subscription item details" onClose={() => setViewItemKey(null)} wide>
-          {viewItemLoading ? <p className="loading">Loading…</p> : viewItemData && <JsonViewer data={viewItemData} />}
         </Modal>
       )}
     </>
