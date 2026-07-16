@@ -10,18 +10,18 @@ When testing a `fix/sentry-…` or `feat/…` branch, **do not promote to Vercel
 ## Default stack for a frontend cloud test
 
 1. **Git** — work on the named branch; open a PR when ready to preview.
-2. **Pair a backend preview** (required to update `stg-portal`):
+2. **Pair a backend preview** (preferred for any writes):
    - Same branch name as an open backend PR, **or**
    - PR body line: `Backend-PR: #52`, **or**
    - Label: `backend-pr-52`
-3. **Vercel** — PR workflow builds with that backend PR’s Railway preview as `VITE_API_URL` and aliases `STAGING_FRONTEND_URL` (e.g. `https://stg-portal.koltto.com`). Test there, not a random `*.vercel.app` URL.
-4. Do **not** add `VITE_API_URL` to Vercel Preview env vars for Git-triggered builds (`vercel.json` skips those).
+3. **Vercel** — PR workflow builds with that backend PR’s Railway preview as `VITE_API_URL` and aliases `STAGING_FRONTEND_URL` (e.g. `https://stg-portal.koltto.com`).
+4. Always test at **stg-portal** (CORS allowlisted). Random `*.vercel.app` URLs cannot log in against Railway.
 
 ## Fail closed (no silent prod)
 
 Unpaired PRs **fail** the preview job instead of pointing staging at production.
 
-Opt-in only: label `preview-against-prod` builds against the production API and deploys a `*.vercel.app` URL — it does **not** update `stg-portal`. Treat as read-only; never create/update/delete prod data from that URL.
+Opt-in only: label `preview-against-prod` builds against the **production** API and **does** update `stg-portal` (needed for CORS/login). Treat as **read-only** — never create/update/delete prod data.
 
 Before any create/update/delete on staging, confirm the PR comment’s `VITE_API_URL` is a `backend-pr-*` Railway host, not `backend-production-*`.
 

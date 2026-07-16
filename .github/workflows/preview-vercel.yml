@@ -1,18 +1,19 @@
 # Frontend preview on Vercel. Does not touch Neon or Railway.
 #
-# Pairing (required to alias STAGING_FRONTEND_URL):
+# Pairing (preferred — safe Neon/Railway preview API):
 #   1. Same branch name as an open backend PR, OR
 #   2. PR body line: `Backend-PR: #52`, OR
 #   3. Label: `backend-pr-52`
 # Then VITE_API_URL = that backend PR’s preview Railway API (from its comment).
 #
-# Opt-in prod (no staging alias):
-#   Label `preview-against-prod` → build against production API, deploy to a
-#   *.vercel.app URL only. Does NOT update stg-portal.koltto.com.
+# Opt-in prod (explicit label only — never silent):
+#   Label `preview-against-prod` → build against production API and alias
+#   STAGING_FRONTEND_URL (stg-portal). Required for login: Railway CORS only
+#   allows that host, not random *.vercel.app URLs. Treat as read-only.
 #
 # Otherwise the job fails — never silently point staging at prod.
 #
-# Test paired builds at STAGING_FRONTEND_URL (e.g. stg-portal.koltto.com).
+# Test at STAGING_FRONTEND_URL (e.g. stg-portal.koltto.com), not *.vercel.app.
 # VITE_API_URL is injected at CI build time — do not add it to Vercel Preview env
 # (Git preview builds are skipped via vercel.json ignoreCommand).
 #
@@ -121,13 +122,15 @@ jobs:
           elif [ "$allow_prod" = "true" ]; then
             api_url="$PRODUCTION_API_URL"
             mode="production-api-opt-in"
-            alias_staging="false"
-            echo "::warning::preview-against-prod: building against production API. Staging alias will NOT be updated."
+            # Alias stg-portal: login needs CORS, and only that host is allowlisted
+            # (not *.vercel.app). Label is the explicit opt-in; never do this silently.
+            alias_staging="true"
+            echo "::warning::preview-against-prod: staging portal will talk to PRODUCTION API. Do not mutate prod data."
           else
             {
               echo "::error::No backend preview pairing found. Refusing to point the staging portal at production."
               echo "::error::Add one of: same branch as an open backend PR | PR body line Backend-PR: #52 | label backend-pr-52"
-              echo "::error::For deliberate prod-backed UI smoke (no writes): label preview-against-prod (*.vercel.app only, no stg-portal alias)."
+              echo "::error::For deliberate prod-backed UI smoke (CORS/login): label preview-against-prod — aliases stg-portal; treat as read-only."
             }
             exit 1
           fi
@@ -163,7 +166,7 @@ jobs:
             echo "Aliased https://$staging -> $url"
             echo "test_url=$STAGING_FRONTEND_URL" >> "$GITHUB_OUTPUT"
           else
-            echo "Skipping staging alias (prod-backed or unpaired build)."
+            echo "Skipping staging alias."
             echo "test_url=$url" >> "$GITHUB_OUTPUT"
           fi
 
@@ -188,8 +191,10 @@ jobs:
             }
             if (aliasStaging === 'true') {
               lines.push(`- Staging alias updated: ${stagingUrl}`);
-            } else {
-              lines.push(`- Staging alias **not** updated (prod-backed opt-in). Do not mutate production data.`);
+            }
+            if (mode === 'production-api-opt-in') {
+              lines.push(``);
+              lines.push(`⚠️ **Production API** via \`preview-against-prod\` (CORS requires \`${stagingUrl}\`). Do **not** create/update/delete data.`);
             }
             const body = lines.join("\n");
 
