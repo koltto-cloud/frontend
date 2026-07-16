@@ -4,7 +4,8 @@
 #   - same branch name as an open backend PR → read that PR's preview API comment
 #
 # Test in the browser at STAGING_FRONTEND_URL (e.g. stg-portal.koltto.com), not the
-# random *.vercel.app URL. Assign that domain to Preview in Vercel once.
+# random *.vercel.app URL. VITE_API_URL is injected at CI build time — do not add it
+# to Vercel Preview env (Git preview builds are skipped via vercel.json ignoreCommand).
 #
 # Backend CORS: add https://stg-portal.koltto.com to Railway Shared CORS_ORIGINS
 # (PR envs inherit it). No code change — your existing env var owns CORS.
@@ -84,15 +85,20 @@ jobs:
           VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VITE_API_URL: ${{ steps.api.outputs.api_url }}
+          STAGING_FRONTEND_URL: ${{ vars.STAGING_FRONTEND_URL || 'https://stg-portal.koltto.com' }}
         run: |
           set -euo pipefail
           npm ci
           npx vercel pull --yes --environment=preview --token="$VERCEL_TOKEN"
           echo "VITE_API_URL=$VITE_API_URL" >> .vercel/.env.preview.local
-          npx vercel build --token="$VERCEL_TOKEN"
+          VITE_API_URL="$VITE_API_URL" npx vercel build --token="$VERCEL_TOKEN"
           url="$(npx vercel deploy --prebuilt --yes --token="$VERCEL_TOKEN")"
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "Deployed: $url"
+          staging="${STAGING_FRONTEND_URL#https://}"
+          staging="${staging#http://}"
+          npx vercel alias set "$url" "$staging" --token="$VERCEL_TOKEN"
+          echo "Aliased https://$staging -> $url"
 
       - name: Comment on PR
         uses: actions/github-script@v7
