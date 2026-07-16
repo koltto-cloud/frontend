@@ -70,6 +70,10 @@ export default function PlansPage() {
   const [editBundle, setEditBundle] = useState<BundleRow | null>(null)
   const [editBundleForm, setEditBundleForm] = useState({ sku: '', status: 'active', notes: '' })
 
+  const [viewBundleId, setViewBundleId] = useState<string | null>(null)
+  const [viewBundleData, setViewBundleData] = useState<Record<string, unknown> | null>(null)
+  const [viewBundleLoading, setViewBundleLoading] = useState(false)
+
   const { data: services } = useAsyncData(
     () =>
       apiRequest<ServiceOption[]>('/api/v1/catalog/feature/list', {
@@ -198,6 +202,21 @@ export default function PlansPage() {
       void reload()
     } catch (e) {
       setErr(formatApiError(e))
+    }
+  }
+
+  const openViewBundle = async (id: string) => {
+    setViewBundleId(id)
+    setViewBundleData(null)
+    setViewBundleLoading(true)
+    setErr('')
+    try {
+      setViewBundleData(await apiRequest(`/api/v1/catalog/plan_feature/${id}`))
+    } catch (e) {
+      setErr(formatApiError(e))
+      setViewBundleId(null)
+    } finally {
+      setViewBundleLoading(false)
     }
   }
 
@@ -363,11 +382,11 @@ export default function PlansPage() {
                         </td>
                       </tr>
                       {open ? (
-                        <tr className="plan-bundles-row">
+                        <tr className="nested-detail-row">
                           <td colSpan={8}>
-                            <div className="plan-bundles-panel">
-                              <div className="plan-bundles-header">
-                                <p className="plan-bundles-title">Service bundles — {row.name}</p>
+                            <div className="nested-panel">
+                              <div className="nested-panel-header">
+                                <p className="nested-panel-title">Service bundles — {row.name}</p>
                                 <button type="button" className="btn btn-sm btn-primary" onClick={() => openAddBundle(row)}>
                                   Add service
                                 </button>
@@ -377,7 +396,7 @@ export default function PlansPage() {
                               ) : bundles.length === 0 ? (
                                 <p className="empty">No services on this plan yet.</p>
                               ) : (
-                                <table className="data-table plan-bundles-table">
+                                <table className="nested-table">
                                   <thead>
                                     <tr>
                                       <th>Bundle ID</th>
@@ -390,7 +409,15 @@ export default function PlansPage() {
                                   <tbody>
                                     {bundles.map((b) => (
                                       <tr key={b.plan_feature_id}>
-                                        <td>{b.plan_feature_id.slice(0, 8)}…</td>
+                                        <td>
+                                          <button
+                                            type="button"
+                                            className="id-link"
+                                            onClick={() => void openViewBundle(b.plan_feature_id)}
+                                          >
+                                            {b.plan_feature_id.slice(0, 8)}…
+                                          </button>
+                                        </td>
                                         <td>{b.feature_name}</td>
                                         <td>{b.sku}</td>
                                         <td>{b.status}</td>
@@ -546,6 +573,11 @@ export default function PlansPage() {
       {viewId && (
         <Modal title="Plan details" onClose={() => setViewId(null)} wide>
           {viewLoading ? <p className="loading">Loading…</p> : viewData && <JsonViewer data={viewData} />}
+        </Modal>
+      )}
+      {viewBundleId && (
+        <Modal title="Service bundle details" onClose={() => setViewBundleId(null)} wide>
+          {viewBundleLoading ? <p className="loading">Loading…</p> : viewBundleData && <JsonViewer data={viewBundleData} />}
         </Modal>
       )}
     </>

@@ -16,7 +16,6 @@ import FeaturesPage from '@/pages/catalog/FeaturesPage'
 import SubscriptionItemsPage from '@/pages/catalog/SubscriptionItemsPage'
 import SubscriptionsPage from '@/pages/billing/SubscriptionsPage'
 import InvoicesPage from '@/pages/billing/InvoicesPage'
-import InvoiceItemsPage from '@/pages/billing/InvoiceItemsPage'
 import ConnectionsPage from '@/pages/oci/ConnectionsPage'
 import UsagePage from '@/pages/oci/UsagePage'
 import InventoryPage from '@/pages/oci/InventoryPage'
@@ -48,7 +47,7 @@ export default function App() {
               <Route path="/catalog/subscription-items" element={<SubscriptionItemsPage />} />
               <Route path="/billing/subscriptions" element={<SubscriptionsPage />} />
               <Route path="/billing/invoices" element={<InvoicesPage />} />
-              <Route path="/billing/invoice-items" element={<InvoiceItemsPage />} />
+              <Route path="/billing/invoice-items" element={<Navigate to="/billing/invoices" replace />} />
               <Route path="/oci/connections" element={<ConnectionsPage />} />
               <Route path="/oci/usage" element={<UsagePage />} />
               <Route path="/oci/inventory" element={<InventoryPage />} />

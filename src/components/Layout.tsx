@@ -38,7 +38,6 @@ const INTERNAL_NAV: NavSection[] = [
       { to: '/catalog/subscription-items', label: 'Subscription Items' },
       { to: '/billing/subscriptions', label: 'Subscriptions' },
       { to: '/billing/invoices', label: 'Invoices' },
-      { to: '/billing/invoice-items', label: 'Invoice Items' },
     ],
   },
   {
