@@ -14,10 +14,6 @@ const NAV = [
     ],
   },
   {
-    section: 'Auth & Audit',
-    links: [{ to: '/audit', label: 'Audit Logs' }],
-  },
-  {
     section: 'Catalog & Billing',
     links: [
       { to: '/catalog/plans', label: 'Plans' },
@@ -36,15 +32,18 @@ const NAV = [
       { to: '/oci/usage', label: 'Usage & Costs' },
       { to: '/oci/inventory', label: 'Inventory' },
       { to: '/oci/monitoring', label: 'Monitoring' },
-      { to: '/oci/pricing', label: 'Pricing' },
     ],
   },
 ]
 
 const STAFF_NAV = [
   {
-    section: 'Platform',
-    links: [{ to: '/admin/maintenance', label: 'Maintenance' }],
+    section: 'Admin',
+    links: [
+      { to: '/audit', label: 'Audit Logs' },
+      { to: '/oci/pricing', label: 'OCI Pricing' },
+      { to: '/admin/maintenance', label: 'Maintenance' },
+    ],
   },
 ]
 
