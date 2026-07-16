@@ -10,25 +10,34 @@ When testing a `fix/sentry-…` or `feat/…` branch, **do not promote to Vercel
 ## Default stack for a frontend cloud test
 
 1. **Git** — work on the named branch; open a PR when ready to preview.
-2. **Vercel** — PR workflow (`.github/workflows/preview-vercel.yml`) builds and aliases to `STAGING_FRONTEND_URL` (e.g. `https://stg-portal.koltto.com`). Test there, not a random `*.vercel.app` URL.
-3. **API URL** — CI sets `VITE_API_URL` at build time:
-   - Frontend-only PR → production Railway API
-   - Same branch name as an open **backend** PR → that PR’s preview Railway API (from the backend PR comment)
-4. Do **not** add `VITE_API_URL` to Vercel Preview env vars for Git-triggered builds (`vercel.json` skips those). Prefer the CI path above.
+2. **Pair a backend preview** (required to update `stg-portal`):
+   - Same branch name as an open backend PR, **or**
+   - PR body line: `Backend-PR: #52`, **or**
+   - Label: `backend-pr-52`
+3. **Vercel** — PR workflow builds with that backend PR’s Railway preview as `VITE_API_URL` and aliases `STAGING_FRONTEND_URL` (e.g. `https://stg-portal.koltto.com`). Test there, not a random `*.vercel.app` URL.
+4. Do **not** add `VITE_API_URL` to Vercel Preview env vars for Git-triggered builds (`vercel.json` skips those).
+
+## Fail closed (no silent prod)
+
+Unpaired PRs **fail** the preview job instead of pointing staging at production.
+
+Opt-in only: label `preview-against-prod` builds against the production API and deploys a `*.vercel.app` URL — it does **not** update `stg-portal`. Treat as read-only; never create/update/delete prod data from that URL.
+
+Before any create/update/delete on staging, confirm the PR comment’s `VITE_API_URL` is a `backend-pr-*` Railway host, not `backend-production-*`.
 
 ## What this repo does *not* own
 
-Neon branches, Railway PR envs, and DB migrations are backend concerns. Prefer **local** `npm run dev` for small UI fixes. Use a cloud preview when you need the staging alias, auth against a real API, or a paired backend PR.
+Neon branches, Railway PR envs, and DB migrations are backend concerns. Prefer **local** `npm run dev` for small UI fixes.
 
 ## Cost / safety guardrails
 
 - Prefer local Vite for small UI/Sentry fixes.
 - Cap concurrent cloud experiments: usually **0–1** active FE preview stack you care about.
-- Never “Deploy all” / mutate prod tenants from a preview that still points at prod APIs unless the user explicitly wants that.
+- Never mutate prod tenants from a preview pointed at prod APIs.
 - Do not promote a Vercel deployment to Production without asking.
 
 ## Ask before
 
 - Promoting a Vercel deployment to Production
 - Changing preview secrets / `STAGING_FRONTEND_URL` / production API URL vars
-- Pointing a preview build at an API the user did not intend (especially prod)
+- Adding `preview-against-prod` when writes are involved

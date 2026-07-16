@@ -16,6 +16,24 @@ interface PlanFeatureRow {
   status: string
 }
 
+interface PlanOption {
+  plan_id: string
+  name: string
+}
+
+interface FeatureOption {
+  feature_id: string
+  name: string
+}
+
+const emptyCreateForm = {
+  plan_id: '',
+  feature_id: '',
+  sku: '',
+  status: 'active',
+  notes: '',
+}
+
 export default function PlanFeaturesPage() {
   const [planId, setPlanId] = useState('')
   const [featureId, setFeatureId] = useState('')
@@ -32,13 +50,22 @@ export default function PlanFeaturesPage() {
   const [editForm, setEditForm] = useState({ sku: '', status: 'active', notes: '' })
 
   const [showCreate, setShowCreate] = useState(false)
-  const [createForm, setCreateForm] = useState({
-    plan_id: '',
-    feature_id: '',
-    sku: '',
-    status: 'active',
-    notes: '',
-  })
+  const [createForm, setCreateForm] = useState(emptyCreateForm)
+
+  const { data: plans } = useAsyncData(
+    () =>
+      apiRequest<PlanOption[]>('/api/v1/catalog/plan/list', {
+        query: { plan_status: 'active' },
+      }),
+    [],
+  )
+  const { data: features } = useAsyncData(
+    () =>
+      apiRequest<FeatureOption[]>('/api/v1/catalog/feature/list', {
+        query: { feature_status: 'active' },
+      }),
+    [],
+  )
 
   const { data, error, loading, reload } = useAsyncData(
     () =>
@@ -54,6 +81,8 @@ export default function PlanFeaturesPage() {
   )
 
   const rows = data ?? []
+  const planOptions = plans ?? []
+  const featureOptions = features ?? []
   const { page, pageSize, pageItems, totalItems, setPage, setPageSize } =
     useClientPagination(rows)
 
@@ -108,6 +137,7 @@ export default function PlanFeaturesPage() {
       })
       setMsg('Plan feature created.')
       setShowCreate(false)
+      setCreateForm(emptyCreateForm)
       void reload()
     } catch (e) {
       setErr(formatApiError(e))
@@ -131,11 +161,36 @@ export default function PlanFeaturesPage() {
     <>
       <h1 className="page-title">Plan Features</h1>
       <div className="toolbar">
-        <button type="button" className="btn btn-primary" onClick={() => setShowCreate(true)}>Create plan feature</button>
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={() => {
+            setCreateForm(emptyCreateForm)
+            setShowCreate(true)
+          }}
+        >
+          Create plan feature
+        </button>
       </div>
       <div className="filters">
-        <label>Plan ID <input value={planId} onChange={(e) => setPlanId(e.target.value)} /></label>
-        <label>Feature ID <input value={featureId} onChange={(e) => setFeatureId(e.target.value)} /></label>
+        <label>
+          Plan
+          <select value={planId} onChange={(e) => setPlanId(e.target.value)}>
+            <option value="">All</option>
+            {planOptions.map((p) => (
+              <option key={p.plan_id} value={p.plan_id}>{p.name}</option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Feature
+          <select value={featureId} onChange={(e) => setFeatureId(e.target.value)}>
+            <option value="">All</option>
+            {featureOptions.map((f) => (
+              <option key={f.feature_id} value={f.feature_id}>{f.name}</option>
+            ))}
+          </select>
+        </label>
         <label>SKU <input value={sku} onChange={(e) => setSku(e.target.value)} /></label>
         <label>
           Status
@@ -194,8 +249,32 @@ export default function PlanFeaturesPage() {
       {showCreate && (
         <Modal title="Create plan feature" onClose={() => setShowCreate(false)}>
           <form className="inline-form" onSubmit={(e) => void handleCreate(e)}>
-            <div className="form-field"><label>Plan ID</label><input value={createForm.plan_id} onChange={(e) => setCreateForm({ ...createForm, plan_id: e.target.value })} required /></div>
-            <div className="form-field"><label>Feature ID</label><input value={createForm.feature_id} onChange={(e) => setCreateForm({ ...createForm, feature_id: e.target.value })} required /></div>
+            <div className="form-field">
+              <label>Plan</label>
+              <select
+                value={createForm.plan_id}
+                onChange={(e) => setCreateForm({ ...createForm, plan_id: e.target.value })}
+                required
+              >
+                <option value="">Select plan…</option>
+                {planOptions.map((p) => (
+                  <option key={p.plan_id} value={p.plan_id}>{p.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="form-field">
+              <label>Feature</label>
+              <select
+                value={createForm.feature_id}
+                onChange={(e) => setCreateForm({ ...createForm, feature_id: e.target.value })}
+                required
+              >
+                <option value="">Select feature…</option>
+                {featureOptions.map((f) => (
+                  <option key={f.feature_id} value={f.feature_id}>{f.name}</option>
+                ))}
+              </select>
+            </div>
             <div className="form-field"><label>SKU</label><input value={createForm.sku} onChange={(e) => setCreateForm({ ...createForm, sku: e.target.value })} required /></div>
             <div className="form-field">
               <label>Status</label>

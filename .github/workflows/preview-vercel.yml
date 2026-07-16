@@ -1,14 +1,23 @@
-# Frontend-only preview on Vercel. Does not touch Neon or Railway.
+# Frontend preview on Vercel. Does not touch Neon or Railway.
 #
-#   - frontend-only PR → VITE_API_URL = production Railway API
-#   - same branch name as an open backend PR → read that PR's preview API comment
+# Pairing (required to alias STAGING_FRONTEND_URL):
+#   1. Same branch name as an open backend PR, OR
+#   2. PR body line: `Backend-PR: #52`, OR
+#   3. Label: `backend-pr-52`
+# Then VITE_API_URL = that backend PR’s preview Railway API (from its comment).
 #
-# Test in the browser at STAGING_FRONTEND_URL (e.g. stg-portal.koltto.com), not the
-# random *.vercel.app URL. VITE_API_URL is injected at CI build time — do not add it
-# to Vercel Preview env (Git preview builds are skipped via vercel.json ignoreCommand).
+# Opt-in prod (no staging alias):
+#   Label `preview-against-prod` → build against production API, deploy to a
+#   *.vercel.app URL only. Does NOT update stg-portal.koltto.com.
+#
+# Otherwise the job fails — never silently point staging at prod.
+#
+# Test paired builds at STAGING_FRONTEND_URL (e.g. stg-portal.koltto.com).
+# VITE_API_URL is injected at CI build time — do not add it to Vercel Preview env
+# (Git preview builds are skipped via vercel.json ignoreCommand).
 #
 # Backend CORS: add https://stg-portal.koltto.com to Railway Shared CORS_ORIGINS
-# (PR envs inherit it). No code change — your existing env var owns CORS.
+# (PR envs inherit it).
 #
 # Secrets: VERCEL_TOKEN, BACKEND_GITHUB_TOKEN (read koltto-cloud/backend)
 # Vars: VERCEL_ORG_ID, VERCEL_PROJECT_ID, PRODUCTION_API_URL, STAGING_FRONTEND_URL
@@ -18,7 +27,7 @@ name: Preview Vercel
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, labeled, unlabeled, edited]
 
 concurrency:
   group: preview-vercel-${{ github.event.pull_request.number }}
@@ -47,36 +56,87 @@ jobs:
           BACKEND_REPO: ${{ vars.BACKEND_GITHUB_REPO || 'koltto-cloud/backend' }}
           PRODUCTION_API_URL: ${{ vars.PRODUCTION_API_URL || 'https://backend-production-7570.up.railway.app' }}
           BRANCH: ${{ github.head_ref }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
         run: |
           set -euo pipefail
-          api_url="$PRODUCTION_API_URL"
-          backend_pr=""
-          mode="production-api"
 
-          if [ -n "${GH_TOKEN:-}" ]; then
-            backend_pr="$(gh pr list --repo "$BACKEND_REPO" --head "$BRANCH" --state open --json number -q '.[0].number' || true)"
-            if [ -n "$backend_pr" ] && [ "$backend_pr" != "null" ]; then
-              echo "Open backend PR #$backend_pr on branch $BRANCH"
-              for attempt in $(seq 1 36); do
-                comments="$(gh api "repos/$BACKEND_REPO/issues/$backend_pr/comments" --jq '.[].body' || true)"
-                found="$(printf '%s\n' "$comments" | grep -oE 'API: `https://[^`]+`' | head -1 | sed 's/API: `//;s/`$//' || true)"
-                if [ -n "$found" ]; then
-                  api_url="$found"
-                  mode="backend-pr-$backend_pr"
-                  break
-                fi
-                echo "Waiting for backend preview API URL (attempt $attempt)…"
-                sleep 10
-              done
-            fi
+          api_url=""
+          backend_pr=""
+          mode=""
+          alias_staging="false"
+          allow_prod="false"
+
+          if printf '%s' "$PR_LABELS" | tr ',' '\n' | grep -qx 'preview-against-prod'; then
+            allow_prod="true"
+          fi
+
+          # Explicit Backend-PR: #N in the PR body (wins over branch-name match when set)
+          body_pr="$(printf '%s\n' "$PR_BODY" | grep -oiE 'Backend-PR:[[:space:]]*#?[0-9]+' | head -1 | grep -oE '[0-9]+' || true)"
+
+          # Label backend-pr-N
+          label_pr="$(printf '%s' "$PR_LABELS" | tr ',' '\n' | grep -oE '^backend-pr-[0-9]+$' | head -1 | grep -oE '[0-9]+' || true)"
+
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "::error::BACKEND_GITHUB_TOKEN is not set; cannot resolve a backend preview API."
+            exit 1
+          fi
+
+          if [ -n "$body_pr" ]; then
+            backend_pr="$body_pr"
+            echo "Backend PR from PR body: #$backend_pr"
+          elif [ -n "$label_pr" ]; then
+            backend_pr="$label_pr"
+            echo "Backend PR from label: #$backend_pr"
           else
-            echo "BACKEND_GITHUB_TOKEN not set; using production API."
+            branch_pr="$(gh pr list --repo "$BACKEND_REPO" --head "$BRANCH" --state open --json number -q '.[0].number' || true)"
+            if [ -n "$branch_pr" ] && [ "$branch_pr" != "null" ]; then
+              backend_pr="$branch_pr"
+              echo "Backend PR from matching branch $BRANCH: #$backend_pr"
+            fi
+          fi
+
+          if [ -n "$backend_pr" ]; then
+            state="$(gh pr view "$backend_pr" --repo "$BACKEND_REPO" --json state -q .state || true)"
+            if [ "$state" != "OPEN" ]; then
+              echo "::error::Backend PR #$backend_pr is not open (state=$state)."
+              exit 1
+            fi
+            for attempt in $(seq 1 36); do
+              comments="$(gh api "repos/$BACKEND_REPO/issues/$backend_pr/comments" --jq '.[].body' || true)"
+              found="$(printf '%s\n' "$comments" | grep -oE 'API: `https://[^`]+`' | head -1 | sed 's/API: `//;s/`$//' || true)"
+              if [ -n "$found" ]; then
+                api_url="$found"
+                mode="backend-pr-$backend_pr"
+                alias_staging="true"
+                break
+              fi
+              echo "Waiting for backend preview API URL (attempt $attempt)…"
+              sleep 10
+            done
+            if [ -z "$api_url" ]; then
+              echo "::error::Timed out waiting for backend PR #$backend_pr preview API comment."
+              exit 1
+            fi
+          elif [ "$allow_prod" = "true" ]; then
+            api_url="$PRODUCTION_API_URL"
+            mode="production-api-opt-in"
+            alias_staging="false"
+            echo "::warning::preview-against-prod: building against production API. Staging alias will NOT be updated."
+          else
+            {
+              echo "::error::No backend preview pairing found. Refusing to point the staging portal at production."
+              echo "::error::Add one of: same branch as an open backend PR | PR body line Backend-PR: #52 | label backend-pr-52"
+              echo "::error::For deliberate prod-backed UI smoke (no writes): label preview-against-prod (*.vercel.app only, no stg-portal alias)."
+            }
+            exit 1
           fi
 
           echo "api_url=$api_url" >> "$GITHUB_OUTPUT"
           echo "mode=$mode" >> "$GITHUB_OUTPUT"
           echo "backend_pr=$backend_pr" >> "$GITHUB_OUTPUT"
-          echo "Using VITE_API_URL=$api_url ($mode)"
+          echo "alias_staging=$alias_staging" >> "$GITHUB_OUTPUT"
+          echo "Using VITE_API_URL=$api_url ($mode) alias_staging=$alias_staging"
 
       - name: Build and deploy to Vercel Preview
         id: deploy
@@ -86,6 +146,7 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VITE_API_URL: ${{ steps.api.outputs.api_url }}
           STAGING_FRONTEND_URL: ${{ vars.STAGING_FRONTEND_URL || 'https://stg-portal.koltto.com' }}
+          ALIAS_STAGING: ${{ steps.api.outputs.alias_staging }}
         run: |
           set -euo pipefail
           npm ci
@@ -95,10 +156,16 @@ jobs:
           url="$(npx vercel deploy --prebuilt --yes --token="$VERCEL_TOKEN")"
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "Deployed: $url"
-          staging="${STAGING_FRONTEND_URL#https://}"
-          staging="${staging#http://}"
-          npx vercel alias set "$url" "$staging" --token="$VERCEL_TOKEN"
-          echo "Aliased https://$staging -> $url"
+          if [ "$ALIAS_STAGING" = "true" ]; then
+            staging="${STAGING_FRONTEND_URL#https://}"
+            staging="${staging#http://}"
+            npx vercel alias set "$url" "$staging" --token="$VERCEL_TOKEN"
+            echo "Aliased https://$staging -> $url"
+            echo "test_url=$STAGING_FRONTEND_URL" >> "$GITHUB_OUTPUT"
+          else
+            echo "Skipping staging alias (prod-backed or unpaired build)."
+            echo "test_url=$url" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Comment on PR
         uses: actions/github-script@v7
@@ -107,15 +174,22 @@ jobs:
             const apiUrl = `${{ steps.api.outputs.api_url }}`;
             const mode = `${{ steps.api.outputs.mode }}`;
             const backendPr = `${{ steps.api.outputs.backend_pr }}`;
+            const aliasStaging = `${{ steps.api.outputs.alias_staging }}`;
+            const testUrl = `${{ steps.deploy.outputs.test_url }}`;
             const stagingUrl = `${{ vars.STAGING_FRONTEND_URL || 'https://stg-portal.koltto.com' }}`;
             const lines = [
               `### Vercel preview ready`,
               ``,
-              `- Test at: ${stagingUrl}`,
+              `- Test at: ${testUrl}`,
               `- \`VITE_API_URL\`: \`${apiUrl}\` (${mode})`,
             ];
             if (backendPr) {
               lines.push(`- Matching backend PR: #${backendPr}`);
+            }
+            if (aliasStaging === 'true') {
+              lines.push(`- Staging alias updated: ${stagingUrl}`);
+            } else {
+              lines.push(`- Staging alias **not** updated (prod-backed opt-in). Do not mutate production data.`);
             }
             const body = lines.join("\n");
 
