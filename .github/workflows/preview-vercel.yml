@@ -88,8 +88,9 @@ jobs:
           set -euo pipefail
           npm ci
           npx vercel pull --yes --environment=preview --token="$VERCEL_TOKEN"
-          VITE_API_URL="$VITE_API_URL" npm run build
-          url="$(npx vercel deploy dist --yes --token="$VERCEL_TOKEN")"
+          echo "VITE_API_URL=$VITE_API_URL" >> .vercel/.env.preview.local
+          npx vercel build --token="$VERCEL_TOKEN"
+          url="$(npx vercel deploy --prebuilt --yes --token="$VERCEL_TOKEN")"
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "Deployed: $url"
 
