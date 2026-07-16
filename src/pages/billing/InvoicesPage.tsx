@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { apiRequest, formatApiError } from '@/api/client'
 import { useAsyncData } from '@/hooks/useAsyncData'
 import { useClientPagination } from '@/hooks/useClientPagination'
@@ -16,14 +16,33 @@ interface InvoiceRow {
   created_at: string
 }
 
+interface InvoiceItemRow {
+  invoice_item_id: string
+  sku: string
+  name: string
+  quantity: number
+  price: number
+  discount: number
+}
+
 interface SubscriptionOption {
   subscription_id: string
   company: { company_id: string; name: string }
   status: string
 }
 
-function shortId(id: string): string {
-  return `${id.slice(0, 8)}…`
+const emptyItemForm = {
+  sku: '',
+  name: '',
+  description: '',
+  quantity: '1',
+  price: '0',
+  discount: '0',
+}
+
+function shortId(id: string | null | undefined): string {
+  if (!id) return '—'
+  return id.length > 8 ? `${id.slice(0, 8)}…` : id
 }
 
 export default function InvoicesPage() {
@@ -32,9 +51,17 @@ export default function InvoicesPage() {
   const [msg, setMsg] = useState('')
   const [err, setErr] = useState('')
 
+  const [expandedInvoiceId, setExpandedInvoiceId] = useState<string | null>(null)
+  const [itemsByInvoice, setItemsByInvoice] = useState<Record<string, InvoiceItemRow[]>>({})
+  const [itemsLoadingId, setItemsLoadingId] = useState<string | null>(null)
+
   const [viewId, setViewId] = useState<string | null>(null)
   const [viewData, setViewData] = useState<Record<string, unknown> | null>(null)
   const [viewLoading, setViewLoading] = useState(false)
+
+  const [viewItemId, setViewItemId] = useState<string | null>(null)
+  const [viewItemData, setViewItemData] = useState<Record<string, unknown> | null>(null)
+  const [viewItemLoading, setViewItemLoading] = useState(false)
 
   const [editRow, setEditRow] = useState<InvoiceRow | null>(null)
   const [editForm, setEditForm] = useState({ status: 'draft', due_date: '', tax: '0', discount: '0' })
@@ -46,6 +73,9 @@ export default function InvoicesPage() {
     tax: '0',
     discount: '0',
   })
+
+  const [addItemInvoice, setAddItemInvoice] = useState<InvoiceRow | null>(null)
+  const [itemForm, setItemForm] = useState(emptyItemForm)
 
   const { data: subscriptions } = useAsyncData(
     () => apiRequest<SubscriptionOption[]>('/api/v1/billing/subscription/list'),
@@ -68,6 +98,29 @@ export default function InvoicesPage() {
   const { page, pageSize, pageItems, totalItems, setPage, setPageSize } =
     useClientPagination(rows)
 
+  const loadItems = async (invoiceId: string) => {
+    setItemsLoadingId(invoiceId)
+    setErr('')
+    try {
+      const list = await apiRequest<InvoiceItemRow[]>('/api/v1/billing/invoice-item/list', {
+        query: { invoice_id: invoiceId },
+      })
+      setItemsByInvoice((prev) => ({ ...prev, [invoiceId]: list }))
+    } catch (e) {
+      setErr(formatApiError(e))
+    } finally {
+      setItemsLoadingId(null)
+    }
+  }
+
+  const toggleExpand = (invoiceId: string) => {
+    if (expandedInvoiceId === invoiceId) {
+      setExpandedInvoiceId(null)
+      return
+    }
+    setExpandedInvoiceId(invoiceId)
+    void loadItems(invoiceId)
+  }
 
   const openView = async (id: string) => {
     setViewId(id)
@@ -81,6 +134,21 @@ export default function InvoicesPage() {
       setViewId(null)
     } finally {
       setViewLoading(false)
+    }
+  }
+
+  const openViewItem = async (id: string) => {
+    setViewItemId(id)
+    setViewItemData(null)
+    setViewItemLoading(true)
+    setErr('')
+    try {
+      setViewItemData(await apiRequest(`/api/v1/billing/invoice-item/${id}`))
+    } catch (e) {
+      setErr(formatApiError(e))
+      setViewItemId(null)
+    } finally {
+      setViewItemLoading(false)
     }
   }
 
@@ -146,9 +214,43 @@ export default function InvoicesPage() {
     }
   }
 
+  const openAddItem = (invoice: InvoiceRow) => {
+    setAddItemInvoice(invoice)
+    setItemForm(emptyItemForm)
+    setErr('')
+  }
+
+  const handleAddItem = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!addItemInvoice) return
+    setErr('')
+    setMsg('')
+    try {
+      await apiRequest('/api/v1/billing/invoice-item/create', {
+        method: 'POST',
+        body: {
+          invoice_id: addItemInvoice.invoice_id,
+          ...itemForm,
+          quantity: Number(itemForm.quantity),
+          price: Number(itemForm.price),
+          discount: Number(itemForm.discount),
+        },
+      })
+      setMsg('Invoice item added.')
+      setAddItemInvoice(null)
+      setItemForm(emptyItemForm)
+      void loadItems(addItemInvoice.invoice_id)
+    } catch (e) {
+      setErr(formatApiError(e))
+    }
+  }
+
   return (
     <>
       <h1 className="page-title">Invoices</h1>
+      <p className="alert alert-info" style={{ marginTop: 0 }}>
+        Expand an invoice to manage its <strong>line items</strong>.
+      </p>
       <div className="toolbar">
         <button type="button" className="btn btn-primary" onClick={() => setShowCreate(true)}>Create invoice</button>
       </div>
@@ -177,44 +279,119 @@ export default function InvoicesPage() {
       <Alert type="success">{msg}</Alert>
       {loading ? <p className="loading">Loading…</p> : (
         <>
-        <div className="data-table-wrap">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Invoice ID</th><th>Company</th><th>Status</th><th>Due date</th><th>Created</th><th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pageItems.map((row) => (
-                <tr key={row.invoice_id}>
-                  <td>
-                    <button type="button" className="id-link" onClick={() => void openView(row.invoice_id)}>
-                      {row.invoice_id.slice(0, 8)}…
-                    </button>
-                  </td>
-                  <td>{row.company?.name}</td>
-                  <td>{row.status}</td>
-                  <td>{row.due_date?.slice(0, 10)}</td>
-                  <td>{row.created_at?.slice(0, 10)}</td>
-                  <td className="actions-cell">
-                    <button type="button" className="btn btn-sm" onClick={() => void openEdit(row)}>Edit</button>
-                  </td>
+          <div className="data-table-wrap">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th className="col-expand" aria-label="Expand" />
+                  <th>Invoice ID</th>
+                  <th>Company</th>
+                  <th>Status</th>
+                  <th>Due date</th>
+                  <th>Created</th>
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {pageItems.map((row) => {
+                  const open = expandedInvoiceId === row.invoice_id
+                  const items = itemsByInvoice[row.invoice_id] ?? []
+                  return (
+                    <Fragment key={row.invoice_id}>
+                      <tr className={open ? 'row-invoice-expanded' : undefined}>
+                        <td className="col-expand">
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-ghost"
+                            aria-expanded={open}
+                            aria-label={open ? 'Collapse line items' : 'Expand line items'}
+                            onClick={() => toggleExpand(row.invoice_id)}
+                          >
+                            <span className="expand-chevron">{open ? '▾' : '▸'}</span>
+                          </button>
+                        </td>
+                        <td>
+                          <button type="button" className="id-link" onClick={() => void openView(row.invoice_id)}>
+                            {shortId(row.invoice_id)}
+                          </button>
+                        </td>
+                        <td>{row.company?.name}</td>
+                        <td>{row.status}</td>
+                        <td>{row.due_date?.slice(0, 10)}</td>
+                        <td>{row.created_at?.slice(0, 10)}</td>
+                        <td className="actions-cell">
+                          <button type="button" className="btn btn-sm" onClick={() => void openEdit(row)}>Edit</button>
+                        </td>
+                      </tr>
+                      {open ? (
+                        <tr className="nested-detail-row">
+                          <td colSpan={7}>
+                            <div className="nested-panel">
+                              <div className="nested-panel-header">
+                                <p className="nested-panel-title">Line items — {shortId(row.invoice_id)}</p>
+                                <button type="button" className="btn btn-sm btn-primary" onClick={() => openAddItem(row)}>
+                                  Add line item
+                                </button>
+                              </div>
+                              {itemsLoadingId === row.invoice_id ? (
+                                <p className="loading">Loading items…</p>
+                              ) : items.length === 0 ? (
+                                <p className="empty">No line items yet.</p>
+                              ) : (
+                                <table className="nested-table">
+                                  <thead>
+                                    <tr>
+                                      <th>Item ID</th>
+                                      <th>SKU</th>
+                                      <th>Name</th>
+                                      <th>Qty</th>
+                                      <th>Price</th>
+                                      <th>Discount</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {items.map((item) => (
+                                      <tr key={item.invoice_item_id}>
+                                        <td>
+                                          <button
+                                            type="button"
+                                            className="id-link"
+                                            onClick={() => void openViewItem(item.invoice_item_id)}
+                                          >
+                                            {shortId(item.invoice_item_id)}
+                                          </button>
+                                        </td>
+                                        <td>{item.sku}</td>
+                                        <td>{item.name}</td>
+                                        <td>{item.quantity}</td>
+                                        <td>{item.price}</td>
+                                        <td>{item.discount}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ) : null}
+                    </Fragment>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
 
-      {!loading && rows.length > 0 && (
-        <PaginationControls
-          page={page}
-          pageSize={pageSize}
-          itemCount={pageItems.length}
-          totalItems={totalItems}
-          onPageChange={setPage}
-          onPageSizeChange={setPageSize}
-        />
-      )}
+          {!loading && rows.length > 0 && (
+            <PaginationControls
+              page={page}
+              pageSize={pageSize}
+              itemCount={pageItems.length}
+              totalItems={totalItems}
+              onPageChange={setPage}
+              onPageSizeChange={setPageSize}
+            />
+          )}
         </>
       )}
       {showCreate && (
@@ -258,9 +435,27 @@ export default function InvoicesPage() {
           </form>
         </Modal>
       )}
+      {addItemInvoice && (
+        <Modal title={`Add line item — ${shortId(addItemInvoice.invoice_id)}`} onClose={() => setAddItemInvoice(null)}>
+          <form className="inline-form" onSubmit={(e) => void handleAddItem(e)}>
+            <div className="form-field"><label>SKU</label><input value={itemForm.sku} onChange={(e) => setItemForm({ ...itemForm, sku: e.target.value })} required /></div>
+            <div className="form-field"><label>Name</label><input value={itemForm.name} onChange={(e) => setItemForm({ ...itemForm, name: e.target.value })} required /></div>
+            <div className="form-field"><label>Description</label><input value={itemForm.description} onChange={(e) => setItemForm({ ...itemForm, description: e.target.value })} required /></div>
+            <div className="form-field"><label>Quantity</label><input type="number" value={itemForm.quantity} onChange={(e) => setItemForm({ ...itemForm, quantity: e.target.value })} required /></div>
+            <div className="form-field"><label>Price</label><input type="number" step="0.01" value={itemForm.price} onChange={(e) => setItemForm({ ...itemForm, price: e.target.value })} required /></div>
+            <div className="form-field"><label>Discount</label><input type="number" step="0.01" value={itemForm.discount} onChange={(e) => setItemForm({ ...itemForm, discount: e.target.value })} required /></div>
+            <button type="submit" className="btn btn-primary">Add</button>
+          </form>
+        </Modal>
+      )}
       {viewId && (
         <Modal title="Invoice details" onClose={() => setViewId(null)} wide>
           {viewLoading ? <p className="loading">Loading…</p> : viewData && <JsonViewer data={viewData} />}
+        </Modal>
+      )}
+      {viewItemId && (
+        <Modal title="Invoice item details" onClose={() => setViewItemId(null)} wide>
+          {viewItemLoading ? <p className="loading">Loading…</p> : viewItemData && <JsonViewer data={viewItemData} />}
         </Modal>
       )}
     </>

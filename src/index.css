@@ -732,6 +732,87 @@ button {
   background: #f8fafc;
 }
 
+.data-table tr.row-plan-expanded td,
+.data-table tr.row-invoice-expanded td,
+.data-table tr.row-subscription-expanded td {
+  background: #f1f5f9;
+}
+
+.data-table .col-expand {
+  width: 2rem;
+  padding: 0.35rem 0.15rem 0.35rem 0.4rem;
+}
+
+.nested-detail-row > td {
+  background: #f8fafc !important;
+  padding: 0.45rem 0.65rem 0.55rem 2rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.nested-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.nested-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.nested-panel-title {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.nested-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.nested-table th,
+.nested-table td {
+  padding: 0.3rem 0.55rem;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.nested-table th {
+  background: #f1f5f9;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.nested-table tr:last-child td {
+  border-bottom: none;
+}
+
+.nested-table .actions-cell {
+  white-space: nowrap;
+}
+
+.nested-panel .empty,
+.nested-panel .loading {
+  margin: 0;
+  padding: 0.35rem 0;
+  font-size: 0.8rem;
+}
+
 .inventory-resource-table .col-expand {
   width: 2rem;
   text-align: center;
