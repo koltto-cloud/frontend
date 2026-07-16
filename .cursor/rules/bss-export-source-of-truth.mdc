@@ -1,0 +1,28 @@
+---
+description: BSS export is the only source for UI attributes and generated React wiring
+globs: src/pages/**/*,src/hooks/**/*,src/layout/**/*
+alwaysApply: false
+---
+
+# BSS export → React (no manual wiring in src/)
+
+Cloudey frontend wiring must not diverge from Bootstrap Studio export.
+
+## Only edit
+
+1. **`bss-export/`** (BSS HTML output) — `data-cloudey`, `data-cloudey-type`, structure, classes
+2. **`bss_exporter/templates/cloudey.config.json`** — mapping keys to hook `wires`
+3. **`bss_exporter/templates/*.ts`** — hook implementations copied to `src/hooks/` on export
+
+## Never edit for functionality
+
+- `src/pages/**/*.tsx` — generated from BSS HTML; re-export to change
+- `src/hooks/**`, `src/layout/**`, `src/context/**` after export — copied from templates; edit templates then re-export
+
+Do not add `data-cloudey`, `onSubmit`, alert blocks, or modal wiring directly in `src/`. If BSS lacks an attribute, leave React unwired until BSS is fixed and export runs again.
+
+## Fixes
+
+- Missing attribute → add in BSS, ensure key exists in `cloudey.config.json`, re-export
+- Wrong behavior → update `bss_exporter/templates/` hook or config, re-export
+- Do not patch generated `LoginPage.tsx` (etc.) as a shortcut

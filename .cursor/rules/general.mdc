@@ -1,0 +1,34 @@
+---
+description: Markdown formatting and organization rules
+globs:
+  - "**/*.md"
+alwaysApply: false
+---
+
+# Markdown Rules
+
+## File Organization
+**STRICT: Prefer only this repo’s `README.md` for markdown docs** (plus allowed `documentation/` files covered by `documentation.mdc`).
+
+Do not invent extra markdown guides. Sibling repos keep their own README.
+
+## Documentation Updates
+- **NEVER automatically update README files when code changes**
+- Always ask first: "Should I update the README to reflect this change?"
+- Only update after explicit confirmation
+- Documentation should lag behind code (prototype pace)
+
+## Content Guidelines
+
+### README.md
+- How to run this repo locally
+- Start/stop commands
+- Project structure
+- Key commands
+
+## Formatting
+- ATX-style headers (# ## ###)
+- One blank line between sections
+- Code blocks with language: ```python
+- Lists: `-` for unordered, `1.` for ordered
+- Keep it scannable and concise

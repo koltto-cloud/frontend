@@ -1,0 +1,37 @@
+---
+description: Git branch and commit naming for Sentry fixes and features; merge when done
+alwaysApply: true
+---
+
+# Branch & commit conventions
+
+Do **not** commit Sentry fixes or features straight to `main`. Use a branch, finish the work, then merge (PR preferred).
+
+## Sentry fixes
+
+- **Branch:** `fix/sentry-<ID>-<short-slug>`
+  - Example: `fix/sentry-7-account-status-filter`
+  - `<ID>` is the Sentry short id (`7`, `X`, `PYTHON-FASTAPI-6`, etc.)
+- **Commits:** every commit subject includes the same id + short message
+  - Example: `fix(sentry-7): compare AccountStatus as enum in filters`
+  - Example: `fix(PYTHON-FASTAPI-X): skip missing ARQ keys when listing syncs`
+- One Sentry issue → one branch when practical; related twins (K/J) may share a branch if the fix is one change.
+
+## Features
+
+- **Branch:** `feat/<short-slug>`
+  - Example: `feat/company-schema-revision`
+- **Commits:** prefer `feat:` (or clear subject starting with the feature intent)
+  - Example: `feat: stamp tenant alembic revision on company integrations`
+
+## Merge when complete
+
+1. Finish the fix/feature on its branch (tests / smoke as needed).
+2. Open a PR into `main` (or merge the branch into `main` when the user asks).
+3. Do not leave finished Sentry/feature work only on a long-lived branch with no merge plan.
+
+## Agent defaults
+
+- When starting a Sentry fix or new feature, create/switch to the correctly named branch **before** committing (ask if branch naming is unclear).
+- Never invent `feat/` for a pure Sentry bugfix — use `fix/sentry-…`.
+- Pure chores/docs may use `chore/…` if the user wants a branch; otherwise follow their request.

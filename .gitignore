@@ -33,5 +33,7 @@ cloudey_notes.txt
 DEPLOYMENT.md
 README.md
 .env
-.cursor/
+.cursor/*
+!.cursor/rules/
+!.cursor/rules/**
 .vercel
