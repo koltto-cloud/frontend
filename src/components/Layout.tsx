@@ -35,7 +35,6 @@ const INTERNAL_NAV: NavSection[] = [
     links: [
       { to: '/catalog/plans', label: 'Plans' },
       { to: '/catalog/features', label: 'Services' },
-      { to: '/catalog/plan-features', label: 'Service Bundles' },
       { to: '/catalog/subscription-items', label: 'Subscription Items' },
       { to: '/billing/subscriptions', label: 'Subscriptions' },
       { to: '/billing/invoices', label: 'Invoices' },

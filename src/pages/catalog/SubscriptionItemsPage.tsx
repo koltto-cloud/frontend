@@ -64,7 +64,7 @@ export default function SubscriptionItemsPage() {
       <p className="alert alert-info" style={{ marginTop: 0 }}>
         Subscription items are <strong>not created directly</strong>. They are auto-generated when you
         create a subscription: the backend copies every service bundle from the selected plan into
-        subscription items. Flow: Services → Plan → Service Bundles →{' '}
+        subscription items. Flow: Services → Plans (add services on the plan) →{' '}
         <a href="/billing/subscriptions">Create subscription</a> → view items here.
       </p>
       <div className="filters">
