@@ -1,0 +1,143 @@
+# Frontend-only preview on Vercel. Does not touch Neon or Railway.
+#
+#   - frontend-only PR → VITE_API_URL = production Railway API
+#   - same branch name as an open backend PR → read that PR's preview API comment
+#
+# Test in the browser at STAGING_FRONTEND_URL (e.g. stg-portal.koltto.com), not the
+# random *.vercel.app URL. VITE_API_URL is injected at CI build time — do not add it
+# to Vercel Preview env (Git preview builds are skipped via vercel.json ignoreCommand).
+#
+# Backend CORS: add https://stg-portal.koltto.com to Railway Shared CORS_ORIGINS
+# (PR envs inherit it). No code change — your existing env var owns CORS.
+#
+# Secrets: VERCEL_TOKEN, BACKEND_GITHUB_TOKEN (read koltto-cloud/backend)
+# Vars: VERCEL_ORG_ID, VERCEL_PROJECT_ID, PRODUCTION_API_URL, STAGING_FRONTEND_URL
+#       optional BACKEND_GITHUB_REPO (default koltto-cloud/backend)
+
+name: Preview Vercel
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: preview-vercel-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  deploy_preview:
+    name: Vercel Preview
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Resolve VITE_API_URL
+        id: api
+        env:
+          GH_TOKEN: ${{ secrets.BACKEND_GITHUB_TOKEN }}
+          BACKEND_REPO: ${{ vars.BACKEND_GITHUB_REPO || 'koltto-cloud/backend' }}
+          PRODUCTION_API_URL: ${{ vars.PRODUCTION_API_URL || 'https://backend-production-7570.up.railway.app' }}
+          BRANCH: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+          api_url="$PRODUCTION_API_URL"
+          backend_pr=""
+          mode="production-api"
+
+          if [ -n "${GH_TOKEN:-}" ]; then
+            backend_pr="$(gh pr list --repo "$BACKEND_REPO" --head "$BRANCH" --state open --json number -q '.[0].number' || true)"
+            if [ -n "$backend_pr" ] && [ "$backend_pr" != "null" ]; then
+              echo "Open backend PR #$backend_pr on branch $BRANCH"
+              for attempt in $(seq 1 36); do
+                comments="$(gh api "repos/$BACKEND_REPO/issues/$backend_pr/comments" --jq '.[].body' || true)"
+                found="$(printf '%s\n' "$comments" | grep -oE 'API: `https://[^`]+`' | head -1 | sed 's/API: `//;s/`$//' || true)"
+                if [ -n "$found" ]; then
+                  api_url="$found"
+                  mode="backend-pr-$backend_pr"
+                  break
+                fi
+                echo "Waiting for backend preview API URL (attempt $attempt)…"
+                sleep 10
+              done
+            fi
+          else
+            echo "BACKEND_GITHUB_TOKEN not set; using production API."
+          fi
+
+          echo "api_url=$api_url" >> "$GITHUB_OUTPUT"
+          echo "mode=$mode" >> "$GITHUB_OUTPUT"
+          echo "backend_pr=$backend_pr" >> "$GITHUB_OUTPUT"
+          echo "Using VITE_API_URL=$api_url ($mode)"
+
+      - name: Build and deploy to Vercel Preview
+        id: deploy
+        env:
+          VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VITE_API_URL: ${{ steps.api.outputs.api_url }}
+          STAGING_FRONTEND_URL: ${{ vars.STAGING_FRONTEND_URL || 'https://stg-portal.koltto.com' }}
+        run: |
+          set -euo pipefail
+          npm ci
+          npx vercel pull --yes --environment=preview --token="$VERCEL_TOKEN"
+          echo "VITE_API_URL=$VITE_API_URL" >> .vercel/.env.preview.local
+          VITE_API_URL="$VITE_API_URL" npx vercel build --token="$VERCEL_TOKEN"
+          url="$(npx vercel deploy --prebuilt --yes --token="$VERCEL_TOKEN")"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Deployed: $url"
+          staging="${STAGING_FRONTEND_URL#https://}"
+          staging="${staging#http://}"
+          npx vercel alias set "$url" "$staging" --token="$VERCEL_TOKEN"
+          echo "Aliased https://$staging -> $url"
+
+      - name: Comment on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const apiUrl = `${{ steps.api.outputs.api_url }}`;
+            const mode = `${{ steps.api.outputs.mode }}`;
+            const backendPr = `${{ steps.api.outputs.backend_pr }}`;
+            const stagingUrl = `${{ vars.STAGING_FRONTEND_URL || 'https://stg-portal.koltto.com' }}`;
+            const lines = [
+              `### Vercel preview ready`,
+              ``,
+              `- Test at: ${stagingUrl}`,
+              `- \`VITE_API_URL\`: \`${apiUrl}\` (${mode})`,
+            ];
+            if (backendPr) {
+              lines.push(`- Matching backend PR: #${backendPr}`);
+            }
+            const body = lines.join("\n");
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const marker = "### Vercel preview ready";
+            const existing = comments.find((c) => c.user?.type === "Bot" && c.body?.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
