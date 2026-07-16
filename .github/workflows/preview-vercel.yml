@@ -170,7 +170,9 @@ jobs:
             echo "test_url=$url" >> "$GITHUB_OUTPUT"
           fi
 
+      # Non-critical: a flaky GitHub API (503) must not fail a good deploy.
       - name: Comment on PR
+        continue-on-error: true
         uses: actions/github-script@v7
         with:
           script: |
@@ -197,26 +199,47 @@ jobs:
               lines.push(`⚠️ **Production API** via \`preview-against-prod\` (CORS requires \`${stagingUrl}\`). Do **not** create/update/delete data.`);
             }
             const body = lines.join("\n");
-
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
             const marker = "### Vercel preview ready";
-            const existing = comments.find((c) => c.user?.type === "Bot" && c.body?.includes(marker));
-            if (existing) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: existing.id,
-                body,
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body,
-              });
+
+            const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+            const withRetry = async (fn) => {
+              for (let attempt = 1; attempt <= 4; attempt++) {
+                try {
+                  return await fn();
+                } catch (err) {
+                  const status = err?.status;
+                  if (attempt === 4 || (status && status < 500)) throw err;
+                  console.log(`GitHub API ${status || err} — retrying (${attempt}/3)…`);
+                  await sleep(attempt * 3000);
+                }
+              }
+            };
+
+            try {
+              const { data: comments } = await withRetry(() =>
+                github.rest.issues.listComments({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                }),
+              );
+              const existing = comments.find((c) => c.user?.type === "Bot" && c.body?.includes(marker));
+              await withRetry(() =>
+                existing
+                  ? github.rest.issues.updateComment({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      comment_id: existing.id,
+                      body,
+                    })
+                  : github.rest.issues.createComment({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      issue_number: context.issue.number,
+                      body,
+                    }),
+              );
+            } catch (err) {
+              // Deploy already succeeded and staging is aliased; just log.
+              console.log(`Skipping PR comment after retries: ${err?.status || err}`);
             }
