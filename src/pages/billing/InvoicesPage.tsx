@@ -16,6 +16,16 @@ interface InvoiceRow {
   created_at: string
 }
 
+interface SubscriptionOption {
+  subscription_id: string
+  company: { company_id: string; name: string }
+  status: string
+}
+
+function shortId(id: string): string {
+  return `${id.slice(0, 8)}…`
+}
+
 export default function InvoicesPage() {
   const [subscriptionId, setSubscriptionId] = useState('')
   const [invoiceStatus, setInvoiceStatus] = useState('')
@@ -37,6 +47,11 @@ export default function InvoicesPage() {
     discount: '0',
   })
 
+  const { data: subscriptions } = useAsyncData(
+    () => apiRequest<SubscriptionOption[]>('/api/v1/billing/subscription/list'),
+    [],
+  )
+
   const { data, error, loading, reload } = useAsyncData(
     () =>
       apiRequest<InvoiceRow[]>('/api/v1/billing/invoice/list', {
@@ -49,6 +64,7 @@ export default function InvoicesPage() {
   )
 
   const rows = data ?? []
+  const subscriptionOptions = subscriptions ?? []
   const { page, pageSize, pageItems, totalItems, setPage, setPageSize } =
     useClientPagination(rows)
 
@@ -137,7 +153,17 @@ export default function InvoicesPage() {
         <button type="button" className="btn btn-primary" onClick={() => setShowCreate(true)}>Create invoice</button>
       </div>
       <div className="filters">
-        <label>Subscription ID <input value={subscriptionId} onChange={(e) => setSubscriptionId(e.target.value)} /></label>
+        <label>
+          Subscription ID
+          <select value={subscriptionId} onChange={(e) => setSubscriptionId(e.target.value)}>
+            <option value="">All</option>
+            {subscriptionOptions.map((s) => (
+              <option key={s.subscription_id} value={s.subscription_id}>
+                {shortId(s.subscription_id)} — {s.company?.name ?? '—'} ({s.status})
+              </option>
+            ))}
+          </select>
+        </label>
         <label>
           Status
           <select value={invoiceStatus} onChange={(e) => setInvoiceStatus(e.target.value)}>
@@ -194,7 +220,21 @@ export default function InvoicesPage() {
       {showCreate && (
         <Modal title="Create invoice" onClose={() => setShowCreate(false)}>
           <form className="inline-form" onSubmit={(e) => void handleCreate(e)}>
-            <div className="form-field"><label>Subscription ID</label><input value={createForm.subscription_id} onChange={(e) => setCreateForm({ ...createForm, subscription_id: e.target.value })} required /></div>
+            <div className="form-field">
+              <label>Subscription ID</label>
+              <select
+                value={createForm.subscription_id}
+                onChange={(e) => setCreateForm({ ...createForm, subscription_id: e.target.value })}
+                required
+              >
+                <option value="">Select subscription…</option>
+                {subscriptionOptions.map((s) => (
+                  <option key={s.subscription_id} value={s.subscription_id}>
+                    {s.subscription_id} — {s.company?.name ?? '—'} ({s.status})
+                  </option>
+                ))}
+              </select>
+            </div>
             <div className="form-field"><label>Due date</label><input type="datetime-local" value={createForm.due_date} onChange={(e) => setCreateForm({ ...createForm, due_date: e.target.value })} required /></div>
             <div className="form-field"><label>Tax</label><input type="number" step="0.01" value={createForm.tax} onChange={(e) => setCreateForm({ ...createForm, tax: e.target.value })} required /></div>
             <div className="form-field"><label>Discount</label><input type="number" step="0.01" value={createForm.discount} onChange={(e) => setCreateForm({ ...createForm, discount: e.target.value })} required /></div>

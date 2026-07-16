@@ -82,7 +82,7 @@ export default function FeaturesPage() {
           notes: editForm.notes || null,
         },
       })
-      setMsg('Feature updated.')
+      setMsg('Service updated.')
       setEditRow(null)
       void reload()
     } catch (e) {
@@ -99,7 +99,7 @@ export default function FeaturesPage() {
         method: 'POST',
         body: { ...createForm, price: Number(createForm.price), notes: createForm.notes || null },
       })
-      setMsg('Feature created.')
+      setMsg('Service created.')
       setShowCreate(false)
       void reload()
     } catch (e) {
@@ -108,12 +108,12 @@ export default function FeaturesPage() {
   }
 
   const handleDelete = async (row: FeatureRow) => {
-    if (!confirm(`Delete feature "${row.name}"?`)) return
+    if (!confirm(`Delete service "${row.name}"?`)) return
     setErr('')
     setMsg('')
     try {
       await apiRequest(`/api/v1/catalog/feature/${row.feature_id}`, { method: 'DELETE' })
-      setMsg('Feature deleted.')
+      setMsg('Service deleted.')
       void reload()
     } catch (e) {
       setErr(formatApiError(e))
@@ -122,9 +122,9 @@ export default function FeaturesPage() {
 
   return (
     <>
-      <h1 className="page-title">Features</h1>
+      <h1 className="page-title">Services</h1>
       <div className="toolbar">
-        <button type="button" className="btn btn-primary" onClick={() => setShowCreate(true)}>Create feature</button>
+        <button type="button" className="btn btn-primary" onClick={() => setShowCreate(true)}>Create service</button>
       </div>
       <div className="filters">
         <label>Name <input value={name} onChange={(e) => setName(e.target.value)} /></label>
@@ -145,7 +145,7 @@ export default function FeaturesPage() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>Feature ID</th><th>Name</th><th>Description</th><th>Price</th><th>Status</th><th>Actions</th>
+                <th>Service ID</th><th>Name</th><th>Description</th><th>Price</th><th>Status</th><th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -183,7 +183,7 @@ export default function FeaturesPage() {
         </>
       )}
       {showCreate && (
-        <Modal title="Create feature" onClose={() => setShowCreate(false)}>
+        <Modal title="Create service" onClose={() => setShowCreate(false)}>
           <form className="inline-form" onSubmit={(e) => void handleCreate(e)}>
             {(['name', 'description', 'price', 'notes'] as const).map((f) => (
               <div key={f} className="form-field">
@@ -196,7 +196,7 @@ export default function FeaturesPage() {
         </Modal>
       )}
       {editRow && (
-        <Modal title={`Edit feature — ${editRow.name}`} onClose={() => setEditRow(null)}>
+        <Modal title={`Edit service — ${editRow.name}`} onClose={() => setEditRow(null)}>
           <form className="inline-form" onSubmit={(e) => void handleEdit(e)}>
             {(['name', 'description', 'price', 'notes'] as const).map((f) => (
               <div key={f} className="form-field">
@@ -215,7 +215,7 @@ export default function FeaturesPage() {
         </Modal>
       )}
       {viewId && (
-        <Modal title="Feature details" onClose={() => setViewId(null)} wide>
+        <Modal title="Service details" onClose={() => setViewId(null)} wide>
           {viewLoading ? <p className="loading">Loading…</p> : viewData && <JsonViewer data={viewData} />}
         </Modal>
       )}
