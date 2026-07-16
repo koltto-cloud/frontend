@@ -18,7 +18,7 @@ interface SubscriptionRow {
 
 interface SubscriptionItemRow {
   subscription_id: string
-  plan_feature_id: string
+  plan_feature_id?: string
   company_name: string
   plan_name: string
   feature_name: string
@@ -36,8 +36,9 @@ interface PlanOption {
   name: string
 }
 
-function shortId(id: string): string {
-  return `${id.slice(0, 8)}…`
+function shortId(id: string | null | undefined): string {
+  if (!id) return '—'
+  return id.length > 8 ? `${id.slice(0, 8)}…` : id
 }
 
 export default function SubscriptionsPage() {
@@ -309,16 +310,22 @@ export default function SubscriptionsPage() {
                                     </tr>
                                   </thead>
                                   <tbody>
-                                    {items.map((item) => (
-                                      <tr key={item.plan_feature_id}>
+                                    {items.map((item, idx) => (
+                                      <tr key={item.plan_feature_id || `${item.subscription_id}-${idx}`}>
                                         <td>
-                                          <button
-                                            type="button"
-                                            className="id-link"
-                                            onClick={() => void openViewItem(item.subscription_id, item.plan_feature_id)}
-                                          >
-                                            {shortId(item.plan_feature_id)}
-                                          </button>
+                                          {item.plan_feature_id ? (
+                                            <button
+                                              type="button"
+                                              className="id-link"
+                                              onClick={() =>
+                                                void openViewItem(item.subscription_id, item.plan_feature_id)
+                                              }
+                                            >
+                                              {shortId(item.plan_feature_id)}
+                                            </button>
+                                          ) : (
+                                            '—'
+                                          )}
                                         </td>
                                         <td>{item.plan_name}</td>
                                         <td>{item.feature_name}</td>
