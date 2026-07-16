@@ -1,5 +1,5 @@
 ---
-description: Solo-owner simplicity — keep the app small, readable, and maintainable
+description: Solo-owner simplicity — keep the frontend small, readable, and maintainable
 alwaysApply: true
 ---
 
@@ -13,19 +13,20 @@ New modules are fine when they earn their keep (clear single job, would meaningf
 ## Hard rules
 
 1. **Fix in place first.** Prefer editing the file that already owns the behavior.
-2. **New files need a reason.** Allowed when the concern is real and distinct (e.g. a new OCI resource sync). Not allowed for registries/helpers that only exist to avoid touching an existing file.
+2. **New files need a reason.** Allowed when the concern is real and distinct (e.g. a shared OCI polling hook used by multiple pages). Not allowed for registries/helpers that only exist to avoid touching an existing file.
 3. **No speculative architecture.** Do not invent factories, strategy patterns, or "for later" abstraction.
-4. **Reuse what exists.** Before extracting, check whether an existing function or dict already does the job.
+4. **Reuse what exists.** Before extracting, check whether an existing hook, component, or helper already does the job (`useAsyncData`, `DataTable`, `Modal`, etc.).
 5. **Short diffs.** Touch the fewest files that solve the real bug. Do not "clean up" adjacent code unless asked.
-6. **Clear and compact beats clever.** Correctness first — the code must work. Prefer the smallest design that stays obvious: fewer lines is good when each line still makes sense on a tired read. Avoid indirection that hides what runs (mystery factories, premature frameworks). A short dict / shared pattern is fine; a new abstraction layer "to be elegant" is not.
+6. **Clear and compact beats clever.** Correctness first — the code must work. Prefer the smallest design that stays obvious: fewer lines is good when each line still makes sense on a tired read. Avoid indirection that hides what runs. A short map / shared pattern is fine; a new abstraction layer "to be elegant" is not.
 7. **Length is not virtue.** Do not unroll or duplicate code just to look "explicit." Compress when the pattern is the same; expand only when cases truly differ.
 
 ## When tempted to add a file
 
 Ask: can this live in the module that already owns the behavior?
-- Worker task map → `worker.py`
-- Sync-run step execution → `sync_orchestrator.py`
-- Tenant DSN refresh → `tenant_dsn.py`
+- Page-only UI/state → that page under `src/pages/<domain>/`
+- Shared fetch/reload → `src/hooks/useAsyncData.ts` (or extend an existing domain hook)
+- API calls / types → `src/api/client.ts`
+- Shell / nav → `src/components/Layout.tsx` and routes in `src/App.tsx`
 
 Add a new file only when it has a clear single job **and** leaving it inline would make the owner file harder to maintain.
 
@@ -33,21 +34,22 @@ Add a new file only when it has a clear single job **and** leaving it inline wou
 
 When a new module *is* justified, put it in the directory that already owns that concern so the tree stays obvious:
 
-- Backend OCI / DB / auth / worker paths live in the sibling backend repo (`koltto/…`)
-- Frontend hooks → `src/hooks/` (or BSS templates when that pipeline applies)
-- Prefer editing BSS templates / exporter config over generated `src/` when that pipeline applies
+- Route pages → `src/pages/<domain>/` (identity, audit, catalog, billing, oci, admin, …)
+- Shared UI → `src/components/`
+- Shared React hooks → `src/hooks/`
+- Auth / session → `src/context/AuthContext.tsx`
+- API client + types → `src/api/`
+- OCI domain logic (non-UI) → `src/oci/`
+- Dashboard domain logic (non-UI) → `src/dashboard/`
+- Tiny generic helpers → `src/utils/`
+- Global styles → `src/index.css`
 
-Never drop a helper at an unrelated root, invent a parallel folder for the same domain, or put cloud logic under `core/` / `database/` unless it is truly cross-cutting infrastructure.
+Edit `src/` directly. `old_files/` (archived BSS export / exporter) is reference only — do not treat it as the edit path for new work.
 
-## Inventory / jobs
-
-- **One unit of work = one ARQ job** (usage, monitoring, inventory step — same pattern).
-- Inventory: enqueue **all steps up front**; each step is its own job. The last terminal step finalizes the run.
-- **Never** hold a worker slot waiting for sibling jobs on the same queue (that deadlocked inventory).
-- Prefer one standard enqueue/worker path over mega-jobs or special-case timeouts. Customization for one feature path is debt — standardize first.
-- Throughput = `WORKER_CONCURRENCY` draining the shared queue.
+Never drop a helper at an unrelated root, invent a parallel folder for the same domain, or add a new top-level package for one feature.
 
 ## Docs
 
-- Do not create new markdown docs for fixes. Update `documentation/product/tracker.md` for Sentry/incident status when relevant.
-- Never invent new README files (project allows only root / backend / frontend README).
+- Do not create new markdown docs for fixes.
+- Tracker / ARCHITECTURE / DEPLOYMENT live in the sibling backend repo — update those when API or deploy posture changes.
+- Never invent new README files unless the user explicitly asks.
