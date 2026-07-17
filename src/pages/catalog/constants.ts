@@ -14,3 +14,17 @@ export function toDatetimeLocal(iso?: string | null) {
 export function fromDatetimeLocal(value: string) {
   return value ? new Date(value).toISOString() : null
 }
+
+/** ISO / API datetime → `YYYY-MM-DD` for `<input type="date">` (local calendar day). */
+export function toDateInput(iso?: string | null) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
+/** `YYYY-MM-DD` → ISO at local midnight (00:00). */
+export function fromDateInput(value: string) {
+  return value ? new Date(`${value}T00:00:00`).toISOString() : null
+}

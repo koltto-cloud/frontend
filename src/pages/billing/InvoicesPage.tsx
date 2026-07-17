@@ -6,7 +6,7 @@ import { Alert } from '@/components/Alert'
 import PaginationControls from '@/components/PaginationControls'
 import Modal from '@/components/Modal'
 import JsonViewer from '@/components/JsonViewer'
-import { fromDatetimeLocal, INVOICE_STATUSES, toDatetimeLocal } from '@/pages/billing/constants'
+import { fromDateInput, INVOICE_STATUSES, toDateInput } from '@/pages/billing/constants'
 
 interface InvoiceRow {
   invoice_id: string
@@ -154,13 +154,13 @@ export default function InvoicesPage() {
 
   const openEdit = async (row: InvoiceRow) => {
     setEditRow(row)
-    setEditForm({ status: row.status, due_date: toDatetimeLocal(row.due_date), tax: '0', discount: '0' })
+    setEditForm({ status: row.status, due_date: toDateInput(row.due_date), tax: '0', discount: '0' })
     setErr('')
     try {
       const detail = await apiRequest<{ tax?: number; discount?: number }>(`/api/v1/billing/invoice/${row.invoice_id}`)
       setEditForm({
         status: row.status,
-        due_date: toDatetimeLocal(row.due_date),
+        due_date: toDateInput(row.due_date),
         tax: String(detail.tax ?? 0),
         discount: String(detail.discount ?? 0),
       })
@@ -179,7 +179,7 @@ export default function InvoicesPage() {
         method: 'PUT',
         body: {
           status: editForm.status,
-          due_date: fromDatetimeLocal(editForm.due_date),
+          due_date: fromDateInput(editForm.due_date),
           tax: Number(editForm.tax),
           discount: Number(editForm.discount),
         },
@@ -201,7 +201,7 @@ export default function InvoicesPage() {
         method: 'POST',
         body: {
           subscription_id: createForm.subscription_id,
-          due_date: fromDatetimeLocal(createForm.due_date),
+          due_date: fromDateInput(createForm.due_date),
           tax: Number(createForm.tax),
           discount: Number(createForm.discount),
         },
@@ -412,7 +412,7 @@ export default function InvoicesPage() {
                 ))}
               </select>
             </div>
-            <div className="form-field"><label>Due date</label><input type="datetime-local" value={createForm.due_date} onChange={(e) => setCreateForm({ ...createForm, due_date: e.target.value })} required /></div>
+            <div className="form-field"><label>Due date</label><input type="date" value={createForm.due_date} onChange={(e) => setCreateForm({ ...createForm, due_date: e.target.value })} required /></div>
             <div className="form-field"><label>Tax</label><input type="number" step="0.01" value={createForm.tax} onChange={(e) => setCreateForm({ ...createForm, tax: e.target.value })} required /></div>
             <div className="form-field"><label>Discount</label><input type="number" step="0.01" value={createForm.discount} onChange={(e) => setCreateForm({ ...createForm, discount: e.target.value })} required /></div>
             <button type="submit" className="btn btn-primary">Create</button>
@@ -428,7 +428,7 @@ export default function InvoicesPage() {
                 {INVOICE_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
-            <div className="form-field"><label>Due date</label><input type="datetime-local" value={editForm.due_date} onChange={(e) => setEditForm({ ...editForm, due_date: e.target.value })} /></div>
+            <div className="form-field"><label>Due date</label><input type="date" value={editForm.due_date} onChange={(e) => setEditForm({ ...editForm, due_date: e.target.value })} /></div>
             <div className="form-field"><label>Tax</label><input type="number" step="0.01" value={editForm.tax} onChange={(e) => setEditForm({ ...editForm, tax: e.target.value })} /></div>
             <div className="form-field"><label>Discount</label><input type="number" step="0.01" value={editForm.discount} onChange={(e) => setEditForm({ ...editForm, discount: e.target.value })} /></div>
             <button type="submit" className="btn btn-primary">Save</button>
