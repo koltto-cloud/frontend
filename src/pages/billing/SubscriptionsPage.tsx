@@ -6,7 +6,7 @@ import { Alert } from '@/components/Alert'
 import PaginationControls from '@/components/PaginationControls'
 import Modal from '@/components/Modal'
 import JsonViewer from '@/components/JsonViewer'
-import { fromDatetimeLocal, SUBSCRIPTION_STATUSES, toDatetimeLocal } from '@/pages/billing/constants'
+import { fromDateInput, SUBSCRIPTION_STATUSES, toDateInput } from '@/pages/billing/constants'
 
 interface SubscriptionRow {
   subscription_id: string
@@ -135,8 +135,8 @@ export default function SubscriptionsPage() {
     setEditRow(row)
     setEditForm({
       status: row.status,
-      start_date: toDatetimeLocal(row.start_date),
-      end_date: toDatetimeLocal(row.end_date),
+      start_date: toDateInput(row.start_date),
+      end_date: toDateInput(row.end_date),
     })
     setErr('')
   }
@@ -151,8 +151,8 @@ export default function SubscriptionsPage() {
         method: 'PUT',
         body: {
           status: editForm.status,
-          start_date: fromDatetimeLocal(editForm.start_date),
-          end_date: editForm.end_date ? fromDatetimeLocal(editForm.end_date) : null,
+          start_date: fromDateInput(editForm.start_date),
+          end_date: editForm.end_date ? fromDateInput(editForm.end_date) : null,
         },
       })
       setMsg('Subscription updated.')
@@ -173,8 +173,8 @@ export default function SubscriptionsPage() {
         body: {
           company_id: createForm.company_id,
           plan_id: createForm.plan_id,
-          start_date: fromDatetimeLocal(createForm.start_date),
-          end_date: createForm.end_date ? fromDatetimeLocal(createForm.end_date) : null,
+          start_date: fromDateInput(createForm.start_date),
+          end_date: createForm.end_date ? fromDateInput(createForm.end_date) : null,
         },
       })
       setMsg('Subscription created (items auto-generated from plan service bundles).')
@@ -351,8 +351,8 @@ export default function SubscriptionsPage() {
                 ))}
               </select>
             </div>
-            <div className="form-field"><label>Start date</label><input type="datetime-local" value={createForm.start_date} onChange={(e) => setCreateForm({ ...createForm, start_date: e.target.value })} required /></div>
-            <div className="form-field"><label>End date (optional)</label><input type="datetime-local" value={createForm.end_date} onChange={(e) => setCreateForm({ ...createForm, end_date: e.target.value })} /></div>
+            <div className="form-field"><label>Start date</label><input type="date" value={createForm.start_date} onChange={(e) => setCreateForm({ ...createForm, start_date: e.target.value })} required /></div>
+            <div className="form-field"><label>End date (optional)</label><input type="date" value={createForm.end_date} onChange={(e) => setCreateForm({ ...createForm, end_date: e.target.value })} /></div>
             <button type="submit" className="btn btn-primary">Create</button>
           </form>
         </Modal>
@@ -366,8 +366,8 @@ export default function SubscriptionsPage() {
                 {SUBSCRIPTION_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
-            <div className="form-field"><label>Start date</label><input type="datetime-local" value={editForm.start_date} onChange={(e) => setEditForm({ ...editForm, start_date: e.target.value })} /></div>
-            <div className="form-field"><label>End date</label><input type="datetime-local" value={editForm.end_date} onChange={(e) => setEditForm({ ...editForm, end_date: e.target.value })} /></div>
+            <div className="form-field"><label>Start date</label><input type="date" value={editForm.start_date} onChange={(e) => setEditForm({ ...editForm, start_date: e.target.value })} /></div>
+            <div className="form-field"><label>End date</label><input type="date" value={editForm.end_date} onChange={(e) => setEditForm({ ...editForm, end_date: e.target.value })} /></div>
             <button type="submit" className="btn btn-primary">Save</button>
           </form>
         </Modal>
