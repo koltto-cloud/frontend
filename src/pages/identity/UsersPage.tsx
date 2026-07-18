@@ -221,12 +221,18 @@ export default function UsersPage() {
                   <td>{row.user_type}</td>
                   <td>{row.account_status}</td>
                   <td className="actions-cell">
-                    <button type="button" className="btn btn-sm" onClick={() => openEdit(row)}>
-                      Edit
-                    </button>
-                    <button type="button" className="btn btn-sm" onClick={() => void handleForceReset(row)}>
-                      Reset pwd
-                    </button>
+                    {row.user_type === 'super_admin' ? (
+                      <span style={{ color: 'var(--muted)' }}>—</span>
+                    ) : (
+                      <>
+                        <button type="button" className="btn btn-sm" onClick={() => openEdit(row)}>
+                          Edit
+                        </button>
+                        <button type="button" className="btn btn-sm" onClick={() => void handleForceReset(row)}>
+                          Reset pwd
+                        </button>
+                      </>
+                    )}
                   </td>
                 </tr>
               ))}
