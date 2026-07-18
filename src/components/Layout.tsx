@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { useSyncsPaused } from '@/hooks/useSyncsPaused'
@@ -59,7 +60,7 @@ function topbarRoleClass(userType: string | undefined): string {
   return ''
 }
 
-function NavSections({ groups }: { groups: NavSection[] }) {
+function NavSections({ groups, onNavigate }: { groups: NavSection[]; onNavigate: () => void }) {
   return (
     <>
       {groups.map((group) => (
@@ -71,6 +72,7 @@ function NavSections({ groups }: { groups: NavSection[] }) {
               to={link.to}
               className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
               end={link.to === '/'}
+              onClick={onNavigate}
             >
               {link.label}
             </NavLink>
@@ -85,19 +87,29 @@ export default function Layout() {
   const { user, companies, activeCompany, connections, connection, switchCompany, switchConnection, logout } =
     useAuth()
   const location = useLocation()
+  const [navOpen, setNavOpen] = useState(false)
   const onOciPage = location.pathname.startsWith('/oci')
   const { syncsPaused, message: syncsPausedMessage } = useSyncsPaused(onOciPage)
   const staff = isStaff(user?.user_type)
 
+  useEffect(() => {
+    if (!navOpen) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setNavOpen(false)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [navOpen])
+
   return (
     <div className="app-shell">
-      <aside className="sidebar">
+      <aside id="primary-navigation" className={`sidebar${navOpen ? ' is-open' : ''}`}>
         <div className="sidebar-brand">
           <p className="sidebar-brand-name">KÖLTTÖ</p>
         </div>
 
         <div className="nav-band">
-          <NavSections groups={CUSTOMER_NAV} />
+          <NavSections groups={CUSTOMER_NAV} onNavigate={() => setNavOpen(false)} />
         </div>
 
         {staff ? (
@@ -106,14 +118,32 @@ export default function Layout() {
               <span className="nav-band-divider-label">Internal</span>
             </div>
             <div className="nav-band nav-band--internal">
-              <NavSections groups={INTERNAL_NAV} />
+              <NavSections groups={INTERNAL_NAV} onNavigate={() => setNavOpen(false)} />
             </div>
           </>
         ) : null}
       </aside>
+      {navOpen ? (
+        <button
+          type="button"
+          className="sidebar-backdrop"
+          aria-label="Close navigation"
+          onClick={() => setNavOpen(false)}
+        />
+      ) : null}
 
       <div className="main">
         <header className={`topbar${topbarRoleClass(user?.user_type)}`}>
+          <button
+            type="button"
+            className="mobile-menu-button"
+            aria-controls="primary-navigation"
+            aria-expanded={navOpen}
+            onClick={() => setNavOpen((open) => !open)}
+          >
+            <span aria-hidden="true">☰</span>
+            <span>Menu</span>
+          </button>
           <div className="context-bar">
             {companies.length > 0 && (
               <label>
