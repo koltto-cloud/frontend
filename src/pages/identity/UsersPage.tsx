@@ -14,6 +14,7 @@ interface UserRow {
   email: string
   user_type: string
   account_status: string
+  totp_enabled: boolean
 }
 
 const USER_TYPES = ['customer', 'staff', 'super_admin'] as const
@@ -204,6 +205,7 @@ export default function UsersPage() {
                 <th>Last name</th>
                 <th>User type</th>
                 <th>Account status</th>
+                <th>TOTP</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -220,6 +222,15 @@ export default function UsersPage() {
                   <td>{row.last_name}</td>
                   <td>{row.user_type}</td>
                   <td>{row.account_status}</td>
+                  <td>
+                    <span
+                      className={
+                        row.totp_enabled ? 'util-badge util-badge-ok' : 'util-badge util-badge-muted'
+                      }
+                    >
+                      {row.totp_enabled ? 'Enabled' : 'Disabled'}
+                    </span>
+                  </td>
                   <td className="actions-cell">
                     {row.user_type === 'super_admin' ? (
                       <span style={{ color: 'var(--muted)' }}>—</span>
