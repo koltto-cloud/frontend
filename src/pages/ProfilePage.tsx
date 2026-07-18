@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react'
+import QRCode from 'qrcode'
 import { apiRequest, formatApiError } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
 import { useAsyncData } from '@/hooks/useAsyncData'
 import { Alert } from '@/components/Alert'
 import JsonViewer from '@/components/JsonViewer'
+
+type TotpStatus = { enabled: boolean }
+type TotpSetup = { provisioning_uri: string; secret: string }
 
 export default function ProfilePage() {
   const { user, refreshSession } = useAuth()
@@ -14,6 +18,10 @@ export default function ProfilePage() {
   const [totpCode, setTotpCode] = useState('')
   const [totpError, setTotpError] = useState('')
   const [totpSuccess, setTotpSuccess] = useState('')
+  const [enrolling, setEnrolling] = useState(false)
+  const [setup, setSetup] = useState<TotpSetup | null>(null)
+  const [qrDataUrl, setQrDataUrl] = useState('')
+  const [totpBusy, setTotpBusy] = useState(false)
 
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
@@ -28,10 +36,38 @@ export default function ProfilePage() {
     }
   }, [user])
 
-  const totpSetup = useAsyncData<Record<string, unknown>>(
-    () => apiRequest('/api/v1/auth/totp/totp/setup', { method: 'POST' }),
+  const totpStatus = useAsyncData<TotpStatus>(
+    () => apiRequest('/api/v1/auth/totp/totp/status'),
     [],
   )
+
+  const totpEnabled = totpStatus.data?.enabled === true
+  const toggleOn = totpEnabled || enrolling
+
+  useEffect(() => {
+    if (!setup?.provisioning_uri) {
+      setQrDataUrl('')
+      return
+    }
+    let cancelled = false
+    void QRCode.toDataURL(setup.provisioning_uri, {
+      width: 200,
+      margin: 2,
+      errorCorrectionLevel: 'M',
+    }).then((url) => {
+      if (!cancelled) setQrDataUrl(url)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [setup?.provisioning_uri])
+
+  const clearEnrollment = () => {
+    setEnrolling(false)
+    setSetup(null)
+    setQrDataUrl('')
+    setTotpCode('')
+  }
 
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -71,30 +107,59 @@ export default function ProfilePage() {
     }
   }
 
+  const handleTotpToggle = async (checked: boolean) => {
+    setTotpError('')
+    setTotpSuccess('')
+    if (checked) {
+      if (totpEnabled) return
+      setTotpBusy(true)
+      setEnrolling(true)
+      try {
+        const data = await apiRequest<TotpSetup>('/api/v1/auth/totp/totp/setup', {
+          method: 'POST',
+        })
+        setSetup(data)
+      } catch (err) {
+        setTotpError(formatApiError(err))
+        clearEnrollment()
+      } finally {
+        setTotpBusy(false)
+      }
+      return
+    }
+
+    setTotpBusy(true)
+    try {
+      if (totpEnabled || setup) {
+        await apiRequest('/api/v1/auth/totp/totp/disable', { method: 'DELETE' })
+      }
+      totpStatus.setData({ enabled: false })
+      clearEnrollment()
+      if (totpEnabled) setTotpSuccess('TOTP disabled.')
+    } catch (err) {
+      setTotpError(formatApiError(err))
+    } finally {
+      setTotpBusy(false)
+    }
+  }
+
   const handleTotpVerify = async (e: React.FormEvent) => {
     e.preventDefault()
     setTotpError('')
     setTotpSuccess('')
+    setTotpBusy(true)
     try {
       await apiRequest('/api/v1/auth/totp/totp/verify', {
         method: 'POST',
         body: { code: totpCode },
       })
+      totpStatus.setData({ enabled: true })
+      clearEnrollment()
       setTotpSuccess('TOTP enabled.')
-      setTotpCode('')
     } catch (err) {
       setTotpError(formatApiError(err))
-    }
-  }
-
-  const handleTotpDisable = async () => {
-    setTotpError('')
-    setTotpSuccess('')
-    try {
-      await apiRequest('/api/v1/auth/totp/totp/disable', { method: 'POST' })
-      setTotpSuccess('TOTP disabled.')
-    } catch (err) {
-      setTotpError(formatApiError(err))
+    } finally {
+      setTotpBusy(false)
     }
   }
 
@@ -168,24 +233,57 @@ export default function ProfilePage() {
       </div>
 
       <div className="card">
-        <h2>TOTP setup</h2>
-        <Alert type="error">{totpSetup.error || totpError}</Alert>
+        <h2>Authenticator (TOTP)</h2>
+        <Alert type="error">{totpStatus.error || totpError}</Alert>
         <Alert type="success">{totpSuccess}</Alert>
-        {totpSetup.data != null && <JsonViewer data={totpSetup.data} />}
-        <form className="inline-form" onSubmit={(e) => void handleTotpVerify(e)}>
-          <div className="form-field">
-            <label>Verify TOTP code</label>
-            <input value={totpCode} onChange={(e) => setTotpCode(e.target.value)} />
+
+        <label className="toggle-row">
+          <span className="toggle-label">
+            {totpEnabled ? 'TOTP is enabled' : 'Enable TOTP'}
+          </span>
+          <input
+            type="checkbox"
+            className="toggle-input"
+            role="switch"
+            checked={toggleOn}
+            disabled={totpBusy || totpStatus.loading}
+            onChange={(e) => void handleTotpToggle(e.target.checked)}
+          />
+          <span className="toggle-track" aria-hidden="true" />
+        </label>
+
+        {enrolling && setup && (
+          <div className="totp-enroll">
+            <p className="totp-enroll-hint">
+              Scan this QR code with your authenticator app, then enter the 6-digit code to confirm.
+            </p>
+            {qrDataUrl ? (
+              <img className="totp-qr" src={qrDataUrl} alt="TOTP QR code" width={200} height={200} />
+            ) : (
+              <p className="muted">Generating QR code…</p>
+            )}
+            <div className="form-field">
+              <label>Secret (manual entry)</label>
+              <code className="totp-secret">{setup.secret}</code>
+            </div>
+            <form className="inline-form" onSubmit={(e) => void handleTotpVerify(e)}>
+              <div className="form-field">
+                <label>Verify code</label>
+                <input
+                  value={totpCode}
+                  onChange={(e) => setTotpCode(e.target.value)}
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  placeholder="123456"
+                  required
+                />
+              </div>
+              <button type="submit" className="btn btn-primary" disabled={totpBusy}>
+                Confirm & enable
+              </button>
+            </form>
           </div>
-          <div className="form-actions">
-            <button type="submit" className="btn btn-primary">
-              Enable TOTP
-            </button>
-            <button type="button" className="btn btn-danger" onClick={() => void handleTotpDisable()}>
-              Disable TOTP
-            </button>
-          </div>
-        </form>
+        )}
       </div>
     </>
   )
