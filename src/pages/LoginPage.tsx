@@ -1,17 +1,21 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { formatApiError, login, loginTotp } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
 import { Alert } from '@/components/Alert'
 
 export default function LoginPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { setSessionTokens, refreshSession } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [totpCode, setTotpCode] = useState('')
   const [tempToken, setTempToken] = useState<string | null>(null)
   const [error, setError] = useState('')
+  const [success] = useState(
+    () => (location.state as { message?: string } | null)?.message ?? '',
+  )
   const [loading, setLoading] = useState(false)
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -78,6 +82,7 @@ export default function LoginPage() {
         <div className="auth-card">
           <h1>{tempToken ? 'Two-factor verification' : 'Welcome back'}</h1>
           <Alert type="error">{error}</Alert>
+          <Alert type="success">{success}</Alert>
 
           {!tempToken ? (
             <form onSubmit={(e) => void handleLogin(e)}>
