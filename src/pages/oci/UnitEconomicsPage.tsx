@@ -4,6 +4,7 @@ import { apiRequest, formatApiError } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
 import { useAsyncData } from '@/hooks/useAsyncData'
 import { Alert } from '@/components/Alert'
+import Modal from '@/components/Modal'
 
 interface BusinessMetric {
   metric_id: string
@@ -74,6 +75,7 @@ export default function UnitEconomicsPage() {
   const [msg, setMsg] = useState('')
   const [err, setErr] = useState('')
   const [busy, setBusy] = useState(false)
+  const [helpOpen, setHelpOpen] = useState(false)
 
   const base =
     companyId && connectionId
@@ -159,16 +161,28 @@ export default function UnitEconomicsPage() {
   if (!companyId || !connectionId) {
     return (
       <div className="page">
-        <h1 className="page-title">Unit Economics</h1>
+        <div className="page-title-row">
+          <h1 className="page-title">Unit Economics</h1>
+          <button
+            type="button"
+            className="page-help-btn"
+            aria-label="How Unit Economics works"
+            title="How Unit Economics works"
+            onClick={() => setHelpOpen(true)}
+          >
+            ?
+          </button>
+        </div>
         <p className="empty">
           Select a company and OCI connection in the top bar.
           {companyId && !connectionId ? (
             <>
               {' '}
-              <Link to="/oci/connections">Set up a connection</Link>
+              <Link to="/connections">Set up a connection</Link>
             </>
           ) : null}
         </p>
+        {helpOpen ? <UnitEconomicsHelpModal onClose={() => setHelpOpen(false)} /> : null}
       </div>
     )
   }
@@ -179,7 +193,18 @@ export default function UnitEconomicsPage() {
   return (
     <div className="page">
       <header className="dashboard-header">
-        <h1 className="page-title">Unit Economics</h1>
+        <div className="page-title-row page-title-row--centered">
+          <h1 className="page-title">Unit Economics</h1>
+          <button
+            type="button"
+            className="page-help-btn"
+            aria-label="How Unit Economics works"
+            title="How Unit Economics works"
+            onClick={() => setHelpOpen(true)}
+          >
+            ?
+          </button>
+        </div>
         <p className="page-lead">
           Track business metrics (customers, seats, deployments) and see cost per unit over a date
           range.
@@ -326,6 +351,57 @@ export default function UnitEconomicsPage() {
           Add metric
         </button>
       </form>
+
+      {helpOpen ? <UnitEconomicsHelpModal onClose={() => setHelpOpen(false)} /> : null}
     </div>
+  )
+}
+
+function UnitEconomicsHelpModal({ onClose }: { onClose: () => void }) {
+  return (
+    <Modal title="How Unit Economics works" onClose={onClose} wide>
+      <div className="help-modal-body">
+        <p>
+          Unit Economics answers: <strong>how much cloud spend does each unit of your business
+          cost?</strong>
+        </p>
+        <p>
+          OCI already knows your cloud bill. It does not know your business counts (customers,
+          seats, API calls, etc.). You add those as <strong>business metrics</strong>, and this page
+          divides period cloud cost by each metric:
+        </p>
+        <p className="help-modal-formula">
+          cost per unit = total OCI cost in the date range ÷ your metric value
+        </p>
+
+        <h3>How to use it</h3>
+        <ol>
+          <li>
+            Add a metric — e.g. name <em>Active customers</em>, unit <em>customer</em>, value{' '}
+            <em>120</em>, period <em>monthly</em>.
+          </li>
+          <li>Pick a date range (default last 30 days).</li>
+          <li>Read the computed <strong>cost per unit</strong> next to each metric.</li>
+        </ol>
+
+        <h3>What it tells you</h3>
+        <p>Examples if the period cost is $12,000:</p>
+        <ul>
+          <li>120 customers → <strong>$100 / customer</strong></li>
+          <li>4,000 seats → <strong>$3 / seat</strong></li>
+          <li>2M API calls → <strong>$0.006 / call</strong></li>
+        </ul>
+        <p>
+          Useful for pricing, margin checks, and spotting when infra cost per customer is climbing
+          even if the raw bill looks normal.
+        </p>
+
+        <h3>Current limits</h3>
+        <p>
+          One static value per metric, total cloud cost (not by service or compartment), and no
+          history yet. Update the metric when the business number changes.
+        </p>
+      </div>
+    </Modal>
   )
 }
