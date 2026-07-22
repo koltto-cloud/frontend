@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { apiRequest } from '@/api/client'
+import { apiRequest, apiRequestPaged } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
 import { useAsyncData } from '@/hooks/useAsyncData'
 import { useOciCompartments } from '@/hooks/useOciCompartments'
@@ -132,9 +132,11 @@ export default function MonitoringPage() {
 
   const { data, error, loading, reload } = useAsyncData(
     () => {
-      if (!base || !loaded) return Promise.resolve([])
+      if (!base || !loaded) {
+        return Promise.resolve({ items: [] as MonitoringMetric[], total: 0 })
+      }
       const limit = Math.min(Math.max(pageSize, 1), MAX_PAGE_SIZE)
-      return apiRequest<MonitoringMetric[]>(base, {
+      return apiRequestPaged<MonitoringMetric[]>(base, {
         query: {
           compartment_id: compartmentId || undefined,
           resource_type: resourceType || undefined,
@@ -149,6 +151,9 @@ export default function MonitoringPage() {
     },
     [listKey],
   )
+
+  const metrics = data?.items ?? []
+  const totalItems = data?.total ?? undefined
 
   const chartKey =
     loaded && base && resourceId && metricName
@@ -330,7 +335,6 @@ export default function MonitoringPage() {
     )
   }
 
-  const metrics = data ?? []
   const viewData = viewRow
     ? {
         ...viewRow,
@@ -585,6 +589,7 @@ export default function MonitoringPage() {
                 page={page}
                 pageSize={pageSize}
                 itemCount={metrics.length}
+                totalItems={totalItems}
                 onPageChange={setPage}
                 onPageSizeChange={(size) => {
                   setPageSize(Math.min(size, MAX_PAGE_SIZE))
