@@ -7,16 +7,25 @@ import SyncsPausedBanner from '@/components/SyncsPausedBanner'
 type NavLinkItem = { to: string; label: string }
 type NavSection = { section: string; links: NavLinkItem[] }
 
-/** Customer-facing: workspace + cloud products */
+/** Customer-facing: cost analysis, resources, and configuration */
 const CUSTOMER_NAV: NavSection[] = [
   {
-    section: 'General',
+    section: 'Costs',
     links: [
       { to: '/', label: 'Dashboard' },
       { to: '/oci/usage', label: 'Usage & Costs' },
       { to: '/oci/cost-explorer', label: 'Cost Explorer' },
       { to: '/oci/recommendations', label: 'Recommendations' },
       { to: '/oci/anomalies', label: 'Cost Anomalies' },
+      { to: '/oci/reports', label: 'Reports' },
+      { to: '/oci/unit-economics', label: 'Unit Economics' },
+    ],
+  },
+  {
+    section: 'Resources',
+    links: [
+      { to: '/oci/inventory', label: 'Inventory' },
+      { to: '/oci/monitoring', label: 'Monitoring' },
     ],
   },
   {
@@ -25,15 +34,6 @@ const CUSTOMER_NAV: NavSection[] = [
       { to: '/connections', label: 'Connections' },
       { to: '/oci/budgets', label: 'Budgets & Alerts' },
       { to: '/oci/allocation', label: 'Allocations' },
-    ],
-  },
-  {
-    section: 'OCI Cloud',
-    links: [
-      { to: '/oci/reports', label: 'Reports' },
-      { to: '/oci/unit-economics', label: 'Unit Economics' },
-      { to: '/oci/inventory', label: 'Inventory' },
-      { to: '/oci/monitoring', label: 'Monitoring' },
     ],
   },
 ]
