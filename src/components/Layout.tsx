@@ -129,14 +129,14 @@ export default function Layout() {
         </div>
 
         {staff ? (
-          <>
+          <div className="nav-band-internal-zone">
             <div className="nav-band-divider nav-band-divider--internal" role="separator" aria-label="Internal">
               <span className="nav-band-divider-label">Internal</span>
             </div>
-            <div className="nav-band nav-band--internal">
+            <div className="nav-band">
               <NavSections groups={INTERNAL_NAV} onNavigate={() => setNavOpen(false)} />
             </div>
-          </>
+          </div>
         ) : null}
       </aside>
       {navOpen ? (
