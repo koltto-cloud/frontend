@@ -123,7 +123,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         void loadConnections(company.company_id)
       }
       return true
-    } catch {
+    } catch (err) {
+      console.error('refreshSession failed', err)
       clearSession()
       return false
     } finally {
