@@ -16,7 +16,6 @@ const CUSTOMER_NAV: NavSection[] = [
       { to: '/oci/cost-explorer', label: 'Cost Explorer' },
       { to: '/oci/recommendations', label: 'Recommendations' },
       { to: '/oci/anomalies', label: 'Cost Anomalies' },
-      { to: '/oci/reports', label: 'Reports' },
       { to: '/oci/unit-economics', label: 'Unit Economics' },
     ],
   },
@@ -25,6 +24,7 @@ const CUSTOMER_NAV: NavSection[] = [
     links: [
       { to: '/oci/inventory', label: 'Inventory' },
       { to: '/oci/monitoring', label: 'Monitoring' },
+      { to: '/oci/reports', label: 'Reports' },
     ],
   },
   {
