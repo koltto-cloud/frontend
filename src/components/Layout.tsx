@@ -13,22 +13,27 @@ const CUSTOMER_NAV: NavSection[] = [
     section: 'General',
     links: [
       { to: '/', label: 'Dashboard' },
+      { to: '/oci/usage', label: 'Usage & Costs' },
+      { to: '/oci/cost-explorer', label: 'Cost Explorer' },
+      { to: '/oci/recommendations', label: 'Recommendations' },
+      { to: '/oci/anomalies', label: 'Cost Anomalies' },
+    ],
+  },
+  {
+    section: 'Settings',
+    links: [
       { to: '/connections', label: 'Connections' },
+      { to: '/oci/budgets', label: 'Budgets & Alerts' },
+      { to: '/oci/allocation', label: 'Allocations' },
     ],
   },
   {
     section: 'OCI Cloud',
     links: [
-      { to: '/oci/usage', label: 'Usage & Costs' },
-      { to: '/oci/cost-explorer', label: 'Cost Explorer' },
-      { to: '/oci/budgets', label: 'Budgets & Alerts' },
       { to: '/oci/reports', label: 'Reports' },
       { to: '/oci/unit-economics', label: 'Unit Economics' },
-      { to: '/oci/allocation', label: 'Allocation' },
       { to: '/oci/inventory', label: 'Inventory' },
       { to: '/oci/monitoring', label: 'Monitoring' },
-      { to: '/oci/recommendations', label: 'Recommendations' },
-      { to: '/oci/anomalies', label: 'Cost Anomalies' },
     ],
   },
 ]
