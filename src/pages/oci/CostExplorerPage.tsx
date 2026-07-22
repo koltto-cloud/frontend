@@ -6,6 +6,7 @@ import { useAsyncData } from '@/hooks/useAsyncData'
 import { loadResourceDisplayNames, resourceDisplayLabel } from '@/oci/resourceDisplayNames'
 import TimeSeriesChart from '@/components/TimeSeriesChart'
 import BarChart from '@/components/BarChart'
+import ResourceCostUtilPanel from '@/components/ResourceCostUtilPanel'
 import { Alert } from '@/components/Alert'
 import PageHeader from '@/components/PageHeader'
 import { costExplorerHelp } from '@/content/pageHelp'
@@ -88,6 +89,12 @@ export default function CostExplorerPage() {
   const [endDate, setEndDate] = useState(defaults.end)
   const [dimension, setDimension] = useState<Dimension>('service')
   const [trendFilter, setTrendFilter] = useState<TrendFilter>(null)
+  const [selectedResource, setSelectedResource] = useState<{
+    resourceId: string
+    label: string
+    service?: string | null
+    periodCost?: number | null
+  } | null>(null)
 
   const base =
     companyId && connectionId
@@ -193,6 +200,8 @@ export default function CostExplorerPage() {
         : (i.service ?? 'unknown'),
       value: i.total_cost ?? 0,
       title: i.resource_id ?? i.service ?? undefined,
+      id: i.resource_id ?? undefined,
+      service: i.service,
     }))
   }, [breakdown])
 
@@ -228,7 +237,7 @@ export default function CostExplorerPage() {
     <div className="page">
       <PageHeader
         title="Cost Explorer"
-        lead="Explore daily spend by service, compartment, or top resources. Click a bar to filter the trend."
+        lead="Explore daily spend by service, compartment, or top resources. Click a service/compartment to filter the trend, or a top resource for cost + utilization."
         helpTitle="About Cost Explorer"
         help={costExplorerHelp}
       />
@@ -365,10 +374,42 @@ export default function CostExplorerPage() {
         ) : (
           <>
             <h2>Top resources</h2>
-            <BarChart items={resourceChart} formatValue={(v) => formatMoney(v, currency)} />
+            <p className="page-lead" style={{ marginTop: 0 }}>
+              Click a resource to open cost + utilization (compute shows capacity and 20%/80%
+              guides).
+            </p>
+            <BarChart
+              items={resourceChart}
+              formatValue={(v) => formatMoney(v, currency)}
+              onItemClick={(item) => {
+                if (!item.id) return
+                setSelectedResource({
+                  resourceId: item.id,
+                  label: item.label,
+                  service: item.service,
+                  periodCost: item.value,
+                })
+                setDimension('resources')
+              }}
+            />
           </>
         )}
       </section>
+
+      {selectedResource ? (
+        <ResourceCostUtilPanel
+          companyId={companyId}
+          connectionId={connectionId}
+          resourceId={selectedResource.resourceId}
+          resourceName={selectedResource.label}
+          service={selectedResource.service}
+          startDate={startDate}
+          endDate={endDate}
+          currency={currency}
+          periodCost={selectedResource.periodCost}
+          onClose={() => setSelectedResource(null)}
+        />
+      ) : null}
     </div>
   )
 }
