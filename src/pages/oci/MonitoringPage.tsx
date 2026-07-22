@@ -10,6 +10,11 @@ import {
   type MonitoringResourceType,
 } from '@/oci/monitoring'
 import { loadResourceDisplayNames, resourceDisplayLabel } from '@/oci/resourceDisplayNames'
+import {
+  formatComputeCapacity,
+  loadInventoryOptions,
+  type InventoryOption,
+} from '@/oci/inventoryOptions'
 import PageHeader from '@/components/PageHeader'
 import { monitoringHelp } from '@/content/pageHelp'
 import {
@@ -56,12 +61,6 @@ interface MonitoringMetric {
   min_value: number | null
   unit: string | null
   synced_at: string
-}
-
-interface ComputeInstance {
-  resource_ocid?: string | null
-  display_name?: string | null
-  compartment_id?: string | null
 }
 
 const RESOURCE_TYPE_LABELS: Record<string, string> = Object.fromEntries(
@@ -116,11 +115,6 @@ export default function MonitoringPage() {
   const base =
     companyId && connectionId
       ? `/api/v1/cloud/oci/monitoring/${companyId}/connections/${connectionId}/monitoring`
-      : null
-
-  const computeBase =
-    companyId && connectionId
-      ? `/api/v1/cloud/oci/compute/${companyId}/connections/${connectionId}/compute`
       : null
 
   const metricOptions =
@@ -219,21 +213,17 @@ export default function MonitoringPage() {
     [utilKey],
   )
 
-  const instancesKey =
-    companyId && connectionId && resourceType === 'compute' ? `${computeBase}:${compartmentId}` : null
+  const inventoryKey =
+    companyId && connectionId && resourceType
+      ? `inv:${resourceType}:${companyId}:${connectionId}:${compartmentId}`
+      : null
 
-  const { data: instances } = useAsyncData(
+  const { data: inventoryOptions } = useAsyncData(
     () => {
-      if (!computeBase || resourceType !== 'compute') return Promise.resolve([])
-      return apiRequest<ComputeInstance[]>(computeBase, {
-        query: {
-          compartment_id: compartmentId || undefined,
-          limit: 500,
-          offset: 0,
-        },
-      })
+      if (!companyId || !connectionId || !resourceType) return Promise.resolve([] as InventoryOption[])
+      return loadInventoryOptions(resourceType, companyId, connectionId, compartmentId || undefined)
     },
-    [instancesKey],
+    [inventoryKey],
   )
 
   useEffect(() => {
@@ -347,7 +337,10 @@ export default function MonitoringPage() {
   const isPercentMetric =
     metricName === 'cpu_utilization' || metricName === 'memory_utilization'
 
-  const instanceOptions = instances ?? []
+  const resourceOptions = inventoryOptions ?? []
+  const selectedInventory = resourceOptions.find((r) => r.resource_ocid === resourceId) ?? null
+  const capacityLabel =
+    resourceType === 'compute' ? formatComputeCapacity(selectedInventory) : null
 
   return (
     <>
@@ -360,9 +353,10 @@ export default function MonitoringPage() {
 
       <Alert type="info">
         Sync monitoring from <Link to="/oci/inventory">Inventory → Compartments</Link>: select
-        compartments, then Sync monitoring. Compute charts use default thresholds ({'<'}
+        compartments, then Sync monitoring. Pick a resource type and resource to chart. Compute
+        charts show capacity (shape) and default thresholds ({'<'}
         {DEFAULT_UTILIZATION_THRESHOLDS.under}% under / {'>'}
-        {DEFAULT_UTILIZATION_THRESHOLDS.over}% over) on period mean — custom thresholds later.
+        {DEFAULT_UTILIZATION_THRESHOLDS.over}% over).
       </Alert>
 
       <div className="filters">
@@ -399,14 +393,13 @@ export default function MonitoringPage() {
             ))}
           </select>
         </label>
-        {resourceType === 'compute' && (
+        {resourceType ? (
           <label>
             Resource
             <select value={resourceId} onChange={(e) => onResourceChange(e.target.value)}>
               <option value="">All resources</option>
-              {instanceOptions.map((inst) => {
-                const id = inst.resource_ocid ?? ''
-                if (!id) return null
+              {resourceOptions.map((inst) => {
+                const id = inst.resource_ocid
                 const label = inst.display_name || resourceDisplayLabel(id, resourceNames)
                 return (
                   <option key={id} value={id}>
@@ -416,7 +409,7 @@ export default function MonitoringPage() {
               })}
             </select>
           </label>
-        )}
+        ) : null}
         <label>
           Metric
           <select value={metricName} onChange={(e) => onMetricChange(e.target.value)}>
@@ -451,7 +444,7 @@ export default function MonitoringPage() {
 
       {!loaded ? (
         <p className="empty">
-          Pick a date range (and preferably a compute resource), then Load metrics.
+          Pick a resource type and resource, then Load metrics to see the chart.
         </p>
       ) : (
         <>
@@ -468,6 +461,13 @@ export default function MonitoringPage() {
                   </span>
                 )}
               </div>
+
+              {capacityLabel ? (
+                <p className="page-lead" style={{ marginTop: 0 }}>
+                  Provisioned capacity: <strong>{capacityLabel}</strong>
+                  {isPercentMetric ? ' · 100% = full capacity' : null}
+                </p>
+              ) : null}
 
               {resourceType === 'compute' && (
                 <div className="monitoring-util-row">
@@ -534,14 +534,34 @@ export default function MonitoringPage() {
                   points={chartPoints}
                   valueLabel={metricOptions.find((m) => m.value === metricName)?.label ?? metricName}
                   valueSuffix={isPercentMetric ? '%' : ''}
+                  dateOnly
+                  yDomain={isPercentMetric ? [0, 100] : undefined}
+                  referenceLines={
+                    isPercentMetric
+                      ? [
+                          {
+                            y: DEFAULT_UTILIZATION_THRESHOLDS.under,
+                            label: `Under ${DEFAULT_UTILIZATION_THRESHOLDS.under}%`,
+                            color: 'rgba(180, 83, 9, 0.7)',
+                          },
+                          {
+                            y: DEFAULT_UTILIZATION_THRESHOLDS.over,
+                            label: `Over ${DEFAULT_UTILIZATION_THRESHOLDS.over}%`,
+                            color: 'rgba(225, 29, 72, 0.65)',
+                          },
+                        ]
+                      : undefined
+                  }
                 />
               )}
             </div>
           )}
 
-          {loaded && !resourceId && resourceType === 'compute' && (
+          {loaded && !resourceId && resourceType && (
             <p className="empty">
-              Select a compute resource to see the utilization chart and rightsizing badge.
+              Select a resource to see the time-series chart
+              {resourceType === 'compute' ? ' and rightsizing badge' : ''}. Or click a resource name
+              in the table below.
             </p>
           )}
 
@@ -575,10 +595,35 @@ export default function MonitoringPage() {
                             <button
                               type="button"
                               className="id-link"
-                              title={row.resource_id}
-                              onClick={() => setViewRow(row)}
+                              title={`${row.resource_id} — click to chart`}
+                              onClick={() => {
+                                const rt = row.resource_type as MonitoringResourceType
+                                if (rt && rt in MONITORING_METRICS_BY_TYPE) {
+                                  setResourceType(rt)
+                                  if (
+                                    !MONITORING_METRICS_BY_TYPE[rt].some(
+                                      (m) => m.value === row.metric_name,
+                                    )
+                                  ) {
+                                    setMetricName(
+                                      MONITORING_METRICS_BY_TYPE[rt][0]?.value ?? row.metric_name,
+                                    )
+                                  } else if (row.metric_name) {
+                                    setMetricName(row.metric_name)
+                                  }
+                                }
+                                setResourceId(row.resource_id)
+                              }}
                             >
                               {name}
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-ghost"
+                              style={{ marginLeft: 6 }}
+                              onClick={() => setViewRow(row)}
+                            >
+                              Details
                             </button>
                           </td>
                           <td>{formatNumber(row.mean_value)}</td>

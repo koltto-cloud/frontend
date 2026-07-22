@@ -33,7 +33,8 @@ export const costExplorerHelp: ReactNode = (
   <>
     <p>
       Cost Explorer is for <strong>interactive cost analysis</strong>: totals, daily trend, and
-      breakdowns by service, compartment, and top resources.
+      breakdowns by service, compartment, and top resources — plus a resource drill-down that
+      pairs spend with utilization.
     </p>
     <h3>How to use it</h3>
     <ol>
@@ -43,11 +44,16 @@ export const costExplorerHelp: ReactNode = (
         Click a service or compartment bar to <strong>filter the daily trend</strong> to that
         slice.
       </li>
+      <li>
+        Open <strong>Top resources</strong> and click a resource for its daily cost. Compute
+        instances also show CPU/memory vs provisioned capacity, with under (20%) / over (80%)
+        guide lines.
+      </li>
     </ol>
     <h3>When to use it</h3>
     <p>
-      Start here when you need to answer “where did the money go?” or “what drove this week’s
-      increase?” For CSV export, use Reports. For cost-per-customer style KPIs, use Unit
+      Start here when you need to answer “where did the money go?” or “is this expensive resource
+      actually busy?” For CSV export, use Reports. For cost-per-customer style KPIs, use Unit
       Economics.
     </p>
   </>
@@ -198,13 +204,18 @@ export const monitoringHelp: ReactNode = (
     </p>
     <h3>How to use it</h3>
     <ol>
-      <li>Pick resource type, optional compartment/resource, metric, and date range.</li>
+      <li>Pick resource type, a specific resource, metric, and date range.</li>
       <li>Load metrics to view the chart and table (mean / min / max).</li>
-      <li>Cross-check high-cost or idle candidates from Recommendations.</li>
+      <li>Or click a resource name in the table to jump straight to its chart.</li>
+      <li>
+        For compute: charts show provisioned shape (OCPU / memory) and 20% / 80% utilization
+        guides.
+      </li>
     </ol>
     <p>
       Flat mean≈min≈max on capacity gauges (e.g. file system usage) is often expected; look at CPU
-      and throughput for activity patterns.
+      and throughput for activity patterns. For cost + util together, use Cost Explorer → Top
+      resources.
     </p>
   </>
 )

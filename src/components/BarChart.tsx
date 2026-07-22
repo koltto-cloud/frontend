@@ -4,6 +4,8 @@ export interface BarChartItem {
   title?: string
   /** Optional stable key for click handlers (e.g. service name, compartment id). */
   id?: string
+  /** Optional metadata for click handlers (e.g. resource service). */
+  service?: string | null
 }
 
 interface BarChartProps {
