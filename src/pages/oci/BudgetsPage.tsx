@@ -4,6 +4,8 @@ import { apiRequest, formatApiError } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
 import { useAsyncData } from '@/hooks/useAsyncData'
 import { Alert } from '@/components/Alert'
+import PageHeader from '@/components/PageHeader'
+import { budgetsHelp } from '@/content/pageHelp'
 
 interface CostBudget {
   budget_id: string
@@ -261,13 +263,17 @@ export default function BudgetsPage() {
   if (!companyId || !connectionId) {
     return (
       <div className="page">
-        <h1 className="page-title">Budgets & Alerts</h1>
+        <PageHeader
+          title="Budgets & Alerts"
+          helpTitle="About Budgets & Alerts"
+          help={budgetsHelp}
+        />
         <p className="empty">
-          Select a company and OCI connection in the top bar.
+          Select a company and cloud connection in the top bar.
           {companyId && !connectionId ? (
             <>
               {' '}
-              <Link to="/oci/connections">Set up a connection</Link>
+              <Link to="/connections">Set up a connection</Link>
             </>
           ) : null}
         </p>
@@ -280,12 +286,12 @@ export default function BudgetsPage() {
 
   return (
     <div className="page">
-      <header className="dashboard-header">
-        <h1 className="page-title">Budgets & Alerts</h1>
-        <p className="page-lead">
-          Set spend caps and email preferences. Budgets and alerts are stored on the server.
-        </p>
-      </header>
+      <PageHeader
+        title="Budgets & Alerts"
+        lead="Set spend caps and email preferences. Budgets and alerts are stored on the server."
+        helpTitle="About Budgets & Alerts"
+        help={budgetsHelp}
+      />
 
       <Alert type="error">{err || budgetsError || alertsError}</Alert>
       <Alert type="success">{msg}</Alert>

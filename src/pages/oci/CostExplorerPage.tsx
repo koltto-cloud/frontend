@@ -7,6 +7,8 @@ import { loadResourceDisplayNames, resourceDisplayLabel } from '@/oci/resourceDi
 import TimeSeriesChart from '@/components/TimeSeriesChart'
 import BarChart from '@/components/BarChart'
 import { Alert } from '@/components/Alert'
+import PageHeader from '@/components/PageHeader'
+import { costExplorerHelp } from '@/content/pageHelp'
 
 type Dimension = 'service' | 'compartment' | 'resources'
 
@@ -204,13 +206,17 @@ export default function CostExplorerPage() {
   if (!companyId || !connectionId) {
     return (
       <div className="page">
-        <h1 className="page-title">Cost Explorer</h1>
+        <PageHeader
+          title="Cost Explorer"
+          helpTitle="About Cost Explorer"
+          help={costExplorerHelp}
+        />
         <p className="empty">
-          Select a company and OCI connection in the top bar.
+          Select a company and cloud connection in the top bar.
           {companyId && !connectionId ? (
             <>
               {' '}
-              <Link to="/oci/connections">Set up a connection</Link>
+              <Link to="/connections">Set up a connection</Link>
             </>
           ) : null}
         </p>
@@ -220,13 +226,12 @@ export default function CostExplorerPage() {
 
   return (
     <div className="page">
-      <header className="dashboard-header">
-        <h1 className="page-title">Cost Explorer</h1>
-        <p className="page-lead">
-          Explore daily spend by service, compartment, or top resources. Click a bar to filter the
-          trend.
-        </p>
-      </header>
+      <PageHeader
+        title="Cost Explorer"
+        lead="Explore daily spend by service, compartment, or top resources. Click a bar to filter the trend."
+        helpTitle="About Cost Explorer"
+        help={costExplorerHelp}
+      />
 
       <div className="filters">
         <label>

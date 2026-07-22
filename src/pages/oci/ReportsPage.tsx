@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import { apiRequestText, formatApiError } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
 import { Alert } from '@/components/Alert'
+import PageHeader from '@/components/PageHeader'
+import { reportsHelp } from '@/content/pageHelp'
 
 function defaultDateRange() {
   const end = new Date()
@@ -55,13 +57,13 @@ export default function ReportsPage() {
   if (!companyId || !connectionId) {
     return (
       <div className="page">
-        <h1 className="page-title">Reports</h1>
+        <PageHeader title="Reports" helpTitle="About Reports" help={reportsHelp} />
         <p className="empty">
-          Select a company and OCI connection in the top bar.
+          Select a company and cloud connection in the top bar.
           {companyId && !connectionId ? (
             <>
               {' '}
-              <Link to="/oci/connections">Set up a connection</Link>
+              <Link to="/connections">Set up a connection</Link>
             </>
           ) : null}
         </p>
@@ -71,10 +73,12 @@ export default function ReportsPage() {
 
   return (
     <div className="page">
-      <header className="dashboard-header">
-        <h1 className="page-title">Reports</h1>
-        <p className="page-lead">Download a CSV cost report for the selected date range.</p>
-      </header>
+      <PageHeader
+        title="Reports"
+        lead="Download a CSV cost report for the selected date range."
+        helpTitle="About Reports"
+        help={reportsHelp}
+      />
 
       <div className="filters">
         <label>

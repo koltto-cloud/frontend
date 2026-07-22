@@ -4,6 +4,8 @@ import { apiRequest } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
 import { useAsyncData } from '@/hooks/useAsyncData'
 import { Alert } from '@/components/Alert'
+import PageHeader from '@/components/PageHeader'
+import { anomaliesHelp } from '@/content/pageHelp'
 
 interface SpendAnomaly {
   date: string
@@ -80,17 +82,16 @@ export default function AnomaliesPage() {
 
   return (
     <div className="page">
-      <header className="dashboard-header">
-        <h1 className="page-title">Cost anomalies</h1>
-        <p className="page-lead">
-          Days where spend jumped well above its recent trend — what changed, by how much, and what
-          drove it. Last 30 days.
-        </p>
-      </header>
+      <PageHeader
+        title="Cost Anomalies"
+        lead="Days where spend jumped well above its recent trend — what changed, by how much, and what drove it."
+        helpTitle="About Cost Anomalies"
+        help={anomaliesHelp}
+      />
 
       {!hasCompany || !hasConnection ? (
         <p className="empty">
-          Select a company and OCI connection in the top bar to see anomalies.
+          Select a company and cloud connection in the top bar to see anomalies.
           {!hasConnection && hasCompany && (
             <>
               {' '}
