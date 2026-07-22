@@ -132,7 +132,7 @@ export default function UnitEconomicsPage() {
           period: form.period,
         },
       })
-      setMsg('Metric created.')
+      setMsg('Business count added.')
       setForm(EMPTY_FORM)
       void reloadMetrics()
       void reloadComputed()
@@ -145,12 +145,12 @@ export default function UnitEconomicsPage() {
 
   const deleteMetric = async (metricId: string) => {
     if (!base) return
-    if (!window.confirm('Delete this metric?')) return
+    if (!window.confirm('Delete this business count?')) return
     setErr('')
     setMsg('')
     try {
       await apiRequest(`${base}/unit-economics/metrics/${metricId}`, { method: 'DELETE' })
-      setMsg('Metric deleted.')
+      setMsg('Business count deleted.')
       void reloadMetrics()
       void reloadComputed()
     } catch (e2) {
