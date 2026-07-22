@@ -10,7 +10,7 @@ interface RecommendationItem {
   resource_name: string | null
   service: string | null
   resource_type: string
-  kind: 'idle' | 'oversized' | 'overutilized' | 'idle_storage'
+  kind: 'idle' | 'oversized' | 'overutilized' | 'idle_storage' | 'idle_lb'
   severity: 'high' | 'medium' | 'low'
   monthly_cost: number
   currency: string | null
@@ -36,6 +36,7 @@ interface RecommendationsResponse {
 const KIND_ACTION: Record<RecommendationItem['kind'], { action: string; color: string }> = {
   idle: { action: 'Stop', color: '#e5484d' },
   idle_storage: { action: 'Review', color: '#e5484d' },
+  idle_lb: { action: 'Delete', color: '#e5484d' },
   oversized: { action: 'Downsize', color: '#f5a623' },
   overutilized: { action: 'Scale up', color: '#d6409f' },
 }
@@ -43,6 +44,8 @@ const KIND_ACTION: Record<RecommendationItem['kind'], { action: string; color: s
 const TYPE_LABEL: Record<string, string> = {
   compute: 'Compute',
   block_storage: 'Block storage',
+  file_storage: 'File storage',
+  load_balancer: 'Load balancer',
 }
 
 function isoDaysAgo(days: number): string {
@@ -71,7 +74,10 @@ function pct(value: number | null): string {
 }
 
 function metricPhrase(item: RecommendationItem): string {
-  if (item.resource_type === 'block_storage') return 'near-zero I/O'
+  if (item.resource_type === 'load_balancer') return 'no traffic'
+  if (item.resource_type === 'block_storage' || item.resource_type === 'file_storage') {
+    return 'near-zero I/O'
+  }
   return `CPU ${pct(item.cpu_avg)} · Mem ${pct(item.mem_avg)}`
 }
 
