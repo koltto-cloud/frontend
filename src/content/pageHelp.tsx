@@ -62,19 +62,24 @@ export const costExplorerHelp: ReactNode = (
 export const recommendationsHelp: ReactNode = (
   <>
     <p>
-      Recommendations surface <strong>actionable FinOps opportunities</strong> from monitoring and
-      usage signals — idle or underused resources, right-sizing hints, and performance alerts.
+      Recommendations surface <strong>actionable FinOps opportunities</strong> from monitoring,
+      usage, and inventory signals — idle or underused resources, unattached volumes, right-sizing
+      hints, and performance alerts.
     </p>
     <h3>How to use it</h3>
     <ol>
-      <li>Select a date range that matches the window you care about.</li>
       <li>Review estimated monthly savings vs performance alerts.</li>
+      <li>
+        Unattached (orphan) boot/block volumes appear when inventory sync finds no active
+        attachment — high-confidence delete/reattach candidates.
+      </li>
       <li>Open a resource in Inventory or Monitoring to validate before changing anything.</li>
     </ol>
     <h3>How to read confidence</h3>
     <p>
-      Lower confidence usually means thinner metrics history or noisier signals. Treat those as
-      investigation leads, not automatic delete candidates.
+      Lower confidence usually means thinner metrics history or noisier signals. Unattached volume
+      findings are high confidence because they use attachment state, not just I/O. Treat noisy
+      util-based leads as investigation, not automatic deletes.
     </p>
   </>
 )

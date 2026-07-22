@@ -32,6 +32,8 @@ const DETAIL_FIELDS: Record<string, string[]> = {
     'size_in_gbs',
     'vpus_per_gb',
     'storage_type',
+    'is_attached',
+    'attached_instance_id',
   ],
   'object-storage': [
     'resource_ocid',

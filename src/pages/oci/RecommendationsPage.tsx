@@ -12,7 +12,7 @@ interface RecommendationItem {
   resource_name: string | null
   service: string | null
   resource_type: string
-  kind: 'idle' | 'oversized' | 'overutilized' | 'idle_storage' | 'idle_lb'
+  kind: 'idle' | 'oversized' | 'overutilized' | 'idle_storage' | 'idle_lb' | 'unattached_volume'
   severity: 'high' | 'medium' | 'low'
   monthly_cost: number
   currency: string | null
@@ -39,6 +39,7 @@ const KIND_ACTION: Record<RecommendationItem['kind'], { action: string; color: s
   idle: { action: 'Stop', color: '#e5484d' },
   idle_storage: { action: 'Review', color: '#e5484d' },
   idle_lb: { action: 'Delete', color: '#e5484d' },
+  unattached_volume: { action: 'Delete', color: '#e5484d' },
   oversized: { action: 'Downsize', color: '#f5a623' },
   overutilized: { action: 'Scale up', color: '#d6409f' },
 }
@@ -76,6 +77,7 @@ function pct(value: number | null): string {
 }
 
 function metricPhrase(item: RecommendationItem): string {
+  if (item.kind === 'unattached_volume') return 'unattached'
   if (item.resource_type === 'load_balancer') return 'no traffic'
   if (item.resource_type === 'block_storage' || item.resource_type === 'file_storage') {
     return 'near-zero I/O'
