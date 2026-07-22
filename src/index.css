@@ -328,6 +328,75 @@ button {
   letter-spacing: -0.02em;
 }
 
+.page-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0 0 1.15rem;
+}
+
+.page-title-row .page-title {
+  margin: 0;
+}
+
+.page-title-row--centered {
+  justify-content: center;
+}
+
+.page-help-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.55rem;
+  height: 1.55rem;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid rgba(8, 145, 178, 0.35);
+  background: rgba(8, 145, 178, 0.08);
+  color: var(--accent);
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.page-help-btn:hover {
+  background: rgba(8, 145, 178, 0.16);
+  border-color: rgba(8, 145, 178, 0.55);
+}
+
+.help-modal-body p,
+.help-modal-body li {
+  color: var(--ink);
+  line-height: 1.55;
+}
+
+.help-modal-body h3 {
+  margin: 1.15rem 0 0.45rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.help-modal-body ol,
+.help-modal-body ul {
+  margin: 0.35rem 0 0.75rem;
+  padding-left: 1.25rem;
+}
+
+.help-modal-body li {
+  margin-bottom: 0.35rem;
+}
+
+.help-modal-formula {
+  margin: 0.75rem 0;
+  padding: 0.7rem 0.9rem;
+  border-radius: 8px;
+  background: rgba(8, 145, 178, 0.08);
+  border: 1px solid rgba(8, 145, 178, 0.18);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.88rem;
+}
+
 .card {
   background: rgba(255, 255, 255, 0.92);
   border: 1px solid var(--line);
