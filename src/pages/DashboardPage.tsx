@@ -132,8 +132,10 @@ export default function DashboardPage() {
       ? `/api/v1/cloud/oci/usage/${companyId}/connections/${connectionId}/usage`
       : null
 
-  // OCI is the only cloud today; `all` uses the same series until AWS/GCP exist.
-  const rangeKey = usageBase ? `${cloud}:${startDate}:${endDate}` : null
+  // OCI is the only cloud today and `cloud` is not sent to the API, so `all` and
+  // `oci` return identical data. Keep it out of the fetch key so toggling the
+  // filter doesn't refetch. Add it back here once AWS/GCP change the query.
+  const rangeKey = usageBase ? `${startDate}:${endDate}` : null
   const costKey = usageBase && rangeKey ? `${usageBase}/by-date:${rangeKey}` : null
   const breakdownKey = usageBase && rangeKey ? `${usageBase}/breakdown:${rangeKey}` : null
   const compartmentKey =
