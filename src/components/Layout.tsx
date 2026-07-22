@@ -13,7 +13,6 @@ const CUSTOMER_NAV: NavSection[] = [
     section: 'Costs',
     links: [
       { to: '/', label: 'Dashboard' },
-      { to: '/oci/usage', label: 'Usage & Costs' },
       { to: '/oci/cost-explorer', label: 'Cost Explorer' },
       { to: '/oci/recommendations', label: 'Recommendations' },
       { to: '/oci/anomalies', label: 'Cost Anomalies' },
