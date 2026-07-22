@@ -9,11 +9,16 @@ type NavSection = { section: string; links: NavLinkItem[] }
 
 /** Customer-facing: workspace + cloud products */
 const CUSTOMER_NAV: NavSection[] = [
-  { section: 'General', links: [{ to: '/', label: 'Dashboard' }] },
+  {
+    section: 'General',
+    links: [
+      { to: '/', label: 'Dashboard' },
+      { to: '/connections', label: 'Connections' },
+    ],
+  },
   {
     section: 'OCI Cloud',
     links: [
-      { to: '/oci/connections', label: 'Connections' },
       { to: '/oci/usage', label: 'Usage & Costs' },
       { to: '/oci/cost-explorer', label: 'Cost Explorer' },
       { to: '/oci/budgets', label: 'Budgets & Alerts' },
@@ -176,6 +181,7 @@ export default function Layout() {
                 >
                   {connections.map((c) => (
                     <option key={c.connection_id} value={c.connection_id}>
+                      {c.cloud ? `${c.cloud.toUpperCase()} · ` : ''}
                       {c.name ?? c.connection_id.slice(0, 8)}
                     </option>
                   ))}

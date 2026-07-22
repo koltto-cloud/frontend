@@ -58,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loadConnections = useCallback(async (companyId: string) => {
     try {
       const data = await apiRequest<Connection[]>(
-        `/api/v1/cloud/oci/connection/${companyId}/connections`,
+        `/api/v1/cloud/connections/${companyId}`,
       )
       setConnections(data)
       const savedId = localStorage.getItem('koltto_selected_connection_id')

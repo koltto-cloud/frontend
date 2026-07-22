@@ -409,11 +409,11 @@ export default function DashboardPage() {
 
       {!hasCompany || !hasConnection ? (
         <p className="empty">
-          Select a company and OCI connection in the top bar to view daily total cost.
+          Select a company and connection in the top bar to view daily total cost.
           {!hasConnection && hasCompany && (
             <>
               {' '}
-              <Link to="/oci/connections">Set up a connection</Link>
+              <Link to="/connections">Set up a connection</Link>
             </>
           )}
         </p>

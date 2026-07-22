@@ -94,7 +94,7 @@ export default function AnomaliesPage() {
           {!hasConnection && hasCompany && (
             <>
               {' '}
-              <Link to="/oci/connections">Set up a connection</Link>
+              <Link to="/connections">Set up a connection</Link>
             </>
           )}
         </p>
