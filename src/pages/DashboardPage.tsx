@@ -12,6 +12,8 @@ import {
   saveBudget,
   toLocalIsoDate,
 } from '@/dashboard/costInsights'
+import PageHeader from '@/components/PageHeader'
+import { dashboardHelp } from '@/content/pageHelp'
 import {
   loadUnderutilizedOpportunities,
   type TopResourceItem,
@@ -402,10 +404,12 @@ export default function DashboardPage() {
 
   return (
     <>
-      <header className="dashboard-header">
-        <h1 className="page-title dashboard-title">Dashboard</h1>
-        <p className="dashboard-greeting-line">Hi {greetingName} — here’s your cloud spend overview.</p>
-      </header>
+      <PageHeader
+        title="Dashboard"
+        lead={`Hi ${greetingName} — here’s your cloud spend overview.`}
+        helpTitle="About the Dashboard"
+        help={dashboardHelp}
+      />
 
       {!hasCompany || !hasConnection ? (
         <p className="empty">

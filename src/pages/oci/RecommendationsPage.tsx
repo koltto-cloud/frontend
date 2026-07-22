@@ -4,6 +4,8 @@ import { apiRequest } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
 import { useAsyncData } from '@/hooks/useAsyncData'
 import { Alert } from '@/components/Alert'
+import PageHeader from '@/components/PageHeader'
+import { recommendationsHelp } from '@/content/pageHelp'
 
 interface RecommendationItem {
   resource_id: string | null
@@ -115,17 +117,16 @@ export default function RecommendationsPage() {
 
   return (
     <div className="page">
-      <header className="dashboard-header">
-        <h1 className="page-title">Recommendations</h1>
-        <p className="page-lead">
-          Where your resources cost more than they’re used — with the fix and the savings. Last 30
-          days.
-        </p>
-      </header>
+      <PageHeader
+        title="Recommendations"
+        lead="Where your resources cost more than they’re used — with the fix and the savings."
+        helpTitle="About Recommendations"
+        help={recommendationsHelp}
+      />
 
       {!hasCompany || !hasConnection ? (
         <p className="empty">
-          Select a company and OCI connection in the top bar to see recommendations.
+          Select a company and cloud connection in the top bar to see recommendations.
           {!hasConnection && hasCompany && (
             <>
               {' '}

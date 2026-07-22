@@ -10,6 +10,8 @@ import {
   type MonitoringResourceType,
 } from '@/oci/monitoring'
 import { loadResourceDisplayNames, resourceDisplayLabel } from '@/oci/resourceDisplayNames'
+import PageHeader from '@/components/PageHeader'
+import { monitoringHelp } from '@/content/pageHelp'
 import {
   average,
   classifyUtilization,
@@ -329,7 +331,7 @@ export default function MonitoringPage() {
   if (!companyId || !connectionId) {
     return (
       <>
-        <h1 className="page-title">OCI Monitoring</h1>
+        <PageHeader title="Monitoring" helpTitle="About Monitoring" help={monitoringHelp} />
         <p className="empty">Select a company and connection from the top bar.</p>
       </>
     )
@@ -349,7 +351,12 @@ export default function MonitoringPage() {
 
   return (
     <>
-      <h1 className="page-title">OCI Monitoring</h1>
+      <PageHeader
+        title="Monitoring"
+        lead="Utilization and performance metrics for resources in the selected connection."
+        helpTitle="About Monitoring"
+        help={monitoringHelp}
+      />
 
       <Alert type="info">
         Sync monitoring from <Link to="/oci/inventory">Inventory → Compartments</Link>: select

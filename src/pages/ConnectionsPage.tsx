@@ -7,6 +7,8 @@ import { Alert } from '@/components/Alert'
 import PaginationControls from '@/components/PaginationControls'
 import Modal from '@/components/Modal'
 import JsonViewer from '@/components/JsonViewer'
+import PageHeader from '@/components/PageHeader'
+import { connectionsHelp } from '@/content/pageHelp'
 
 type CloudProvider = 'oci' | 'aws' | 'gcp'
 
@@ -192,7 +194,11 @@ export default function ConnectionsPage() {
   if (!companyId) {
     return (
       <>
-        <h1 className="page-title">Connections</h1>
+        <PageHeader
+          title="Connections"
+          helpTitle="About Connections"
+          help={connectionsHelp}
+        />
         <p className="empty">Select a company from the top bar.</p>
       </>
     )
@@ -200,11 +206,12 @@ export default function ConnectionsPage() {
 
   return (
     <>
-      <h1 className="page-title">Connections</h1>
-      <p className="page-lead">
-        Cloud account connections for this company. OCI is available today; AWS and GCP will
-        appear here when their connectors ship.
-      </p>
+      <PageHeader
+        title="Connections"
+        lead="Cloud account connections for this company. OCI is available today; AWS and GCP will appear here when their connectors ship."
+        helpTitle="About Connections"
+        help={connectionsHelp}
+      />
 
       <div className="toolbar">
         <button

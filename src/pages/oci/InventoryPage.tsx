@@ -10,6 +10,8 @@ import PaginationControls, {
   MAX_PAGE_SIZE,
 } from '@/components/PaginationControls'
 import { Alert } from '@/components/Alert'
+import PageHeader from '@/components/PageHeader'
+import { inventoryHelp } from '@/content/pageHelp'
 
 const INVENTORY_TABS = [
   { key: 'compartments', label: 'Compartments', segment: 'compartment', resource: 'compartments' },
@@ -103,7 +105,7 @@ export default function InventoryPage() {
   if (!companyId || !connectionId) {
     return (
       <>
-        <h1 className="page-title">OCI Inventory</h1>
+        <PageHeader title="Inventory" helpTitle="About Inventory" help={inventoryHelp} />
         <p className="empty">Select a company and connection from the top bar.</p>
       </>
     )
@@ -111,7 +113,12 @@ export default function InventoryPage() {
 
   return (
     <>
-      <h1 className="page-title">OCI Inventory</h1>
+      <PageHeader
+        title="Inventory"
+        lead="Synced cloud resources for the selected connection — browse by type and compartment."
+        helpTitle="About Inventory"
+        help={inventoryHelp}
+      />
 
       <div className="tabs">
         {INVENTORY_TABS.map((t) => (
