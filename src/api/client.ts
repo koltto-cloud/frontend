@@ -31,7 +31,11 @@ export interface Connection {
   connection_id: string
   company_id: string
   name?: string
+  /** Cloud provider: oci | aws | gcp */
+  cloud?: string
+  tenancy?: string
   tenancy_ocid?: string
+  account_ref?: string
   region?: string
   status?: string
   created_at?: string
