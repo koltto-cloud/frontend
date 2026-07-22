@@ -132,7 +132,7 @@ export default function UnitEconomicsPage() {
           period: form.period,
         },
       })
-      setMsg('Metric created.')
+      setMsg('Business count added.')
       setForm(EMPTY_FORM)
       void reloadMetrics()
       void reloadComputed()
@@ -145,12 +145,12 @@ export default function UnitEconomicsPage() {
 
   const deleteMetric = async (metricId: string) => {
     if (!base) return
-    if (!window.confirm('Delete this metric?')) return
+    if (!window.confirm('Delete this business count?')) return
     setErr('')
     setMsg('')
     try {
       await apiRequest(`${base}/unit-economics/metrics/${metricId}`, { method: 'DELETE' })
-      setMsg('Metric deleted.')
+      setMsg('Business count deleted.')
       void reloadMetrics()
       void reloadComputed()
     } catch (e2) {
@@ -186,7 +186,7 @@ export default function UnitEconomicsPage() {
     <div className="page">
       <PageHeader
         title="Unit Economics"
-        lead="Track business metrics (customers, seats, deployments) and see cost per unit over a date range."
+        lead="Divide your cloud bill by a business count you care about (customers, seats, orders) to see cost each."
         helpTitle="How Unit Economics works"
         help={unitEconomicsHelp}
       />
@@ -205,26 +205,32 @@ export default function UnitEconomicsPage() {
         </label>
       </div>
 
-      <h2>Cost per unit</h2>
+      <h2>Cloud cost each</h2>
+      <p className="page-lead" style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+        Uses the <strong>full bill</strong> for the selected connection in this date range — not a
+        single service or resource. For breakdowns, use Cost Explorer.
+      </p>
       {computedLoading && !computed ? (
         <p className="loading">Computing…</p>
       ) : !computed || computed.items.length === 0 ? (
         <p className="empty">
-          No unit economics yet. Add a business metric below.
-          {computed ? ` Period cost: ${formatMoney(computed.period_cost, currency)}.` : ''}
+          No counts yet. Add a business count below.
+          {computed
+            ? ` Bill for this range: ${formatMoney(computed.period_cost, currency)}.`
+            : ''}
         </p>
       ) : (
         <>
           <p className="page-lead" style={{ marginTop: 0 }}>
-            Period cost: {formatMoney(computed.period_cost, currency)}
+            Bill for this range: {formatMoney(computed.period_cost, currency)}
           </p>
           <div className="data-table-wrap">
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Metric</th>
-                  <th>Units</th>
-                  <th>Cost / unit</th>
+                  <th>What you count</th>
+                  <th>How many</th>
+                  <th>Cost each</th>
                 </tr>
               </thead>
               <tbody>
@@ -233,7 +239,7 @@ export default function UnitEconomicsPage() {
                     <td>
                       {item.name}
                       <span className="page-lead" style={{ marginLeft: 6, fontSize: 12 }}>
-                        ({item.unit_label})
+                        (per {item.unit_label})
                       </span>
                     </td>
                     <td>{item.metric_value}</td>
@@ -246,19 +252,23 @@ export default function UnitEconomicsPage() {
         </>
       )}
 
-      <h2 style={{ marginTop: '1.75rem' }}>Business metrics</h2>
+      <h2 style={{ marginTop: '1.75rem' }}>Your business counts</h2>
+      <p className="page-lead" style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+        These numbers come from your business (CRM, billing, product analytics) — not from the
+        cloud. Update them when the count changes.
+      </p>
       {metricsLoading && !metrics ? (
-        <p className="loading">Loading metrics…</p>
+        <p className="loading">Loading…</p>
       ) : metricRows.length === 0 ? (
-        <p className="empty">No metrics yet.</p>
+        <p className="empty">No business counts yet.</p>
       ) : (
         <div className="data-table-wrap">
           <table className="data-table">
             <thead>
               <tr>
                 <th>Name</th>
-                <th>Unit</th>
-                <th>Value</th>
+                <th>Counted as</th>
+                <th>How many</th>
                 <th>Period</th>
                 <th />
               </tr>
@@ -297,22 +307,23 @@ export default function UnitEconomicsPage() {
           />
         </label>
         <label>
-          Unit label
+          Counted as
           <input
             value={form.unit_label}
             onChange={(e) => setForm((f) => ({ ...f, unit_label: e.target.value }))}
-            placeholder="e.g. customers"
+            placeholder="e.g. customer"
             required
           />
         </label>
         <label>
-          Value
+          How many
           <input
             type="number"
             min="0.0001"
             step="any"
             value={form.value}
             onChange={(e) => setForm((f) => ({ ...f, value: e.target.value }))}
+            placeholder="e.g. 120"
             required
           />
         </label>
@@ -328,7 +339,7 @@ export default function UnitEconomicsPage() {
           </select>
         </label>
         <button type="submit" className="btn btn-primary" disabled={busy}>
-          Add metric
+          Add count
         </button>
       </form>
     </div>

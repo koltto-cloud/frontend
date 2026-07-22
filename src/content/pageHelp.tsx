@@ -95,51 +95,59 @@ export const anomaliesHelp: ReactNode = (
 export const unitEconomicsHelp: ReactNode = (
   <>
     <p>
-      Unit Economics answers:{' '}
-      <strong>how much cloud spend does each unit of your business cost?</strong>
+      This page answers one question:{' '}
+      <strong>if I spread my cloud bill across a business count I care about, what is the cost of
+      each?</strong>
     </p>
     <p>
-      Your cloud bill is ingested from connected providers. Business counts (customers, seats, API
-      calls, etc.) are not — you add those as <strong>business metrics</strong>, and this page
-      divides period cloud cost by each metric:
+      Example: your connected cloud spend for the date range is <strong>$12,000</strong>, and you
+      have <strong>120 active customers</strong>. Cost each = $12,000 ÷ 120 ={' '}
+      <strong>$100 per customer</strong>.
     </p>
     <p className="help-modal-formula">
-      cost per unit = total cloud cost in the date range ÷ your metric value
+      cost each = total cloud bill for the date range ÷ how many you have
     </p>
+
     <h3>How to use it</h3>
     <ol>
       <li>
-        Add a metric — e.g. name <em>Active customers</em>, unit <em>customer</em>, value{' '}
-        <em>120</em>, period <em>monthly</em>.
+        Under <em>Your business counts</em>, add what you want to divide by — e.g. name{' '}
+        <em>Active customers</em>, counted as <em>customer</em>, how many <em>120</em>.
       </li>
-      <li>Pick a date range (default last 30 days).</li>
+      <li>Pick a date range (that sets which bill we use).</li>
       <li>
-        Read the computed <strong>cost per unit</strong> next to each metric.
+        Read <em>Cloud cost each</em> — that is the bill divided by your count.
       </li>
     </ol>
-    <h3>What it tells you</h3>
-    <p>Examples if the period cost is $12,000:</p>
+
+    <h3>What “counted as” and “how many” mean</h3>
     <ul>
-      <li>120 customers → <strong>$100 / customer</strong></li>
-      <li>4,000 seats → <strong>$3 / seat</strong></li>
-      <li>2M API calls → <strong>$0.006 / call</strong></li>
+      <li>
+        <strong>How many</strong> — the number from your business (120 customers, 4000 seats, 2M
+        API calls). Not a cloud meter.
+      </li>
+      <li>
+        <strong>Counted as</strong> — the singular label for one of those (customer, seat, API
+        call). Used only to display “$100 / customer”.
+      </li>
     </ul>
     <p>
-      Useful for pricing, margin checks, and spotting when infra cost per customer is climbing even
-      if the raw bill looks normal.
+      “Unit” in FinOps just means “one of whatever you are counting.” We avoid that word in the UI
+      because it sounds like a cloud usage unit.
     </p>
-    <h3>How this relates to tags</h3>
+
+    <h3>What this does <em>not</em> do yet</h3>
+    <ul>
+      <li>It does not pick a service, resource, or tag — it uses the <strong>whole bill</strong> for
+        the selected connection.</li>
+      <li>It does not split cost per cloud or per resource. Use Cost Explorer for that.</li>
+      <li>
+        Cross-cloud totals and “cost per customer for Product X only” need Allocations/tags later.
+      </li>
+    </ul>
     <p>
-      Unit Economics and tags are complementary — not replacements. Tags (coming via Allocations)
-      will let you attribute spend to orgs/teams/products; Unit Economics divides that spend (or
-      the total bill today) by a business KPI. Together they support budgets per org/tag and
-      cost-per-customer by product.
-    </p>
-    <h3>Current limits</h3>
-    <p>
-      One static value per metric, total connected spend for the selected connection (not yet
-      filtered by tag or multi-cloud rollup), and no history yet. Update the metric when the
-      business number changes.
+      So today: good for “infra cost per customer / seat / order.” Not for “how much does this VM
+      cost per customer.”
     </p>
   </>
 )
