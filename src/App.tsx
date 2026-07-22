@@ -21,6 +21,11 @@ import InventoryPage from '@/pages/oci/InventoryPage'
 import MonitoringPage from '@/pages/oci/MonitoringPage'
 import RecommendationsPage from '@/pages/oci/RecommendationsPage'
 import AnomaliesPage from '@/pages/oci/AnomaliesPage'
+import CostExplorerPage from '@/pages/oci/CostExplorerPage'
+import BudgetsPage from '@/pages/oci/BudgetsPage'
+import ReportsPage from '@/pages/oci/ReportsPage'
+import UnitEconomicsPage from '@/pages/oci/UnitEconomicsPage'
+import AllocationPage from '@/pages/oci/AllocationPage'
 import PricingPage from '@/pages/oci/PricingPage'
 import MaintenancePage from '@/pages/admin/MaintenancePage'
 
@@ -51,6 +56,11 @@ export default function App() {
               <Route path="/billing/invoice-items" element={<Navigate to="/billing/invoices" replace />} />
               <Route path="/oci/connections" element={<ConnectionsPage />} />
               <Route path="/oci/usage" element={<UsagePage />} />
+              <Route path="/oci/cost-explorer" element={<CostExplorerPage />} />
+              <Route path="/oci/budgets" element={<BudgetsPage />} />
+              <Route path="/oci/reports" element={<ReportsPage />} />
+              <Route path="/oci/unit-economics" element={<UnitEconomicsPage />} />
+              <Route path="/oci/allocation" element={<AllocationPage />} />
               <Route path="/oci/inventory" element={<InventoryPage />} />
               <Route path="/oci/resources" element={<Navigate to="/oci/inventory" replace />} />
               <Route path="/oci/monitoring" element={<MonitoringPage />} />

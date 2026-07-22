@@ -148,10 +148,10 @@ export interface RequestOptions {
   headers?: Record<string, string>
 }
 
-export async function apiRequest<T = unknown>(
+async function authorizedFetch(
   path: string,
   options: RequestOptions = {},
-): Promise<T> {
+): Promise<Response> {
   const { method = 'GET', body, auth = true, form, query, headers: extraHeaders } = options
 
   const url = new URL(path, API_URL || window.location.origin)
@@ -171,7 +171,7 @@ export async function apiRequest<T = unknown>(
     if (token) headers.Authorization = `Bearer ${token}`
   }
 
-  let res = await fetch(url.toString(), {
+  const fetchInit: RequestInit = {
     method,
     headers,
     body: form
@@ -179,24 +179,26 @@ export async function apiRequest<T = unknown>(
       : body !== undefined
         ? JSON.stringify(body)
         : undefined,
-  })
+  }
+
+  let res = await fetch(url.toString(), fetchInit)
 
   if (res.status === 401 && auth) {
     const newToken = await refreshAccessToken()
     if (newToken) {
       headers.Authorization = `Bearer ${newToken}`
-      res = await fetch(url.toString(), {
-        method,
-        headers,
-        body: form
-          ? new URLSearchParams(form)
-          : body !== undefined
-            ? JSON.stringify(body)
-            : undefined,
-      })
+      res = await fetch(url.toString(), fetchInit)
     }
   }
 
+  return res
+}
+
+export async function apiRequest<T = unknown>(
+  path: string,
+  options: RequestOptions = {},
+): Promise<T> {
+  const res = await authorizedFetch(path, options)
   const text = await res.text()
   const data = text ? (JSON.parse(text) as unknown) : null
 
@@ -205,6 +207,27 @@ export async function apiRequest<T = unknown>(
   }
 
   return data as T
+}
+
+/** Fetch a non-JSON response (CSV, plain text) with the same auth/refresh behavior. */
+export async function apiRequestText(
+  path: string,
+  options: RequestOptions = {},
+): Promise<string> {
+  const res = await authorizedFetch(path, options)
+  const text = await res.text()
+
+  if (!res.ok) {
+    let data: unknown = null
+    try {
+      data = text ? JSON.parse(text) : null
+    } catch {
+      data = { detail: text || `Request failed (${res.status})` }
+    }
+    throw new RequestError(res.status, data, formatApiError(new RequestError(res.status, data)))
+  }
+
+  return text
 }
 
 export async function login(email: string, password: string): Promise<TokenResponse> {
