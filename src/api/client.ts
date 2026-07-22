@@ -213,6 +213,33 @@ export async function apiRequest<T = unknown>(
   return data as T
 }
 
+export interface PagedResult<T> {
+  items: T
+  /** Total matching rows from X-Total-Count, when the API provides it. */
+  total: number | null
+}
+
+/** Like apiRequest, but also reads X-Total-Count for pagination (“Page X of Y”). */
+export async function apiRequestPaged<T = unknown>(
+  path: string,
+  options: RequestOptions = {},
+): Promise<PagedResult<T>> {
+  const res = await authorizedFetch(path, options)
+  const text = await res.text()
+  const data = text ? (JSON.parse(text) as unknown) : null
+
+  if (!res.ok) {
+    throw new RequestError(res.status, data, formatApiError(new RequestError(res.status, data)))
+  }
+
+  const raw = res.headers.get('X-Total-Count')
+  const parsed = raw != null && raw !== '' ? Number(raw) : NaN
+  return {
+    items: data as T,
+    total: Number.isFinite(parsed) ? parsed : null,
+  }
+}
+
 /** Fetch a non-JSON response (CSV, plain text) with the same auth/refresh behavior. */
 export async function apiRequestText(
   path: string,

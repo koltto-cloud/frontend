@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { apiRequest } from '@/api/client'
+import { apiRequestPaged } from '@/api/client'
 import { useAsyncData } from '@/hooks/useAsyncData'
 import PaginationControls, {
   DEFAULT_PAGE_SIZE,
@@ -41,7 +41,7 @@ export default function AuditLogsPage() {
   const { data, error, loading, reload } = useAsyncData(
     () => {
       const limit = Math.min(Math.max(pageSize, 1), MAX_PAGE_SIZE)
-      return apiRequest<AuditLogRow[]>('/api/v1/audit/logs', {
+      return apiRequestPaged<AuditLogRow[]>('/api/v1/audit/logs', {
         query: {
           user_id: userId || undefined,
           event_type: eventType || undefined,
@@ -58,7 +58,8 @@ export default function AuditLogsPage() {
     setPage(1)
   }, [userId, eventType, success])
 
-  const rows = data ?? []
+  const rows = data?.items ?? []
+  const totalItems = data?.total ?? undefined
 
   return (
     <>
@@ -130,6 +131,7 @@ export default function AuditLogsPage() {
             page={page}
             pageSize={pageSize}
             itemCount={rows.length}
+            totalItems={totalItems}
             onPageChange={setPage}
             onPageSizeChange={(size) => {
               setPageSize(Math.min(size, MAX_PAGE_SIZE))

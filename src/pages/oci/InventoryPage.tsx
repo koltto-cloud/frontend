@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { apiRequest } from '@/api/client'
+import { apiRequest, apiRequestPaged } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
 import { useAsyncData } from '@/hooks/useAsyncData'
 import { ociCompartmentsPath, useOciCompartments } from '@/hooks/useOciCompartments'
@@ -59,17 +59,22 @@ export default function InventoryPage() {
 
   const { data, error, loading, reload: reloadInventory } = useAsyncData(
     () => {
-      if (!base || !isResourceTab) return Promise.resolve([])
+      if (!base || !isResourceTab) {
+        return Promise.resolve({ items: [] as Record<string, unknown>[], total: 0 })
+      }
       const limit = Math.min(Math.max(pageSize, 1), MAX_PAGE_SIZE)
       const query: Record<string, string | number> = {
         limit,
         offset: (page - 1) * limit,
       }
       if (compartmentFilter) query.compartment_id = compartmentFilter
-      return apiRequest<Record<string, unknown>[]>(base, { query })
+      return apiRequestPaged<Record<string, unknown>[]>(base, { query })
     },
     [listKey],
   )
+
+  const inventoryRows = data?.items ?? []
+  const inventoryTotal = data?.total ?? undefined
 
   useEffect(() => {
     if (!isResourceTab) setCompartmentFilter(ALL_COMPARTMENTS)
@@ -163,13 +168,14 @@ export default function InventoryPage() {
               <InventoryResourceTable
                 key={tab}
                 tabKey={tab}
-                rows={(data ?? []) as Record<string, unknown>[]}
+                rows={inventoryRows}
                 compartmentNames={compartmentNames}
               />
               <PaginationControls
                 page={page}
                 pageSize={pageSize}
-                itemCount={(data ?? []).length}
+                itemCount={inventoryRows.length}
+                totalItems={inventoryTotal}
                 onPageChange={setPage}
                 onPageSizeChange={(size) => {
                   setPageSize(Math.min(size, MAX_PAGE_SIZE))

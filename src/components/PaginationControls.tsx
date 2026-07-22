@@ -7,7 +7,7 @@ interface PaginationControlsProps {
   pageSize: number
   /** Number of items currently shown on this page. */
   itemCount: number
-  /** Total items across all pages (client-side). Enables accurate next/range. */
+  /** Total items across all pages. Enables “of N” and “Page X of Y”. */
   totalItems?: number
   onPageChange: (page: number) => void
   onPageSizeChange: (pageSize: number) => void
@@ -23,18 +23,32 @@ export default function PaginationControls({
   onPageSizeChange,
   disabled = false,
 }: PaginationControlsProps) {
+  const knownTotal = totalItems != null && Number.isFinite(totalItems)
+  const totalPages = knownTotal
+    ? Math.max(1, Math.ceil(Math.max(totalItems, 0) / pageSize) || 1)
+    : null
   const hasPrev = page > 1
-  const hasNext =
-    totalItems != null ? page * pageSize < totalItems : itemCount >= pageSize
+  const hasNext = knownTotal
+    ? page < (totalPages ?? 1)
+    : itemCount >= pageSize
   const rangeStart = itemCount > 0 ? (page - 1) * pageSize + 1 : 0
   const rangeEnd = (page - 1) * pageSize + itemCount
 
   const rangeLabel =
     itemCount === 0
-      ? '0 results'
-      : totalItems != null
+      ? knownTotal
+        ? `0 of ${totalItems}`
+        : '0 results'
+      : knownTotal
         ? `${rangeStart}–${rangeEnd} of ${totalItems}`
         : `${rangeStart}–${rangeEnd}`
+
+  const pageLabel =
+    totalPages != null
+      ? `Page ${page} of ${totalPages}`
+      : hasNext
+        ? `Page ${page} (more available)`
+        : `Page ${page}`
 
   return (
     <div className="pagination">
@@ -53,7 +67,10 @@ export default function PaginationControls({
         </select>
       </label>
 
-      <span className="pagination-range">{rangeLabel}</span>
+      <div className="pagination-meta">
+        <span className="pagination-range">{rangeLabel}</span>
+        <span className="pagination-pages">{pageLabel}</span>
+      </div>
 
       <div className="pagination-nav">
         <button
