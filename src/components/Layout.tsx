@@ -17,6 +17,7 @@ const CUSTOMER_NAV: NavSection[] = [
       { to: '/oci/usage', label: 'Usage & Costs' },
       { to: '/oci/inventory', label: 'Inventory' },
       { to: '/oci/monitoring', label: 'Monitoring' },
+      { to: '/oci/recommendations', label: 'Recommendations' },
     ],
   },
 ]
