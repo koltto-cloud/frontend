@@ -29,6 +29,13 @@ interface CancelResult {
   aborted_jobs: Record<string, string>
 }
 
+interface RebuildRollupsResult {
+  companies: number
+  tenancies: number
+  rollup_rows: number
+  skipped: { company_id: string; reason: string }[]
+}
+
 const POLL_MS = 10000
 
 function syncTypeLabel(type: string): string {
@@ -66,6 +73,7 @@ export default function MaintenancePage() {
   const [success, setSuccess] = useState('')
   const [saving, setSaving] = useState(false)
   const [cancelling, setCancelling] = useState<string | null>(null)
+  const [rebuilding, setRebuilding] = useState(false)
 
   const load = useCallback(async () => {
     try {
@@ -186,7 +194,31 @@ export default function MaintenancePage() {
     }
   }
 
-  const busy = saving || cancelling != null
+  const rebuildRollups = async () => {
+    setRebuilding(true)
+    setError('')
+    setSuccess('')
+    try {
+      const r = await apiRequest<RebuildRollupsResult>(
+        '/api/v1/admin/maintenance/usage-rollups/rebuild',
+        { method: 'POST' },
+      )
+      const skippedNote = r.skipped.length
+        ? ` Skipped ${r.skipped.length}: ${r.skipped
+            .map((s) => `${s.company_id.slice(0, 8)} (${s.reason})`)
+            .join('; ')}.`
+        : ''
+      setSuccess(
+        `Rebuilt cost rollups for ${r.companies} company(ies), ${r.tenancies} tenancy(ies), ${r.rollup_rows} rows.${skippedNote}`,
+      )
+    } catch (err) {
+      setError(formatApiError(err))
+    } finally {
+      setRebuilding(false)
+    }
+  }
+
+  const busy = saving || cancelling != null || rebuilding
 
   return (
     <div className="page">
@@ -225,6 +257,25 @@ export default function MaintenancePage() {
             Resume syncs
           </button>
         </div>
+      </div>
+
+      <div className="card" style={{ maxWidth: 520, marginTop: 16 }}>
+        <p style={{ margin: 0 }}>
+          <strong>Cost rollups</strong>
+        </p>
+        <p className="page-lead" style={{ marginTop: 4 }}>
+          Recompute the dashboard cost rollups from raw history for all companies. Useful after a
+          large usage backfill; normal syncs keep them current automatically. Companies that
+          haven’t run Deploy (oci) yet are skipped.
+        </p>
+        <button
+          type="button"
+          className="btn btn-primary"
+          disabled={busy}
+          onClick={() => void rebuildRollups()}
+        >
+          {rebuilding ? 'Rebuilding…' : 'Rebuild cost rollups'}
+        </button>
       </div>
 
       <section style={{ marginTop: 32 }}>
