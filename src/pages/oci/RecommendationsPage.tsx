@@ -9,7 +9,8 @@ interface RecommendationItem {
   resource_id: string | null
   resource_name: string | null
   service: string | null
-  kind: 'idle' | 'oversized' | 'overutilized'
+  resource_type: string
+  kind: 'idle' | 'oversized' | 'overutilized' | 'idle_storage'
   severity: 'high' | 'medium' | 'low'
   monthly_cost: number
   currency: string | null
@@ -32,10 +33,16 @@ interface RecommendationsResponse {
   items: RecommendationItem[]
 }
 
-const KIND_META: Record<RecommendationItem['kind'], { label: string; action: string; color: string }> = {
-  idle: { label: 'Idle', action: 'Stop', color: '#e5484d' },
-  oversized: { label: 'Underused', action: 'Downsize', color: '#f5a623' },
-  overutilized: { label: 'Running hot', action: 'Scale up', color: '#d6409f' },
+const KIND_ACTION: Record<RecommendationItem['kind'], { action: string; color: string }> = {
+  idle: { action: 'Stop', color: '#e5484d' },
+  idle_storage: { action: 'Review', color: '#e5484d' },
+  oversized: { action: 'Downsize', color: '#f5a623' },
+  overutilized: { action: 'Scale up', color: '#d6409f' },
+}
+
+const TYPE_LABEL: Record<string, string> = {
+  compute: 'Compute',
+  block_storage: 'Block storage',
 }
 
 function isoDaysAgo(days: number): string {
@@ -63,6 +70,11 @@ function pct(value: number | null): string {
   return value == null || Number.isNaN(value) ? 'n/a' : `${value.toFixed(0)}%`
 }
 
+function metricPhrase(item: RecommendationItem): string {
+  if (item.resource_type === 'block_storage') return 'near-zero I/O'
+  return `CPU ${pct(item.cpu_avg)} · Mem ${pct(item.mem_avg)}`
+}
+
 export default function RecommendationsPage() {
   const { activeCompany, connection } = useAuth()
   const companyId = activeCompany?.company_id
@@ -71,26 +83,26 @@ export default function RecommendationsPage() {
   const [startDate] = useState(isoDaysAgo(30))
   const [endDate] = useState(isoDaysAgo(0))
 
-  const base =
+  const url =
     companyId && connectionId
       ? `/api/v1/cloud/oci/recommendations/${companyId}/connections/${connectionId}/recommendations`
       : null
-  const key = base ? `${base}/compute:${startDate}:${endDate}` : null
 
   const { data, error, loading } = useAsyncData(
     () => {
-      if (!base) return Promise.resolve(null)
-      return apiRequest<RecommendationsResponse>(`${base}/compute`, {
-        query: { start_date: startDate, end_date: endDate, limit: 50 },
+      if (!url) return Promise.resolve(null)
+      return apiRequest<RecommendationsResponse>(url, {
+        query: { start_date: startDate, end_date: endDate, limit: 100 },
       })
     },
-    [key],
+    [url ? `${url}:${startDate}:${endDate}` : null],
     { keepPreviousData: true },
   )
 
   const currency = data?.currency ?? 'USD'
   const items = useMemo(() => data?.items ?? [], [data])
-  const savingsItems = items.filter((i) => i.estimated_monthly_savings > 0)
+  const savingsCount = items.filter((i) => i.estimated_monthly_savings > 0).length
+  const alertsCount = items.length - savingsCount
 
   const hasCompany = Boolean(companyId)
   const hasConnection = Boolean(connectionId)
@@ -100,8 +112,8 @@ export default function RecommendationsPage() {
       <header className="dashboard-header">
         <h1 className="page-title">Recommendations</h1>
         <p className="page-lead">
-          Where your compute is costing more than it’s using — with what to do and how much you
-          could save. Based on the last 30 days of cost and utilization.
+          Where your resources cost more than they’re used — with the fix and the savings. Last 30
+          days.
         </p>
       </header>
 
@@ -123,93 +135,99 @@ export default function RecommendationsPage() {
             <p className="loading">Analyzing cost vs utilization…</p>
           ) : (
             <>
-              <section className="card" style={{ marginBottom: 20 }}>
-                <p className="dashboard-cost-stat-label">Potential monthly savings</p>
-                <p style={{ fontSize: 28, fontWeight: 700, margin: '4px 0 0' }}>
-                  {formatMoney(data?.total_estimated_monthly_savings ?? 0, currency)}
-                </p>
-                <p className="page-lead" style={{ marginTop: 4 }}>
-                  {savingsItems.length} savings opportunit{savingsItems.length === 1 ? 'y' : 'ies'}
-                  {items.length > savingsItems.length
-                    ? ` · ${items.length - savingsItems.length} performance alert(s)`
-                    : ''}
-                </p>
+              <section
+                className="card"
+                style={{ display: 'flex', alignItems: 'baseline', gap: 16, marginBottom: 16 }}
+              >
+                <div>
+                  <span className="dashboard-cost-stat-label">Potential monthly savings</span>
+                  <div style={{ fontSize: 24, fontWeight: 700 }}>
+                    {formatMoney(data?.total_estimated_monthly_savings ?? 0, currency)}
+                  </div>
+                </div>
+                <span className="page-lead" style={{ fontSize: 13 }}>
+                  {savingsCount} savings · {alertsCount} performance alert{alertsCount === 1 ? '' : 's'}
+                </span>
               </section>
 
               {items.length === 0 ? (
                 <p className="empty">
-                  No recommendations — your compute looks right-sized for the last 30 days. (This
-                  needs both cost and monitoring data; make sure usage and monitoring have synced.)
+                  No recommendations — resources look right-sized for the last 30 days. (Needs both
+                  cost and monitoring data synced.)
                 </p>
               ) : (
-                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 12 }}>
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 6 }}>
                   {items.map((item) => {
-                    const meta = KIND_META[item.kind]
+                    const meta = KIND_ACTION[item.kind]
                     const isSaving = item.estimated_monthly_savings > 0
                     return (
-                      <li key={item.resource_id ?? item.resource_name} className="card">
+                      <li
+                        key={item.resource_id ?? item.resource_name}
+                        className="card"
+                        style={{ padding: '10px 14px' }}
+                        title={item.summary}
+                      >
                         <div
                           style={{
                             display: 'flex',
-                            flexWrap: 'wrap',
                             gap: 12,
-                            alignItems: 'baseline',
+                            alignItems: 'center',
                             justifyContent: 'space-between',
+                            flexWrap: 'wrap',
                           }}
                         >
-                          <div style={{ display: 'flex', gap: 10, alignItems: 'baseline' }}>
+                          <div style={{ display: 'flex', gap: 10, alignItems: 'center', minWidth: 0 }}>
                             <span
                               style={{
-                                fontSize: 12,
+                                fontSize: 11,
                                 fontWeight: 700,
                                 color: meta.color,
                                 border: `1px solid ${meta.color}`,
                                 borderRadius: 4,
-                                padding: '1px 8px',
+                                padding: '1px 7px',
+                                whiteSpace: 'nowrap',
                               }}
                             >
                               {meta.action}
                             </span>
-                            <strong style={{ fontSize: 16 }} title={item.resource_id ?? undefined}>
-                              {item.resource_name ?? item.resource_id ?? 'unknown'}
-                            </strong>
-                            {item.confidence === 'low' && (
-                              <span className="page-lead" style={{ fontSize: 12 }}>
-                                low confidence · {item.metric_days}d data
+                            <span style={{ minWidth: 0 }}>
+                              <strong
+                                style={{
+                                  fontSize: 14,
+                                  display: 'inline-block',
+                                  maxWidth: 260,
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                  verticalAlign: 'bottom',
+                                }}
+                                title={item.resource_id ?? undefined}
+                              >
+                                {item.resource_name ?? item.resource_id ?? 'unknown'}
+                              </strong>
+                              <span className="page-lead" style={{ fontSize: 12, marginLeft: 8 }}>
+                                {TYPE_LABEL[item.resource_type] ?? item.resource_type} ·{' '}
+                                {metricPhrase(item)}
+                                {item.confidence === 'low' ? ' · low confidence' : ''}
+                              </span>
+                            </span>
+                          </div>
+                          <div style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                            {isSaving ? (
+                              <span style={{ fontWeight: 700, color: '#2e9e5b' }}>
+                                save ~{formatMoney(item.estimated_monthly_savings, currency)}/mo
+                              </span>
+                            ) : (
+                              <span style={{ fontWeight: 700, color: meta.color }}>
+                                performance risk
                               </span>
                             )}
-                          </div>
-                          <div style={{ textAlign: 'right' }}>
-                            {isSaving ? (
-                              <>
-                                <div style={{ fontSize: 18, fontWeight: 700, color: '#2e9e5b' }}>
-                                  save ~{formatMoney(item.estimated_monthly_savings, currency)}/mo
-                                </div>
-                                <div className="page-lead" style={{ fontSize: 12 }}>
-                                  costs {formatMoney(item.monthly_cost, currency)}/mo
-                                </div>
-                              </>
-                            ) : (
-                              <>
-                                <div style={{ fontSize: 14, fontWeight: 700, color: meta.color }}>
-                                  performance risk
-                                </div>
-                                <div className="page-lead" style={{ fontSize: 12 }}>
-                                  costs {formatMoney(item.monthly_cost, currency)}/mo
-                                </div>
-                              </>
-                            )}
+                            <span className="page-lead" style={{ fontSize: 12, marginLeft: 8 }}>
+                              {formatMoney(item.monthly_cost, currency)}/mo
+                            </span>
                           </div>
                         </div>
-
-                        <p style={{ margin: '10px 0 6px' }}>{item.summary}</p>
-                        <p style={{ margin: 0, fontWeight: 600 }}>→ {item.recommendation}</p>
-
-                        <div className="page-lead" style={{ fontSize: 12, marginTop: 8 }}>
-                          CPU avg {pct(item.cpu_avg)} (p95 {pct(item.cpu_p95)}) · Memory avg{' '}
-                          {pct(item.mem_avg)} ·{' '}
-                          <Link to="/oci/monitoring">view metrics</Link>
-                        </div>
+                        <div style={{ fontSize: 13, marginTop: 4 }}>→ {item.recommendation}</div>
                       </li>
                     )
                   })}

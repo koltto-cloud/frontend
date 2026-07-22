@@ -20,6 +20,7 @@ import UsagePage from '@/pages/oci/UsagePage'
 import InventoryPage from '@/pages/oci/InventoryPage'
 import MonitoringPage from '@/pages/oci/MonitoringPage'
 import RecommendationsPage from '@/pages/oci/RecommendationsPage'
+import AnomaliesPage from '@/pages/oci/AnomaliesPage'
 import PricingPage from '@/pages/oci/PricingPage'
 import MaintenancePage from '@/pages/admin/MaintenancePage'
 
@@ -54,6 +55,7 @@ export default function App() {
               <Route path="/oci/resources" element={<Navigate to="/oci/inventory" replace />} />
               <Route path="/oci/monitoring" element={<MonitoringPage />} />
               <Route path="/oci/recommendations" element={<RecommendationsPage />} />
+              <Route path="/oci/anomalies" element={<AnomaliesPage />} />
               <Route path="/oci/pricing" element={<PricingPage />} />
             </Route>
           </Route>
