@@ -60,7 +60,9 @@ export default function LoginPage() {
       setSessionTokens(data.access_token, data.refresh_token)
       const ok = await refreshSession()
       if (!ok) {
-        setError('TOTP verified but could not load your session.')
+        setError(
+          'TOTP verified but could not load your session. The API may still be deploying — wait a moment and try again. Check the browser console for details.',
+        )
         return
       }
       navigate('/')
