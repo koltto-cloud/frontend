@@ -36,6 +36,16 @@ interface RebuildRollupsResult {
   skipped: { company_id: string; reason: string }[]
 }
 
+interface MonitoringResyncResult {
+  companies: number
+  connections: number
+  jobs_queued: number
+  jobs_already_queued: number
+  start_date: string
+  end_date: string
+  skipped: { company_id: string; connection_id?: string; reason: string }[]
+}
+
 const POLL_MS = 10000
 
 function syncTypeLabel(type: string): string {
@@ -74,6 +84,7 @@ export default function MaintenancePage() {
   const [saving, setSaving] = useState(false)
   const [cancelling, setCancelling] = useState<string | null>(null)
   const [rebuilding, setRebuilding] = useState(false)
+  const [resyncingMonitoring, setResyncingMonitoring] = useState(false)
 
   const load = useCallback(async () => {
     try {
@@ -218,7 +229,39 @@ export default function MaintenancePage() {
     }
   }
 
-  const busy = saving || cancelling != null || rebuilding
+  const resyncMonitoring = async () => {
+    if (
+      !confirm(
+        'Enqueue monitoring re-sync for all companies (every compartment × resource type, last ~90 days)? Jobs appear under Open syncs. Syncs must not be paused.',
+      )
+    ) {
+      return
+    }
+    setResyncingMonitoring(true)
+    setError('')
+    setSuccess('')
+    try {
+      const r = await apiRequest<MonitoringResyncResult>(
+        '/api/v1/admin/maintenance/monitoring/resync',
+        { method: 'POST' },
+      )
+      const skippedNote = r.skipped.length
+        ? ` Skipped ${r.skipped.length}: ${r.skipped
+            .map((s) => `${s.company_id.slice(0, 8)} (${s.reason})`)
+            .join('; ')}.`
+        : ''
+      setSuccess(
+        `Queued monitoring re-sync (${r.start_date} → ${r.end_date}): ${r.jobs_queued} new job(s), ${r.jobs_already_queued} already queued across ${r.connections} connection(s) / ${r.companies} company(ies).${skippedNote}`,
+      )
+      await load()
+    } catch (err) {
+      setError(formatApiError(err))
+    } finally {
+      setResyncingMonitoring(false)
+    }
+  }
+
+  const busy = saving || cancelling != null || rebuilding || resyncingMonitoring
 
   return (
     <div className="page">
@@ -275,6 +318,25 @@ export default function MaintenancePage() {
           onClick={() => void rebuildRollups()}
         >
           {rebuilding ? 'Rebuilding…' : 'Rebuild cost rollups'}
+        </button>
+      </div>
+
+      <div className="card" style={{ maxWidth: 520, marginTop: 16 }}>
+        <p style={{ margin: 0 }}>
+          <strong>Monitoring re-sync</strong>
+        </p>
+        <p className="page-lead" style={{ marginTop: 4 }}>
+          Re-queue monitoring metric sync for all companies (every compartment × resource type,
+          last ~90 days). Use after metric sync fixes so historical days get real mean/max/min, or
+          after a fresh tenant load. Requires syncs open — progress shows under Open syncs.
+        </p>
+        <button
+          type="button"
+          className="btn btn-primary"
+          disabled={busy || status?.syncs_paused === true}
+          onClick={() => void resyncMonitoring()}
+        >
+          {resyncingMonitoring ? 'Queueing…' : 'Re-sync monitoring'}
         </button>
       </div>
 
