@@ -131,7 +131,7 @@ export default function Layout() {
 
         {staff ? (
           <>
-            <div className="nav-band-divider" role="separator" aria-label="Internal">
+            <div className="nav-band-divider nav-band-divider--internal" role="separator" aria-label="Internal">
               <span className="nav-band-divider-label">Internal</span>
             </div>
             <div className="nav-band nav-band--internal">
