@@ -209,7 +209,7 @@ export default function CostExplorerPage() {
     trendFilter?.kind === 'service'
       ? `Service: ${trendFilter.value}`
       : trendFilter?.kind === 'compartment'
-        ? `Compartment: ${trendFilter.label}`
+        ? `Scope: ${trendFilter.label}`
         : null
 
   if (!companyId || !connectionId) {
@@ -237,7 +237,7 @@ export default function CostExplorerPage() {
     <div className="page">
       <PageHeader
         title="Cost Explorer"
-        lead="Explore daily spend by service, compartment, or top resources. Click a service/compartment to filter the trend, or a top resource for cost + utilization."
+          lead="Explore daily spend by service, scope, or top resources. Click a service/scope to filter the trend, or a top resource for cost + utilization."
         helpTitle="About Cost Explorer"
         help={costExplorerHelp}
       />
@@ -317,7 +317,7 @@ export default function CostExplorerPage() {
         {(
           [
             ['service', 'Service'],
-            ['compartment', 'Compartment'],
+            ['compartment', 'Scope'],
             ['resources', 'Top resources'],
           ] as const
         ).map(([value, label]) => (
@@ -354,9 +354,10 @@ export default function CostExplorerPage() {
           </>
         ) : dimension === 'compartment' ? (
           <>
-            <h2>By compartment</h2>
+            <h2>By scope</h2>
             <p className="page-lead" style={{ marginTop: 0 }}>
-              Click a compartment to filter the daily trend.
+              Click a scope to filter the daily trend. On OCI this is a compartment; on AWS an
+              account; on Azure a subscription or resource group.
             </p>
             <BarChart
               items={compartmentChart}

@@ -33,16 +33,15 @@ export const costExplorerHelp: ReactNode = (
   <>
     <p>
       Cost Explorer is for <strong>interactive cost analysis</strong>: totals, daily trend, and
-      breakdowns by service, compartment, and top resources — plus a resource drill-down that
-      pairs spend with utilization.
+      breakdowns by service, scope, and top resources — plus a resource drill-down that pairs spend
+      with utilization.
     </p>
     <h3>How to use it</h3>
     <ol>
       <li>Set the date range.</li>
       <li>Review the total and charts.</li>
       <li>
-        Click a service or compartment bar to <strong>filter the daily trend</strong> to that
-        slice.
+        Click a service or scope bar to <strong>filter the daily trend</strong> to that slice.
       </li>
       <li>
         Open <strong>Top resources</strong> and click a resource for its daily cost. Compute
@@ -50,6 +49,12 @@ export const costExplorerHelp: ReactNode = (
         guide lines.
       </li>
     </ol>
+    <h3>What “Scope” means</h3>
+    <p>
+      Scope is the cloud account hierarchy slice: <strong>compartment</strong> in OCI,{' '}
+      <strong>account</strong> in AWS, <strong>subscription / resource group</strong> in Azure.
+      Filtering by cloud provider across connections is planned for a later pass.
+    </p>
     <h3>When to use it</h3>
     <p>
       Start here when you need to answer “where did the money go?” or “is this expensive resource
@@ -70,8 +75,16 @@ export const recommendationsHelp: ReactNode = (
     <ol>
       <li>Review estimated monthly savings vs performance alerts.</li>
       <li>
+        Filter by cloud, resource type, action (Downsize / Review / Terminate / …), scope, or
+        silence status. Default view is all active recommendations.
+      </li>
+      <li>
+        <strong>Silence 30d</strong> hides an item for a month; <strong>Ignore</strong> hides it
+        until you unsilence it. Silenced items are excluded from recommendation emails.
+      </li>
+      <li>
         Unattached (orphan) boot/block volumes appear when inventory sync finds no active
-        attachment — high-confidence delete/reattach candidates.
+        attachment — high-confidence terminate/reattach candidates.
       </li>
       <li>Open a resource in Inventory or Monitoring to validate before changing anything.</li>
     </ol>
