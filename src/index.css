@@ -2553,7 +2553,7 @@ textarea:focus-visible {
 
 .settings-page {
   width: 100%;
-  max-width: 40rem;
+  max-width: 68rem;
 }
 
 .settings-header {
@@ -2566,10 +2566,41 @@ textarea:focus-visible {
 
 .settings-header .page-lead {
   margin: 0;
+  max-width: 36rem;
+}
+
+.settings-layout {
+  display: grid;
+  grid-template-columns: minmax(16rem, 20rem) minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.settings-aside {
+  position: sticky;
+  top: 5rem;
+}
+
+.settings-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
 }
 
 .settings-card {
-  padding: 1.35rem 1.5rem;
+  padding: 1.25rem 1.35rem;
+}
+
+.settings-card--aside {
+  margin-bottom: 0;
+}
+
+.settings-aside-title {
+  margin: 0 0 1rem;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 600;
 }
 
 .settings-card-head {
@@ -2588,6 +2619,7 @@ textarea:focus-visible {
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
+  max-width: 36rem;
 }
 
 .settings-form .form-actions {
@@ -2612,9 +2644,8 @@ textarea:focus-visible {
 
 .identity-hero {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.85rem;
-  flex-wrap: wrap;
 }
 
 .identity-avatar {
@@ -2648,49 +2679,57 @@ textarea:focus-visible {
 }
 
 .identity-email {
-  margin: 0.15rem 0 0;
+  margin: 0.2rem 0 0;
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   word-break: break-word;
 }
 
-.identity-facts {
-  margin: 0;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem 1rem;
+.identity-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.55rem;
 }
 
-.identity-fact {
+.identity-meta {
+  margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  padding: 0.75rem 0.85rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: color-mix(in srgb, var(--ink) 2.5%, var(--surface));
-  min-width: 0;
+  border-top: 1px solid var(--line);
 }
 
-.identity-fact dt {
+.identity-meta-row {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--line);
+  align-items: baseline;
+}
+
+.identity-meta-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.identity-meta-row dt {
   margin: 0;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--muted);
 }
 
-.identity-fact dd {
+.identity-meta-row dd {
   margin: 0;
   color: var(--ink);
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   word-break: break-word;
 }
 
 .mono {
   font-family: var(--font-mono);
-  font-size: 0.82rem;
+  font-size: 0.78rem;
 }
 
 .identity-raw-toggle {
@@ -2698,10 +2737,24 @@ textarea:focus-visible {
   font-size: 0.85rem;
 }
 
-@media (max-width: 640px) {
-  .form-row--2,
-  .identity-facts {
+@media (max-width: 900px) {
+  .settings-layout {
     grid-template-columns: 1fr;
+  }
+
+  .settings-aside {
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .form-row--2 {
+    grid-template-columns: 1fr;
+  }
+
+  .identity-meta-row {
+    grid-template-columns: 1fr;
+    gap: 0.2rem;
   }
 }
 
