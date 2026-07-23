@@ -597,7 +597,9 @@ textarea:focus-visible {
 }
 
 .filters input,
-.filters select {
+.filters select,
+.toolbar input,
+.toolbar select {
   padding: 11px 14px;
   border: 1.5px solid var(--line);
   border-radius: var(--radius);
@@ -605,16 +607,36 @@ textarea:focus-visible {
   background-color: var(--surface);
   color: var(--ink);
   font-size: 14px;
+  line-height: 1.35;
   transition:
     border-color 0.15s ease-out,
     box-shadow 0.15s ease-out;
 }
 
 .filters input:focus,
-.filters select:focus {
+.filters select:focus,
+.toolbar input:focus,
+.toolbar select:focus {
   outline: none;
   border-color: var(--primary);
   box-shadow: 0 0 0 3px var(--primary-soft);
+}
+
+.filters select,
+.toolbar select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 2.4rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px 16px;
+  cursor: pointer;
+}
+
+[data-theme='light'] .filters select,
+[data-theme='light'] .toolbar select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
 }
 
 .pagination {
@@ -1255,6 +1277,8 @@ textarea:focus-visible {
 .form-field textarea,
 .filters input,
 .filters select,
+.toolbar input,
+.toolbar select,
 .pagination select,
 .context-bar select {
   box-sizing: border-box;
@@ -1278,6 +1302,7 @@ textarea:focus-visible {
 
 .form-field select,
 .filters select,
+.toolbar select,
 .pagination select,
 .context-bar select {
   appearance: none;
@@ -1292,6 +1317,7 @@ textarea:focus-visible {
 
 [data-theme='light'] .form-field select,
 [data-theme='light'] .filters select,
+[data-theme='light'] .toolbar select,
 [data-theme='light'] .pagination select,
 [data-theme='light'] .context-bar select {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
@@ -1307,6 +1333,8 @@ textarea:focus-visible {
 .form-field textarea:focus,
 .filters input:focus,
 .filters select:focus,
+.toolbar input:focus,
+.toolbar select:focus,
 .pagination select:focus,
 .context-bar select:focus {
   outline: none;
@@ -2023,7 +2051,7 @@ textarea:focus-visible {
 .toolbar label {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.25rem;
   font-size: 0.8rem;
   font-weight: 500;
   color: var(--muted);
@@ -3205,6 +3233,8 @@ textarea:focus-visible {
   .form-field textarea,
   .filters input,
   .filters select,
+  .toolbar input,
+  .toolbar select,
   .context-bar select,
   .auth-card .form-field input {
     font-size: 16px;
