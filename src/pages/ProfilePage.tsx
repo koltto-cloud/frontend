@@ -178,217 +178,215 @@ export default function ProfilePage() {
         <p className="page-lead">Your account details, password, and authenticator.</p>
       </header>
 
-      <div className="settings-layout">
-        <aside className="settings-aside">
-          <section className="card settings-card settings-card--aside">
-            <h2 className="settings-aside-title">Account</h2>
-
-            {user ? (
-              <div className="identity-panel">
-                <div className="identity-hero">
-                  <div className="identity-avatar" aria-hidden="true">
-                    {initials}
-                  </div>
-                  <div className="identity-hero-copy">
-                    <p className="identity-name">
-                      {user.first_name} {user.last_name}
-                    </p>
-                    <p className="identity-email">{user.email}</p>
-                    <div className="identity-badges">
-                      <span
-                        className={`badge ${user.account_status === 'active' ? 'badge-success' : 'badge-neutral'}`}
-                      >
-                        {user.account_status}
-                      </span>
-                      <span className="badge badge-neutral">{user.user_type}</span>
-                    </div>
+      <section className="card settings-card settings-account">
+        {user ? (
+          <div className="identity-panel">
+            <div className="identity-hero">
+              <div className="identity-avatar" aria-hidden="true">
+                {initials}
+              </div>
+              <div className="identity-hero-copy">
+                <div className="identity-title-row">
+                  <p className="identity-name">
+                    {user.first_name} {user.last_name}
+                  </p>
+                  <div className="identity-badges">
+                    <span
+                      className={`badge ${user.account_status === 'active' ? 'badge-success' : 'badge-neutral'}`}
+                    >
+                      {user.account_status}
+                    </span>
+                    <span className="badge badge-neutral">{user.user_type}</span>
                   </div>
                 </div>
-
-                <dl className="identity-meta">
-                  <div className="identity-meta-row">
-                    <dt>User ID</dt>
-                    <dd className="mono" title={user.user_id}>
-                      {user.user_id}
-                    </dd>
-                  </div>
-                  <div className="identity-meta-row">
-                    <dt>Created</dt>
-                    <dd>{formatWhen(user.created_at)}</dd>
-                  </div>
-                  <div className="identity-meta-row">
-                    <dt>Updated</dt>
-                    <dd>{formatWhen(user.updated_at)}</dd>
-                  </div>
-                </dl>
-
-                <button
-                  type="button"
-                  className="btn-link identity-raw-toggle"
-                  onClick={() => setShowRawUser((open) => !open)}
-                >
-                  {showRawUser ? 'Hide raw details' : 'Show raw details'}
-                </button>
-                {showRawUser ? <JsonViewer data={user} /> : null}
+                <p className="identity-email">{user.email}</p>
               </div>
-            ) : (
-              <p className="loading">Loading profile…</p>
-            )}
-          </section>
-        </aside>
-
-        <div className="settings-main">
-          <section className="card settings-card">
-            <div className="settings-card-head">
-              <h2>Update profile</h2>
             </div>
-            <Alert type="error">{profileError}</Alert>
-            <Alert type="success">{profileSuccess}</Alert>
-            <form className="settings-form" onSubmit={(e) => void handleProfileUpdate(e)}>
-              <div className="form-row form-row--2">
-                <div className="form-field">
-                  <label htmlFor="profile-first-name">First name</label>
-                  <input
-                    id="profile-first-name"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                  />
-                </div>
-                <div className="form-field">
-                  <label htmlFor="profile-last-name">Last name</label>
-                  <input
-                    id="profile-last-name"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className="form-actions">
-                <button type="submit" className="btn btn-primary">
-                  Save changes
-                </button>
-              </div>
-            </form>
-          </section>
 
-          <section className="card settings-card">
-            <div className="settings-card-head">
-              <h2>Password</h2>
-            </div>
-            <Alert type="error">{passwordError}</Alert>
-            <Alert type="success">{passwordSuccess}</Alert>
-            <form className="settings-form" onSubmit={(e) => void handlePasswordUpdate(e)}>
+            <dl className="identity-meta">
+              <div className="identity-meta-item">
+                <dt>User ID</dt>
+                <dd className="mono" title={user.user_id}>
+                  {user.user_id}
+                </dd>
+              </div>
+              <div className="identity-meta-item">
+                <dt>Created</dt>
+                <dd>{formatWhen(user.created_at)}</dd>
+              </div>
+              <div className="identity-meta-item">
+                <dt>Updated</dt>
+                <dd>{formatWhen(user.updated_at)}</dd>
+              </div>
+            </dl>
+
+            <button
+              type="button"
+              className="btn-link identity-raw-toggle"
+              onClick={() => setShowRawUser((open) => !open)}
+            >
+              {showRawUser ? 'Hide raw details' : 'Show raw details'}
+            </button>
+            {showRawUser ? <JsonViewer data={user} /> : null}
+          </div>
+        ) : (
+          <p className="loading">Loading profile…</p>
+        )}
+      </section>
+
+      <div className="settings-grid">
+        <section className="card settings-card">
+          <div className="settings-card-head">
+            <h2>Update profile</h2>
+          </div>
+          <Alert type="error">{profileError}</Alert>
+          <Alert type="success">{profileSuccess}</Alert>
+          <form className="settings-form" onSubmit={(e) => void handleProfileUpdate(e)}>
+            <div className="form-row form-row--2">
               <div className="form-field">
-                <label htmlFor="profile-current-password">Current password</label>
+                <label htmlFor="profile-first-name">First name</label>
                 <input
-                  id="profile-current-password"
-                  type="password"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  required
-                  autoComplete="current-password"
+                  id="profile-first-name"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
                 />
               </div>
-              <div className="form-row form-row--2">
-                <div className="form-field">
-                  <label htmlFor="profile-new-password">New password</label>
-                  <input
-                    id="profile-new-password"
-                    type="password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    required
-                    autoComplete="new-password"
-                  />
-                </div>
-                <div className="form-field">
-                  <label htmlFor="profile-confirm-password">Confirm new password</label>
-                  <input
-                    id="profile-confirm-password"
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    required
-                    autoComplete="new-password"
-                  />
-                </div>
+              <div className="form-field">
+                <label htmlFor="profile-last-name">Last name</label>
+                <input
+                  id="profile-last-name"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                />
               </div>
-              <div className="form-actions">
-                <button type="submit" className="btn btn-primary">
-                  Update password
-                </button>
-              </div>
-            </form>
-          </section>
-
-          <section className="card settings-card">
-            <div className="settings-card-head">
-              <h2>Authenticator</h2>
-              <span className={`badge ${totpEnabled ? 'badge-success' : 'badge-neutral'}`}>
-                {totpEnabled ? 'Enabled' : 'Off'}
-              </span>
             </div>
-            <Alert type="error">{totpStatus.error || totpError}</Alert>
-            <Alert type="success">{totpSuccess}</Alert>
+            <div className="form-actions">
+              <button type="submit" className="btn btn-primary">
+                Save changes
+              </button>
+            </div>
+          </form>
+        </section>
 
-            <label className="toggle-row">
-              <span className="toggle-label">{totpEnabled ? 'TOTP is enabled' : 'Enable TOTP'}</span>
+        <section className="card settings-card">
+          <div className="settings-card-head">
+            <h2>Password</h2>
+          </div>
+          <Alert type="error">{passwordError}</Alert>
+          <Alert type="success">{passwordSuccess}</Alert>
+          <form className="settings-form" onSubmit={(e) => void handlePasswordUpdate(e)}>
+            <div className="form-field">
+              <label htmlFor="profile-current-password">Current password</label>
               <input
-                type="checkbox"
-                className="toggle-input"
-                role="switch"
-                checked={toggleOn}
-                disabled={totpBusy || totpStatus.loading}
-                onChange={(e) => void handleTotpToggle(e.target.checked)}
+                id="profile-current-password"
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                required
+                autoComplete="current-password"
               />
-              <span className="toggle-track" aria-hidden="true" />
-            </label>
-
-            {enrolling && setup ? (
-              <div className="totp-enroll">
-                <p className="totp-enroll-hint">
-                  Scan this QR code with your authenticator app, then enter the 6-digit code to
-                  confirm.
-                </p>
-                {qrDataUrl ? (
-                  <img
-                    className="totp-qr"
-                    src={qrDataUrl}
-                    alt="TOTP QR code"
-                    width={200}
-                    height={200}
-                  />
-                ) : (
-                  <p className="muted">Generating QR code…</p>
-                )}
-                <div className="form-field">
-                  <label>Secret (manual entry)</label>
-                  <code className="totp-secret">{setup.secret}</code>
-                </div>
-                <form className="settings-form" onSubmit={(e) => void handleTotpVerify(e)}>
-                  <div className="form-field">
-                    <label htmlFor="profile-totp-code">Verify code</label>
-                    <input
-                      id="profile-totp-code"
-                      value={totpCode}
-                      onChange={(e) => setTotpCode(e.target.value)}
-                      inputMode="numeric"
-                      autoComplete="one-time-code"
-                      placeholder="123456"
-                      required
-                    />
-                  </div>
-                  <div className="form-actions">
-                    <button type="submit" className="btn btn-primary" disabled={totpBusy}>
-                      Confirm & enable
-                    </button>
-                  </div>
-                </form>
+            </div>
+            <div className="form-row form-row--2">
+              <div className="form-field">
+                <label htmlFor="profile-new-password">New password</label>
+                <input
+                  id="profile-new-password"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                  autoComplete="new-password"
+                />
               </div>
-            ) : null}
-          </section>
-        </div>
+              <div className="form-field">
+                <label htmlFor="profile-confirm-password">Confirm new password</label>
+                <input
+                  id="profile-confirm-password"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  autoComplete="new-password"
+                />
+              </div>
+            </div>
+            <div className="form-actions">
+              <button type="submit" className="btn btn-primary">
+                Update password
+              </button>
+            </div>
+          </form>
+        </section>
       </div>
+
+      <section className="card settings-card">
+        <div className="settings-card-head">
+          <h2>Authenticator</h2>
+          <span className={`badge ${totpEnabled ? 'badge-success' : 'badge-neutral'}`}>
+            {totpEnabled ? 'Enabled' : 'Off'}
+          </span>
+        </div>
+        <Alert type="error">{totpStatus.error || totpError}</Alert>
+        <Alert type="success">{totpSuccess}</Alert>
+
+        <label className="toggle-row">
+          <span className="toggle-label">{totpEnabled ? 'TOTP is enabled' : 'Enable TOTP'}</span>
+          <input
+            type="checkbox"
+            className="toggle-input"
+            role="switch"
+            checked={toggleOn}
+            disabled={totpBusy || totpStatus.loading}
+            onChange={(e) => void handleTotpToggle(e.target.checked)}
+          />
+          <span className="toggle-track" aria-hidden="true" />
+        </label>
+
+        {enrolling && setup ? (
+          <div className="totp-enroll">
+            <div className="totp-enroll-copy">
+              <p className="totp-enroll-hint">
+                Scan this QR code with your authenticator app, then enter the 6-digit code to
+                confirm.
+              </p>
+              <div className="form-field">
+                <label>Secret (manual entry)</label>
+                <code className="totp-secret">{setup.secret}</code>
+              </div>
+              <form className="settings-form" onSubmit={(e) => void handleTotpVerify(e)}>
+                <div className="form-field">
+                  <label htmlFor="profile-totp-code">Verify code</label>
+                  <input
+                    id="profile-totp-code"
+                    value={totpCode}
+                    onChange={(e) => setTotpCode(e.target.value)}
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    placeholder="123456"
+                    required
+                  />
+                </div>
+                <div className="form-actions">
+                  <button type="submit" className="btn btn-primary" disabled={totpBusy}>
+                    Confirm & enable
+                  </button>
+                </div>
+              </form>
+            </div>
+            {qrDataUrl ? (
+              <img
+                className="totp-qr"
+                src={qrDataUrl}
+                alt="TOTP QR code"
+                width={200}
+                height={200}
+              />
+            ) : (
+              <p className="muted">Generating QR code…</p>
+            )}
+          </div>
+        ) : null}
+      </section>
     </div>
   )
 }
