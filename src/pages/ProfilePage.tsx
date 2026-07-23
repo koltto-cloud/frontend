@@ -9,6 +9,12 @@ import JsonViewer from '@/components/JsonViewer'
 type TotpStatus = { enabled: boolean }
 type TotpSetup = { provisioning_uri: string; secret: string }
 
+function formatWhen(value: string | undefined): string {
+  if (!value) return '—'
+  const d = new Date(value)
+  return Number.isNaN(d.getTime()) ? value : d.toLocaleString()
+}
+
 export default function ProfilePage() {
   const { user, refreshSession } = useAuth()
   const [firstName, setFirstName] = useState(user?.first_name ?? '')
@@ -22,6 +28,7 @@ export default function ProfilePage() {
   const [setup, setSetup] = useState<TotpSetup | null>(null)
   const [qrDataUrl, setQrDataUrl] = useState('')
   const [totpBusy, setTotpBusy] = useState(false)
+  const [showRawUser, setShowRawUser] = useState(false)
 
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
@@ -43,6 +50,7 @@ export default function ProfilePage() {
 
   const totpEnabled = totpStatus.data?.enabled === true
   const toggleOn = totpEnabled || enrolling
+  const initials = `${user?.first_name?.[0] ?? ''}${user?.last_name?.[0] ?? ''}`.toUpperCase() || '?'
 
   useEffect(() => {
     if (!setup?.provisioning_uri) {
@@ -164,41 +172,108 @@ export default function ProfilePage() {
   }
 
   return (
-    <>
-      <h1 className="page-title">Profile & TOTP</h1>
+    <div className="settings-page">
+      <header className="settings-header">
+        <h1 className="page-title">Profile</h1>
+        <p className="page-lead">Your account details, password, and authenticator.</p>
+      </header>
 
-      <div className="card">
-        <h2>Current user</h2>
-        {user && <JsonViewer data={user} />}
-      </div>
+      <section className="card settings-card">
+        <div className="settings-card-head">
+          <h2>Account</h2>
+          {user?.user_type ? <span className="badge badge-neutral">{user.user_type}</span> : null}
+        </div>
 
-      <div className="card">
-        <h2>Update profile</h2>
+        {user ? (
+          <div className="identity-panel">
+            <div className="identity-hero">
+              <div className="identity-avatar" aria-hidden="true">
+                {initials}
+              </div>
+              <div className="identity-hero-copy">
+                <p className="identity-name">
+                  {user.first_name} {user.last_name}
+                </p>
+                <p className="identity-email">{user.email}</p>
+              </div>
+              <span className={`badge ${user.account_status === 'active' ? 'badge-success' : 'badge-neutral'}`}>
+                {user.account_status}
+              </span>
+            </div>
+
+            <dl className="identity-facts">
+              <div className="identity-fact">
+                <dt>User ID</dt>
+                <dd className="mono">{user.user_id}</dd>
+              </div>
+              <div className="identity-fact">
+                <dt>Created</dt>
+                <dd>{formatWhen(user.created_at)}</dd>
+              </div>
+              <div className="identity-fact">
+                <dt>Updated</dt>
+                <dd>{formatWhen(user.updated_at)}</dd>
+              </div>
+            </dl>
+
+            <button
+              type="button"
+              className="btn-link identity-raw-toggle"
+              onClick={() => setShowRawUser((open) => !open)}
+            >
+              {showRawUser ? 'Hide raw details' : 'Show raw details'}
+            </button>
+            {showRawUser ? <JsonViewer data={user} /> : null}
+          </div>
+        ) : (
+          <p className="loading">Loading profile…</p>
+        )}
+      </section>
+
+      <section className="card settings-card">
+        <div className="settings-card-head">
+          <h2>Update profile</h2>
+        </div>
         <Alert type="error">{profileError}</Alert>
         <Alert type="success">{profileSuccess}</Alert>
-        <form className="inline-form" onSubmit={(e) => void handleProfileUpdate(e)}>
-          <div className="form-field">
-            <label>First name</label>
-            <input value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+        <form className="settings-form" onSubmit={(e) => void handleProfileUpdate(e)}>
+          <div className="form-row form-row--2">
+            <div className="form-field">
+              <label htmlFor="profile-first-name">First name</label>
+              <input
+                id="profile-first-name"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+              />
+            </div>
+            <div className="form-field">
+              <label htmlFor="profile-last-name">Last name</label>
+              <input
+                id="profile-last-name"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+              />
+            </div>
           </div>
-          <div className="form-field">
-            <label>Last name</label>
-            <input value={lastName} onChange={(e) => setLastName(e.target.value)} />
+          <div className="form-actions">
+            <button type="submit" className="btn btn-primary">
+              Save changes
+            </button>
           </div>
-          <button type="submit" className="btn btn-primary">
-            Save
-          </button>
         </form>
-      </div>
+      </section>
 
-      <div className="card">
-        <h2>Change password</h2>
+      <section className="card settings-card">
+        <div className="settings-card-head">
+          <h2>Password</h2>
+        </div>
         <Alert type="error">{passwordError}</Alert>
         <Alert type="success">{passwordSuccess}</Alert>
-        <form className="inline-form" onSubmit={(e) => void handlePasswordUpdate(e)}>
+        <form className="settings-form" onSubmit={(e) => void handlePasswordUpdate(e)}>
           <div className="form-field">
-            <label>Current password</label>
+            <label htmlFor="profile-current-password">Current password</label>
             <input
+              id="profile-current-password"
               type="password"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
@@ -206,41 +281,50 @@ export default function ProfilePage() {
               autoComplete="current-password"
             />
           </div>
-          <div className="form-field">
-            <label>New password</label>
-            <input
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              required
-              autoComplete="new-password"
-            />
+          <div className="form-row form-row--2">
+            <div className="form-field">
+              <label htmlFor="profile-new-password">New password</label>
+              <input
+                id="profile-new-password"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+                autoComplete="new-password"
+              />
+            </div>
+            <div className="form-field">
+              <label htmlFor="profile-confirm-password">Confirm new password</label>
+              <input
+                id="profile-confirm-password"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                autoComplete="new-password"
+              />
+            </div>
           </div>
-          <div className="form-field">
-            <label>Confirm new password</label>
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              autoComplete="new-password"
-            />
+          <div className="form-actions">
+            <button type="submit" className="btn btn-primary">
+              Update password
+            </button>
           </div>
-          <button type="submit" className="btn btn-primary">
-            Update password
-          </button>
         </form>
-      </div>
+      </section>
 
-      <div className="card">
-        <h2>Authenticator (TOTP)</h2>
+      <section className="card settings-card">
+        <div className="settings-card-head">
+          <h2>Authenticator</h2>
+          <span className={`badge ${totpEnabled ? 'badge-success' : 'badge-neutral'}`}>
+            {totpEnabled ? 'Enabled' : 'Off'}
+          </span>
+        </div>
         <Alert type="error">{totpStatus.error || totpError}</Alert>
         <Alert type="success">{totpSuccess}</Alert>
 
         <label className="toggle-row">
-          <span className="toggle-label">
-            {totpEnabled ? 'TOTP is enabled' : 'Enable TOTP'}
-          </span>
+          <span className="toggle-label">{totpEnabled ? 'TOTP is enabled' : 'Enable TOTP'}</span>
           <input
             type="checkbox"
             className="toggle-input"
@@ -252,7 +336,7 @@ export default function ProfilePage() {
           <span className="toggle-track" aria-hidden="true" />
         </label>
 
-        {enrolling && setup && (
+        {enrolling && setup ? (
           <div className="totp-enroll">
             <p className="totp-enroll-hint">
               Scan this QR code with your authenticator app, then enter the 6-digit code to confirm.
@@ -266,10 +350,11 @@ export default function ProfilePage() {
               <label>Secret (manual entry)</label>
               <code className="totp-secret">{setup.secret}</code>
             </div>
-            <form className="inline-form" onSubmit={(e) => void handleTotpVerify(e)}>
+            <form className="settings-form" onSubmit={(e) => void handleTotpVerify(e)}>
               <div className="form-field">
-                <label>Verify code</label>
+                <label htmlFor="profile-totp-code">Verify code</label>
                 <input
+                  id="profile-totp-code"
                   value={totpCode}
                   onChange={(e) => setTotpCode(e.target.value)}
                   inputMode="numeric"
@@ -278,13 +363,15 @@ export default function ProfilePage() {
                   required
                 />
               </div>
-              <button type="submit" className="btn btn-primary" disabled={totpBusy}>
-                Confirm & enable
-              </button>
+              <div className="form-actions">
+                <button type="submit" className="btn btn-primary" disabled={totpBusy}>
+                  Confirm & enable
+                </button>
+              </div>
             </form>
           </div>
-        )}
-      </div>
-    </>
+        ) : null}
+      </section>
+    </div>
   )
 }
