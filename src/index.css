@@ -2721,8 +2721,7 @@ textarea:focus-visible {
   white-space: nowrap;
 }
 
-.identity-panel > .json-viewer,
-.identity-panel > [class*='detail-list'] {
+.identity-panel > .detail-viewer {
   grid-column: 1 / -1;
 }
 
