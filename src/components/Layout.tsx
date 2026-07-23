@@ -3,7 +3,6 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { useSyncsPaused } from '@/hooks/useSyncsPaused'
 import SyncsPausedBanner from '@/components/SyncsPausedBanner'
-import ThemeToggle from '@/components/ThemeToggle'
 
 type NavLinkItem = { to: string; label: string }
 type NavSection = { section: string; links: NavLinkItem[] }
@@ -123,7 +122,6 @@ export default function Layout() {
       <aside id="primary-navigation" className={`sidebar${navOpen ? ' is-open' : ''}`}>
         <div className="sidebar-brand">
           <p className="sidebar-brand-name">KÖLTTÖ</p>
-          <ThemeToggle />
         </div>
 
         <div className="nav-band">

@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { apiRequest, formatApiError } from '@/api/client'
 import { Alert } from '@/components/Alert'
-import ThemeToggle from '@/components/ThemeToggle'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
@@ -31,7 +30,6 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="auth-page">
-      <ThemeToggle className="auth-theme-toggle" />
       <div className="auth-shell">
         <header className="auth-header">
           <p className="auth-brand">KÖLTTÖ</p>

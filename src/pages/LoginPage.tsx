@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { formatApiError, login, loginTotp } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
 import { Alert } from '@/components/Alert'
-import ThemeToggle from '@/components/ThemeToggle'
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -76,7 +75,6 @@ export default function LoginPage() {
 
   return (
     <div className="auth-page">
-      <ThemeToggle className="auth-theme-toggle" />
       <div className="auth-shell">
         <header className="auth-header">
           <p className="auth-brand">KÖLTTÖ</p>
