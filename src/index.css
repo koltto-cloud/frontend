@@ -2749,7 +2749,9 @@ textarea:focus-visible {
 
   .identity-detail,
   .identity-detail:nth-child(2n),
-  .identity-detail:nth-child(4n) {
+  .identity-detail:nth-child(4n),
+  .identity-detail--wide {
+    grid-column: auto;
     padding-right: 0;
   }
 }
