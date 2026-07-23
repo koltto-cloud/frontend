@@ -94,15 +94,19 @@ function isoDaysAgo(days: number): string {
 function formatMoney(amount: number | null | undefined, currency: string | null): string {
   if (amount == null || Number.isNaN(Number(amount))) return '—'
   const raw = (currency && currency.trim() ? currency.trim() : 'USD').toUpperCase()
-  const code = raw === 'US$' || raw === 'USA' ? 'USD' : raw
+  const code = raw === 'US$' || raw === 'USA' || raw === '$' ? 'USD' : raw
+  const value = Number(amount)
+  const digits = Math.abs(value) > 0 && Math.abs(value) < 10 ? 2 : 0
   try {
-    return Number(amount).toLocaleString(undefined, {
+    // Force en-US so USD renders as "$" (some locales show "US$").
+    return value.toLocaleString('en-US', {
       style: 'currency',
       currency: code.length === 3 ? code : 'USD',
-      maximumFractionDigits: 0,
+      maximumFractionDigits: digits,
+      minimumFractionDigits: 0,
     })
   } catch {
-    return `$${Number(amount).toFixed(0)}`
+    return `$${value.toFixed(digits)}`
   }
 }
 
@@ -127,6 +131,7 @@ function actionTone(item: RecommendationItem): string {
   return KIND_META[item.kind]?.tone ?? 'muted'
 }
 
+/** Projected monthly cost if the recommendation is applied. */
 function costAfter(item: RecommendationItem): number | null {
   if (item.estimated_monthly_savings <= 0) return null
   return Math.max(0, item.monthly_cost - item.estimated_monthly_savings)
@@ -515,15 +520,28 @@ export default function RecommendationsPage() {
                               </td>
                               <td className="recs-col-cost">
                                 {after != null ? (
-                                  <>
-                                    <div className="recs-cost-after">
-                                      {formatMoney(after, currency)}
-                                      <span className="recs-cost-suffix">/mo after</span>
-                                    </div>
-                                    <div className="recs-cost-current">
-                                      {formatMoney(item.monthly_cost, currency)}/mo now
-                                    </div>
-                                  </>
+                                  after < 0.5 ? (
+                                    <>
+                                      {/* Full savings (stop/terminate): after is ~$0 — lead with save amount. */}
+                                      <div className="recs-cost-after">
+                                        save {formatMoney(item.estimated_monthly_savings, currency)}
+                                        <span className="recs-cost-suffix">/mo</span>
+                                      </div>
+                                      <div className="recs-cost-current">
+                                        {formatMoney(item.monthly_cost, currency)}/mo now → $0 after
+                                      </div>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <div className="recs-cost-after">
+                                        {formatMoney(after, currency)}
+                                        <span className="recs-cost-suffix">/mo after</span>
+                                      </div>
+                                      <div className="recs-cost-current">
+                                        {formatMoney(item.monthly_cost, currency)}/mo now
+                                      </div>
+                                    </>
+                                  )
                                 ) : (
                                   <>
                                     <div className="recs-cost-risk">Performance risk</div>
