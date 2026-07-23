@@ -75,8 +75,12 @@ export const recommendationsHelp: ReactNode = (
     <ol>
       <li>Review estimated monthly savings vs performance alerts.</li>
       <li>
-        Filter by cloud, resource type, action (Downsize / Review / Terminate / …), scope, or
-        silence status. Default view is all active recommendations.
+        Filter with the top cards (potential savings / action type). Use Active · Silenced · All
+        tabs, plus type and scope when needed.
+      </li>
+      <li>
+        Table columns: recommended action, resource, what to do, cost after vs now, and a ⋮ menu
+        for Silence / Ignore.
       </li>
       <li>
         <strong>Silence 30d</strong> hides an item for a month; <strong>Ignore</strong> hides it
