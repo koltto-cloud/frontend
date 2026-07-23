@@ -275,9 +275,10 @@ export default function CompaniesPage() {
               <input value={createName} onChange={(e) => setCreateName(e.target.value)} required />
             </div>
             <div className="form-actions">
-              <button type="submit" className="btn btn-primary">
-                Create
+              <button type="button" className="btn" onClick={() => setShowCreate(false)}>
+                Cancel
               </button>
+              <button type="submit" className="btn btn-primary">Create</button>
             </div>
           </form>
         </Modal>
@@ -307,9 +308,10 @@ export default function CompaniesPage() {
               </select>
             </div>
             <div className="form-actions">
-              <button type="submit" className="btn btn-primary">
-                Save
+              <button type="button" className="btn" onClick={() => setEditCompany(null)}>
+                Cancel
               </button>
+              <button type="submit" className="btn btn-primary">Save</button>
             </div>
           </form>
         </Modal>

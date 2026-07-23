@@ -415,7 +415,12 @@ export default function InvoicesPage() {
             <div className="form-field"><label>Due date</label><input type="date" value={createForm.due_date} onChange={(e) => setCreateForm({ ...createForm, due_date: e.target.value })} required /></div>
             <div className="form-field"><label>Tax</label><input type="number" step="0.01" value={createForm.tax} onChange={(e) => setCreateForm({ ...createForm, tax: e.target.value })} required /></div>
             <div className="form-field"><label>Discount</label><input type="number" step="0.01" value={createForm.discount} onChange={(e) => setCreateForm({ ...createForm, discount: e.target.value })} required /></div>
-            <button type="submit" className="btn btn-primary">Create</button>
+            <div className="form-actions">
+              <button type="button" className="btn" onClick={() => setShowCreate(false)}>
+                Cancel
+              </button>
+              <button type="submit" className="btn btn-primary">Create</button>
+            </div>
           </form>
         </Modal>
       )}
@@ -431,7 +436,12 @@ export default function InvoicesPage() {
             <div className="form-field"><label>Due date</label><input type="date" value={editForm.due_date} onChange={(e) => setEditForm({ ...editForm, due_date: e.target.value })} /></div>
             <div className="form-field"><label>Tax</label><input type="number" step="0.01" value={editForm.tax} onChange={(e) => setEditForm({ ...editForm, tax: e.target.value })} /></div>
             <div className="form-field"><label>Discount</label><input type="number" step="0.01" value={editForm.discount} onChange={(e) => setEditForm({ ...editForm, discount: e.target.value })} /></div>
-            <button type="submit" className="btn btn-primary">Save</button>
+            <div className="form-actions">
+              <button type="button" className="btn" onClick={() => setEditRow(null)}>
+                Cancel
+              </button>
+              <button type="submit" className="btn btn-primary">Save</button>
+            </div>
           </form>
         </Modal>
       )}
@@ -444,7 +454,12 @@ export default function InvoicesPage() {
             <div className="form-field"><label>Quantity</label><input type="number" value={itemForm.quantity} onChange={(e) => setItemForm({ ...itemForm, quantity: e.target.value })} required /></div>
             <div className="form-field"><label>Price</label><input type="number" step="0.01" value={itemForm.price} onChange={(e) => setItemForm({ ...itemForm, price: e.target.value })} required /></div>
             <div className="form-field"><label>Discount</label><input type="number" step="0.01" value={itemForm.discount} onChange={(e) => setItemForm({ ...itemForm, discount: e.target.value })} required /></div>
-            <button type="submit" className="btn btn-primary">Add</button>
+            <div className="form-actions">
+              <button type="button" className="btn" onClick={() => setAddItemInvoice(null)}>
+                Cancel
+              </button>
+              <button type="submit" className="btn btn-primary">Add</button>
+            </div>
           </form>
         </Modal>
       )}

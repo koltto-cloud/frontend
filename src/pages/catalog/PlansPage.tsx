@@ -472,7 +472,12 @@ export default function PlansPage() {
                 />
               </div>
             ))}
-            <button type="submit" className="btn btn-primary">Create</button>
+            <div className="form-actions">
+              <button type="button" className="btn" onClick={() => setShowCreate(false)}>
+                Cancel
+              </button>
+              <button type="submit" className="btn btn-primary">Create</button>
+            </div>
           </form>
         </Modal>
       )}
@@ -491,7 +496,12 @@ export default function PlansPage() {
                 {CATALOG_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
-            <button type="submit" className="btn btn-primary">Save</button>
+            <div className="form-actions">
+              <button type="button" className="btn" onClick={() => setEditRow(null)}>
+                Cancel
+              </button>
+              <button type="submit" className="btn btn-primary">Save</button>
+            </div>
           </form>
         </Modal>
       )}
@@ -535,7 +545,12 @@ export default function PlansPage() {
                 onChange={(e) => setBundleForm({ ...bundleForm, notes: e.target.value })}
               />
             </div>
-            <button type="submit" className="btn btn-primary">Add</button>
+            <div className="form-actions">
+              <button type="button" className="btn" onClick={() => setAddBundlePlan(null)}>
+                Cancel
+              </button>
+              <button type="submit" className="btn btn-primary">Add</button>
+            </div>
           </form>
         </Modal>
       )}
@@ -566,7 +581,12 @@ export default function PlansPage() {
                 onChange={(e) => setEditBundleForm({ ...editBundleForm, notes: e.target.value })}
               />
             </div>
-            <button type="submit" className="btn btn-primary">Save</button>
+            <div className="form-actions">
+              <button type="button" className="btn" onClick={() => setEditBundle(null)}>
+                Cancel
+              </button>
+              <button type="submit" className="btn btn-primary">Save</button>
+            </div>
           </form>
         </Modal>
       )}

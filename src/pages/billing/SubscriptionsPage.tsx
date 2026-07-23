@@ -353,7 +353,12 @@ export default function SubscriptionsPage() {
             </div>
             <div className="form-field"><label>Start date</label><input type="date" value={createForm.start_date} onChange={(e) => setCreateForm({ ...createForm, start_date: e.target.value })} required /></div>
             <div className="form-field"><label>End date (optional)</label><input type="date" value={createForm.end_date} onChange={(e) => setCreateForm({ ...createForm, end_date: e.target.value })} /></div>
-            <button type="submit" className="btn btn-primary">Create</button>
+            <div className="form-actions">
+              <button type="button" className="btn" onClick={() => setShowCreate(false)}>
+                Cancel
+              </button>
+              <button type="submit" className="btn btn-primary">Create</button>
+            </div>
           </form>
         </Modal>
       )}
@@ -368,7 +373,12 @@ export default function SubscriptionsPage() {
             </div>
             <div className="form-field"><label>Start date</label><input type="date" value={editForm.start_date} onChange={(e) => setEditForm({ ...editForm, start_date: e.target.value })} /></div>
             <div className="form-field"><label>End date</label><input type="date" value={editForm.end_date} onChange={(e) => setEditForm({ ...editForm, end_date: e.target.value })} /></div>
-            <button type="submit" className="btn btn-primary">Save</button>
+            <div className="form-actions">
+              <button type="button" className="btn" onClick={() => setEditRow(null)}>
+                Cancel
+              </button>
+              <button type="submit" className="btn btn-primary">Save</button>
+            </div>
           </form>
         </Modal>
       )}

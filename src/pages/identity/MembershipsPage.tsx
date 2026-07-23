@@ -314,9 +314,10 @@ export default function MembershipsPage() {
               </label>
             </div>
             <div className="form-actions">
-              <button type="submit" className="btn btn-primary">
-                Create
+              <button type="button" className="btn" onClick={() => setShowCreate(false)}>
+                Cancel
               </button>
+              <button type="submit" className="btn btn-primary">Create</button>
             </div>
           </form>
         </Modal>
@@ -352,9 +353,10 @@ export default function MembershipsPage() {
               </label>
             </div>
             <div className="form-actions">
-              <button type="submit" className="btn btn-primary">
-                Save
+              <button type="button" className="btn" onClick={() => setEditRow(null)}>
+                Cancel
               </button>
+              <button type="submit" className="btn btn-primary">Save</button>
             </div>
           </form>
         </Modal>

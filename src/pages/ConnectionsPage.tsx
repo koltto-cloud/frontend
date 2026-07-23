@@ -364,9 +364,12 @@ export default function ConnectionsPage() {
                     onChange={(e) => setCreateForm({ ...createForm, passphrase: e.target.value })}
                   />
                 </div>
-                <button type="submit" className="btn btn-primary">
-                  Create
-                </button>
+            <div className="form-actions">
+              <button type="button" className="btn" onClick={() => setShowCreate(false)}>
+                Cancel
+              </button>
+              <button type="submit" className="btn btn-primary">Create</button>
+            </div>
               </>
             ) : (
               <p className="empty" style={{ margin: 0 }}>
@@ -409,9 +412,12 @@ export default function ConnectionsPage() {
             <p className="empty" style={{ margin: 0 }}>
               Credentials (user, fingerprint, key) cannot be updated via this endpoint.
             </p>
-            <button type="submit" className="btn btn-primary">
-              Save
-            </button>
+            <div className="form-actions">
+              <button type="button" className="btn" onClick={() => setEditRow(null)}>
+                Cancel
+              </button>
+              <button type="submit" className="btn btn-primary">Save</button>
+            </div>
           </form>
         </Modal>
       )}

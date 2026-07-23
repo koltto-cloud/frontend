@@ -598,14 +598,16 @@ textarea:focus-visible {
 
 .filters input,
 .filters select {
-  padding: 0.45rem 0.65rem;
-  border: 1px solid var(--line);
-  border-radius: 8px;
+  padding: 11px 14px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
   min-width: 140px;
-  background: var(--surface);
+  background-color: var(--surface);
+  color: var(--ink);
+  font-size: 14px;
   transition:
-    border-color 0.15s ease,
-    box-shadow 0.15s ease;
+    border-color 0.15s ease-out,
+    box-shadow 0.15s ease-out;
 }
 
 .filters input:focus,
@@ -632,11 +634,7 @@ textarea:focus-visible {
 }
 
 .pagination select {
-  padding: 0.45rem 0.65rem;
-  border: 1px solid var(--line);
-  border-radius: 8px;
   min-width: 80px;
-  background: var(--surface);
 }
 
 .pagination-range {
@@ -670,15 +668,15 @@ textarea:focus-visible {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.35rem;
-  min-height: 36px;
-  padding: 0.5rem 1rem;
+  gap: 0.5rem;
+  min-height: 40px;
+  padding: 0.55rem 1.1rem;
   border: 1.5px solid var(--line);
   border-radius: var(--radius);
   background: transparent;
   color: var(--ink);
   font-family: var(--font-body);
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 600;
   letter-spacing: 0.01em;
   box-shadow: none;
@@ -691,8 +689,8 @@ textarea:focus-visible {
 }
 
 .btn:hover {
-  background: color-mix(in srgb, var(--ink) 4%, transparent);
-  border-color: color-mix(in srgb, var(--primary) 40%, var(--line));
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+  border-color: color-mix(in srgb, var(--ink) 22%, var(--line));
 }
 
 .btn:active {
@@ -734,7 +732,7 @@ textarea:focus-visible {
 }
 
 .btn-secondary:hover {
-  background: color-mix(in srgb, var(--ink) 4%, transparent);
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
 }
 
 .btn-danger {
@@ -747,7 +745,6 @@ textarea:focus-visible {
   background: color-mix(in srgb, var(--error) 88%, #000);
   border-color: color-mix(in srgb, var(--error) 88%, #000);
   color: #fff;
-  box-shadow: 0 0 24px color-mix(in srgb, var(--error) 35%, transparent);
 }
 
 .btn-danger-outline,
@@ -766,7 +763,7 @@ textarea:focus-visible {
   background: transparent;
   border-color: transparent;
   color: var(--primary);
-  padding: 0.35rem 0.55rem;
+  padding: 0.55rem 0.75rem;
   box-shadow: none;
 }
 
@@ -780,7 +777,8 @@ textarea:focus-visible {
 .btn:disabled,
 .btn-primary:disabled,
 .btn-danger:disabled,
-.btn-secondary:disabled {
+.btn-secondary:disabled,
+.btn-ghost:disabled {
   background: var(--line);
   border-color: var(--line);
   color: var(--muted);
@@ -788,6 +786,12 @@ textarea:focus-visible {
   cursor: not-allowed;
   box-shadow: none;
   transform: none;
+}
+
+.btn-sm {
+  min-height: 32px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.78rem;
 }
 
 .btn-link {
@@ -1183,6 +1187,24 @@ textarea:focus-visible {
   box-shadow: none;
 }
 
+.alert-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-top: 0.05rem;
+}
+
+.alert-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.alert-message {
+  min-width: 0;
+  flex: 1;
+}
+
 .alert-error {
   background: var(--error-soft);
   color: var(--error);
@@ -1213,6 +1235,119 @@ textarea:focus-visible {
 .empty {
   color: var(--muted);
   padding: 1rem 0;
+}
+
+
+.form-field {
+  margin-bottom: 0;
+}
+
+.form-field label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.form-field input,
+.form-field select,
+.form-field textarea,
+.filters input,
+.filters select,
+.pagination select,
+.context-bar select {
+  box-sizing: border-box;
+  padding: 11px 14px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.35;
+  transition:
+    border-color 0.15s ease-out,
+    box-shadow 0.15s ease-out;
+}
+
+.form-field input,
+.form-field select,
+.form-field textarea {
+  width: 100%;
+}
+
+.form-field select,
+.filters select,
+.pagination select,
+.context-bar select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 2.4rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px 16px;
+  cursor: pointer;
+}
+
+[data-theme='light'] .form-field select,
+[data-theme='light'] .filters select,
+[data-theme='light'] .pagination select,
+[data-theme='light'] .context-bar select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+}
+
+.form-field input::placeholder,
+.filters input::placeholder {
+  color: color-mix(in srgb, var(--muted) 85%, transparent);
+}
+
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus,
+.filters input:focus,
+.filters select:focus,
+.pagination select:focus,
+.context-bar select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.65rem;
+  margin-top: 1rem;
+  padding-top: 0.25rem;
+  justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.inline-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: var(--primary);
+  padding: 0;
+  text-align: left;
+  word-break: break-all;
+  box-shadow: none;
+  font-weight: 600;
+  min-height: 0;
+}
+
+.btn-link:hover {
+  background: none;
+  color: var(--primary-hover);
+  text-decoration: underline;
+  box-shadow: none;
+  transform: none;
 }
 
 .auth-theme-toggle {
@@ -1318,13 +1453,7 @@ textarea:focus-visible {
 }
 
 .auth-card .form-field input {
-  padding: 0.65rem 0.75rem;
-  border: 1.5px solid var(--line);
-  border-radius: 8px;
-  background: var(--surface);
-  transition:
-    border-color 0.15s ease,
-    box-shadow 0.15s ease;
+  padding: 11px 14px;
 }
 
 .auth-card .form-field input:focus {
@@ -1334,80 +1463,12 @@ textarea:focus-visible {
 }
 
 .auth-card .form-actions {
-  margin-top: 1.25rem;
+  justify-content: stretch;
 }
 
+.auth-card .form-actions .btn-primary,
 .auth-submit {
   flex: 1;
-  justify-content: center;
-  padding: 0.65rem 1rem;
-  border-radius: 8px;
-  font-weight: 600;
-}
-
-.auth-footer-link {
-  margin: 1.1rem 0 0;
-  text-align: center;
-  font-size: 0.85rem;
-}
-
-.auth-footer-link a {
-  color: var(--muted);
-  text-decoration: none;
-}
-
-.auth-footer-link a:hover {
-  color: var(--primary);
-  text-decoration: underline;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .auth-shell,
-  .auth-card {
-    animation: none;
-  }
-}
-
-.form-field {
-  margin-bottom: 0;
-}
-
-.form-field label {
-  display: block;
-  margin-bottom: 0.35rem;
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: var(--muted);
-}
-
-.form-field input,
-.form-field select,
-.form-field textarea {
-  width: 100%;
-  padding: 11px 14px;
-  border: 1.5px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--surface);
-  color: var(--ink);
-  font-size: 14px;
-  transition:
-    border-color 0.15s ease-out,
-    box-shadow 0.15s ease-out;
-}
-
-.form-field input:focus,
-.form-field select:focus,
-.form-field textarea:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-soft);
-}
-
-.form-actions {
-  display: flex;
-  gap: 0.6rem;
-  margin-top: 0.35rem;
-  padding-top: 0.35rem;
 }
 
 .context-bar {
@@ -1427,21 +1488,7 @@ textarea:focus-visible {
 }
 
 .context-bar select {
-  padding: 0.4rem 0.65rem;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--surface);
-  color: var(--ink);
   min-width: 140px;
-  transition:
-    border-color 0.15s ease,
-    box-shadow 0.15s ease;
-}
-
-.context-bar select:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-soft);
 }
 
 .bar-chart {
@@ -1755,11 +1802,6 @@ textarea:focus-visible {
   flex-wrap: wrap;
 }
 
-.btn-sm {
-  padding: 0.2rem 0.45rem;
-  font-size: 0.75rem;
-}
-
 .id-link {
   background: none;
   border: none;
@@ -1777,15 +1819,17 @@ textarea:focus-visible {
 }
 
 .cloud-badge {
-  display: inline-block;
-  font-size: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--primary);
   background: var(--primary-soft);
-  padding: 0.15rem 0.45rem;
-  border-radius: 4px;
+  padding: 0.15rem 0.55rem;
+  border-radius: 100px;
+  border: 1px solid color-mix(in srgb, var(--primary) 28%, transparent);
 }
 
 .col-resource,
@@ -1816,8 +1860,12 @@ textarea:focus-visible {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  box-shadow: var(--shadow-modal);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
   animation: modal-rise 0.22s ease-out;
+}
+
+[data-theme='light'] .modal {
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.18);
 }
 
 .modal-wide {
@@ -1830,30 +1878,42 @@ textarea:focus-visible {
 
 .modal-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
-  padding: 1.05rem 1.25rem;
-  border-bottom: 1px solid var(--line);
+  padding: 1.35rem 1.5rem 0.35rem;
   background: var(--surface);
   flex-shrink: 0;
+  border-bottom: none;
+}
+
+.modal-heading {
+  min-width: 0;
+  flex: 1;
 }
 
 .modal-header h2 {
   margin: 0;
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: 15px;
   font-weight: 600;
   color: var(--ink);
   letter-spacing: -0.01em;
-  line-height: 1.3;
+  line-height: 1.35;
+}
+
+.modal-description {
+  margin: 0.45rem 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--ink) 70%, transparent);
 }
 
 .modal-close {
   width: 2rem;
   height: 2rem;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: var(--radius);
   background: transparent;
   color: var(--muted);
   font-size: 1.35rem;
@@ -1864,34 +1924,74 @@ textarea:focus-visible {
   padding: 0;
   flex-shrink: 0;
   transition:
-    background 0.15s ease,
-    color 0.15s ease,
-    border-color 0.15s ease;
+    background 0.15s ease-out,
+    color 0.15s ease-out,
+    border-color 0.15s ease-out,
+    transform 0.1s ease-out;
 }
 
 .modal-close:hover {
-  background: color-mix(in srgb, var(--ink) 4%, var(--surface));
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
   color: var(--ink);
   border-color: var(--line);
 }
 
+.modal-close:active {
+  transform: scale(0.97);
+}
+
 .modal-body {
-  padding: 1.25rem 1.25rem 1.4rem;
+  padding: 0.85rem 1.5rem 1.35rem;
   overflow: auto;
+  font-size: 13px;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--ink) 78%, transparent);
+}
+
+.modal-body .form-field label {
+  font-size: 0.8rem;
+}
+
+.modal-body .form-field input,
+.modal-body .form-field select,
+.modal-body .form-field textarea {
+  color: var(--ink);
+}
+
+.modal-body .inline-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.modal-body .form-actions,
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.modal-actions {
+  padding: 0 1.5rem 1.35rem;
+  flex-shrink: 0;
+}
+
+.modal-body .form-actions {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
 }
 
 .modal-body .inline-form .btn-primary,
-.modal-body .form-actions .btn-primary {
+.modal-body .form-actions .btn-primary,
+.modal-actions .btn-primary {
   min-width: 6.5rem;
 }
 
 @keyframes modal-overlay-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes modal-rise {
@@ -2600,11 +2700,7 @@ textarea:focus-visible {
     min-height: 44px;
   }
 
-  .btn-sm {
-    min-height: 38px;
-  }
-
-  .data-table-wrap {
+    .data-table-wrap {
     max-width: 100%;
     overscroll-behavior-inline: contain;
   }

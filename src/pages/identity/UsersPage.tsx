@@ -294,9 +294,10 @@ export default function UsersPage() {
               />
             </div>
             <div className="form-actions">
-              <button type="submit" className="btn btn-primary">
-                Create
+              <button type="button" className="btn" onClick={() => setShowCreate(false)}>
+                Cancel
               </button>
+              <button type="submit" className="btn btn-primary">Create</button>
             </div>
           </form>
         </Modal>
@@ -353,9 +354,10 @@ export default function UsersPage() {
               </select>
             </div>
             <div className="form-actions">
-              <button type="submit" className="btn btn-primary">
-                Save
+              <button type="button" className="btn" onClick={() => setEditUser(null)}>
+                Cancel
               </button>
+              <button type="submit" className="btn btn-primary">Save</button>
             </div>
           </form>
         </Modal>

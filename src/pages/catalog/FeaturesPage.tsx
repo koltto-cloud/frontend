@@ -191,7 +191,12 @@ export default function FeaturesPage() {
                 <input value={createForm[f]} onChange={(e) => setCreateForm({ ...createForm, [f]: e.target.value })} required={f !== 'notes'} />
               </div>
             ))}
-            <button type="submit" className="btn btn-primary">Create</button>
+            <div className="form-actions">
+              <button type="button" className="btn" onClick={() => setShowCreate(false)}>
+                Cancel
+              </button>
+              <button type="submit" className="btn btn-primary">Create</button>
+            </div>
           </form>
         </Modal>
       )}
@@ -210,7 +215,12 @@ export default function FeaturesPage() {
                 {CATALOG_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
-            <button type="submit" className="btn btn-primary">Save</button>
+            <div className="form-actions">
+              <button type="button" className="btn" onClick={() => setEditRow(null)}>
+                Cancel
+              </button>
+              <button type="submit" className="btn btn-primary">Save</button>
+            </div>
           </form>
         </Modal>
       )}
