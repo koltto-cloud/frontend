@@ -13,7 +13,6 @@ export const dashboardHelp: ReactNode = (
     <ol>
       <li>Pick a company and cloud connection in the top bar.</li>
       <li>Choose a date preset or custom range.</li>
-      <li>Optionally set a monthly budget to track projected month-end spend.</li>
     </ol>
     <h3>What you’ll see</h3>
     <ul>

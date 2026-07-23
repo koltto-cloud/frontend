@@ -2348,58 +2348,6 @@ textarea:focus-visible {
   letter-spacing: -0.01em;
 }
 
-.dashboard-budget-progress {
-  margin: 0.25rem 0 0.95rem;
-}
-
-.dashboard-budget-progress-bar {
-  height: 8px;
-  border-radius: 4px;
-  background: #e2e8f0;
-  overflow: hidden;
-}
-
-.dashboard-budget-progress-fill {
-  height: 100%;
-  border-radius: 4px;
-  background: var(--primary);
-  transition: width 0.2s ease;
-}
-
-.dashboard-budget-progress-fill.is-over {
-  background: #dc2626;
-}
-
-.dashboard-budget-progress-label {
-  margin: 0.4rem 0 0;
-  font-size: 0.8rem;
-  color: var(--muted);
-}
-
-.dashboard-budget-form {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 0.65rem;
-}
-
-.dashboard-budget-form label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  font-size: 0.8rem;
-  color: var(--muted);
-  font-weight: 500;
-}
-
-.dashboard-budget-form input {
-  padding: 0.4rem 0.65rem;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--surface);
-  min-width: 140px;
-}
-
 .monitoring-chart-card {
   margin-bottom: 1.25rem;
 }
@@ -2939,8 +2887,7 @@ textarea:focus-visible {
 
   .filters,
   .toolbar,
-  .form-actions,
-  .dashboard-budget-form {
+  .form-actions {
     align-items: stretch;
   }
 
@@ -2948,9 +2895,7 @@ textarea:focus-visible {
   .filters input,
   .filters select,
   .toolbar .btn,
-  .form-actions .btn,
-  .dashboard-budget-form label,
-  .dashboard-budget-form input {
+  .form-actions .btn {
     width: 100%;
     min-width: 0;
   }
@@ -2959,8 +2904,7 @@ textarea:focus-visible {
   .filters select,
   .form-field input,
   .form-field select,
-  .form-field textarea,
-  .dashboard-budget-form input {
+  .form-field textarea {
     min-height: 44px;
   }
 

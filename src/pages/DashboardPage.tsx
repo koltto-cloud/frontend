@@ -1,15 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { apiRequest, formatApiError } from '@/api/client'
+import { apiRequest } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
 import { useAsyncData } from '@/hooks/useAsyncData'
 import {
-  budgetProgressPct,
-  computeMonthForecast,
-  loadBudget,
   notableDayOverDaySpikes,
   periodStatsFromSeries,
-  saveBudget,
   toLocalIsoDate,
 } from '@/dashboard/costInsights'
 import PageHeader from '@/components/PageHeader'
@@ -63,15 +59,6 @@ interface TopResourcesResponse {
   items: TopResourceItem[]
 }
 
-interface PrimaryBudget {
-  budget_id: string
-  name: string
-  amount: number
-  currency: string
-  period: string
-  scope_type: string
-}
-
 function rangeForPreset(preset: RangePreset): { start: string; end: string } {
   const end = new Date()
   const start = new Date()
@@ -119,61 +106,9 @@ export default function DashboardPage() {
   const [startDate, setStartDate] = useState(defaults.start)
   const [endDate, setEndDate] = useState(defaults.end)
   const [cloud, setCloud] = useState<CloudFilter>('all')
-  const [budgetInput, setBudgetInput] = useState('')
-  const [budget, setBudget] = useState<number | null>(null)
-  const [primaryBudgetId, setPrimaryBudgetId] = useState<string | null>(null)
-  const [budgetMsg, setBudgetMsg] = useState('')
-  const [budgetErr, setBudgetErr] = useState('')
-  const [budgetSaving, setBudgetSaving] = useState(false)
 
   const companyId = activeCompany?.company_id
   const connectionId = connection?.connection_id
-
-  const budgetsBase =
-    companyId && connectionId
-      ? `/api/v1/cloud/oci/budgets/${companyId}/connections/${connectionId}/budgets`
-      : null
-
-  useEffect(() => {
-    let cancelled = false
-    async function loadPrimary() {
-      setBudgetMsg('')
-      setBudgetErr('')
-      if (!budgetsBase) {
-        const stored = loadBudget(companyId)
-        setBudget(stored)
-        setBudgetInput(stored != null ? String(stored) : '')
-        setPrimaryBudgetId(null)
-        return
-      }
-      try {
-        const primary = await apiRequest<PrimaryBudget | null>(`${budgetsBase}/primary`)
-        if (cancelled) return
-        if (primary && Number.isFinite(primary.amount) && primary.amount > 0) {
-          setPrimaryBudgetId(primary.budget_id)
-          setBudget(primary.amount)
-          setBudgetInput(String(primary.amount))
-          saveBudget(companyId!, primary.amount)
-          return
-        }
-        setPrimaryBudgetId(null)
-        const stored = loadBudget(companyId)
-        setBudget(stored)
-        setBudgetInput(stored != null ? String(stored) : '')
-      } catch {
-        if (cancelled) return
-        // Prefer server; fall back to localStorage if API/tables unavailable.
-        setPrimaryBudgetId(null)
-        const stored = loadBudget(companyId)
-        setBudget(stored)
-        setBudgetInput(stored != null ? String(stored) : '')
-      }
-    }
-    void loadPrimary()
-    return () => {
-      cancelled = true
-    }
-  }, [budgetsBase, companyId])
 
   const firstName = user?.first_name?.trim()
   const greetingName = firstName || user?.email || 'there'
@@ -324,79 +259,12 @@ export default function DashboardPage() {
     [costSeries],
   )
 
-  const forecast = useMemo(
-    () => computeMonthForecast(costSeries?.items ?? []),
-    [costSeries],
-  )
-
-  const progressPct = budgetProgressPct(forecast.projectedEom ?? forecast.mtd, budget)
-
   function applyPreset(next: RangePreset) {
     setPreset(next)
     if (next === 'custom') return
     const range = rangeForPreset(next)
     setStartDate(range.start)
     setEndDate(range.end)
-  }
-
-  async function applyBudget() {
-    if (!companyId) return
-    setBudgetMsg('')
-    setBudgetErr('')
-    const trimmed = budgetInput.trim()
-    if (trimmed === '') {
-      setBudgetErr('Enter a positive monthly budget amount.')
-      return
-    }
-    const value = Number(trimmed)
-    if (!Number.isFinite(value) || value <= 0) {
-      setBudgetErr('Enter a positive monthly budget amount.')
-      return
-    }
-
-    if (!budgetsBase) {
-      saveBudget(companyId, value)
-      setBudget(value)
-      setBudgetInput(String(value))
-      setBudgetMsg('Budget saved in this browser (no connection selected).')
-      return
-    }
-
-    setBudgetSaving(true)
-    try {
-      if (primaryBudgetId) {
-        await apiRequest(`${budgetsBase}/${primaryBudgetId}`, {
-          method: 'PATCH',
-          body: { amount: value },
-        })
-      } else {
-        const created = await apiRequest<PrimaryBudget>(budgetsBase, {
-          method: 'POST',
-          body: {
-            name: 'Monthly tenancy budget',
-            amount: value,
-            period: 'monthly',
-            scope_type: 'tenancy',
-            alert_threshold_pct: 80,
-          },
-        })
-        setPrimaryBudgetId(created.budget_id)
-      }
-      setBudget(value)
-      setBudgetInput(String(value))
-      saveBudget(companyId, value)
-      setBudgetMsg('Budget saved on the server.')
-    } catch (err) {
-      // Fall back to localStorage if server write fails.
-      saveBudget(companyId, value)
-      setBudget(value)
-      setBudgetInput(String(value))
-      setBudgetErr(
-        `${formatApiError(err)} — saved in this browser only until the server is available.`,
-      )
-    } finally {
-      setBudgetSaving(false)
-    }
   }
 
   const cloudLabel = cloud === 'all' ? 'All clouds' : 'OCI'
@@ -662,75 +530,6 @@ export default function DashboardPage() {
               )}
             </section>
           </div>
-
-          <section className="card dashboard-cost-card">
-            <div className="dashboard-section-header">
-              <h2>Forecast &amp; budget</h2>
-              <p className="dashboard-cost-subtitle">
-                Calendar month projection from recent daily spend. Budget is stored on the server
-                for this connection.
-              </p>
-            </div>
-            <div className="dashboard-cost-stats">
-              <div className="dashboard-cost-stat">
-                <span className="dashboard-cost-stat-label">Month to date</span>
-                <span className="dashboard-cost-stat-value">
-                  {formatMoney(forecast.mtd, currency)}
-                </span>
-              </div>
-              <div className="dashboard-cost-stat">
-                <span className="dashboard-cost-stat-label">Projected month-end</span>
-                <span className="dashboard-cost-stat-value">
-                  {formatMoney(forecast.projectedEom, currency)}
-                </span>
-              </div>
-              <div className="dashboard-cost-stat">
-                <span className="dashboard-cost-stat-label">Budget</span>
-                <span className="dashboard-cost-stat-value">
-                  {budget != null ? formatMoney(budget, currency) : '—'}
-                </span>
-              </div>
-            </div>
-
-            {progressPct != null && (
-              <div className="dashboard-budget-progress" aria-label="Budget progress">
-                <div className="dashboard-budget-progress-bar">
-                  <div
-                    className={`dashboard-budget-progress-fill${progressPct >= 100 ? ' is-over' : ''}`}
-                    style={{ width: `${progressPct}%` }}
-                  />
-                </div>
-                <p className="dashboard-budget-progress-label">
-                  {progressPct.toFixed(0)}% of budget (using projected month-end)
-                </p>
-              </div>
-            )}
-
-            <Alert type="error">{budgetErr}</Alert>
-            <Alert type="success">{budgetMsg}</Alert>
-
-            <div className="dashboard-budget-form">
-              <label>
-                Monthly budget
-                <input
-                  type="number"
-                  min="0"
-                  step="1"
-                  placeholder="e.g. 5000"
-                  value={budgetInput}
-                  onChange={(e) => setBudgetInput(e.target.value)}
-                />
-              </label>
-              <button
-                type="button"
-                className="btn dashboard-preset-btn"
-                disabled={budgetSaving}
-                onClick={() => void applyBudget()}
-              >
-                {budgetSaving ? 'Saving…' : 'Save budget'}
-              </button>
-            </div>
-          </section>
         </div>
       )}
     </>
