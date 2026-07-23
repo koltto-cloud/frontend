@@ -4,7 +4,6 @@ import { apiRequest, formatApiError } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
 import { useAsyncData } from '@/hooks/useAsyncData'
 import { Alert } from '@/components/Alert'
-import JsonViewer from '@/components/JsonViewer'
 
 type TotpStatus = { enabled: boolean }
 type TotpSetup = { provisioning_uri: string; secret: string }
@@ -28,7 +27,6 @@ export default function ProfilePage() {
   const [setup, setSetup] = useState<TotpSetup | null>(null)
   const [qrDataUrl, setQrDataUrl] = useState('')
   const [totpBusy, setTotpBusy] = useState(false)
-  const [showRawUser, setShowRawUser] = useState(false)
 
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
@@ -203,31 +201,42 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            <dl className="identity-meta">
-              <div className="identity-meta-item">
+            <dl className="identity-details">
+              <div className="identity-detail identity-detail--wide">
                 <dt>User ID</dt>
                 <dd className="mono" title={user.user_id}>
                   {user.user_id}
                 </dd>
               </div>
-              <div className="identity-meta-item">
+              <div className="identity-detail">
+                <dt>First name</dt>
+                <dd>{user.first_name || '—'}</dd>
+              </div>
+              <div className="identity-detail">
+                <dt>Last name</dt>
+                <dd>{user.last_name || '—'}</dd>
+              </div>
+              <div className="identity-detail">
+                <dt>Email</dt>
+                <dd>{user.email}</dd>
+              </div>
+              <div className="identity-detail">
+                <dt>Account status</dt>
+                <dd>{user.account_status}</dd>
+              </div>
+              <div className="identity-detail">
+                <dt>User type</dt>
+                <dd>{user.user_type}</dd>
+              </div>
+              <div className="identity-detail">
                 <dt>Created</dt>
                 <dd>{formatWhen(user.created_at)}</dd>
               </div>
-              <div className="identity-meta-item">
+              <div className="identity-detail">
                 <dt>Updated</dt>
                 <dd>{formatWhen(user.updated_at)}</dd>
               </div>
             </dl>
-
-            <button
-              type="button"
-              className="btn-link identity-raw-toggle"
-              onClick={() => setShowRawUser((open) => !open)}
-            >
-              {showRawUser ? 'Hide raw details' : 'Show raw details'}
-            </button>
-            {showRawUser ? <JsonViewer data={user} /> : null}
           </div>
         ) : (
           <p className="loading">Loading profile…</p>
