@@ -1,10 +1,35 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ComponentType, type SVGProps } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
+import {
+  Activity,
+  AlertTriangle,
+  Boxes,
+  Building2,
+  Cable,
+  Calculator,
+  ClipboardList,
+  FileBarChart,
+  Layers,
+  LayoutDashboard,
+  Lightbulb,
+  Package,
+  PieChart,
+  Receipt,
+  Repeat,
+  ScrollText,
+  Tags,
+  UserCog,
+  Users,
+  Wallet,
+  Wrench,
+} from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { useSyncsPaused } from '@/hooks/useSyncsPaused'
 import SyncsPausedBanner from '@/components/SyncsPausedBanner'
 
-type NavLinkItem = { to: string; label: string }
+type IconComponent = ComponentType<SVGProps<SVGSVGElement> & { size?: number | string; strokeWidth?: number | string }>
+
+type NavLinkItem = { to: string; label: string; icon: IconComponent }
 type NavSection = { section: string; links: NavLinkItem[] }
 
 /** Customer-facing: cost analysis, resources, and configuration */
@@ -12,27 +37,27 @@ const CUSTOMER_NAV: NavSection[] = [
   {
     section: 'Costs',
     links: [
-      { to: '/', label: 'Dashboard' },
-      { to: '/oci/cost-explorer', label: 'Cost Explorer' },
-      { to: '/oci/recommendations', label: 'Recommendations' },
-      { to: '/oci/anomalies', label: 'Cost Anomalies' },
-      { to: '/oci/unit-economics', label: 'Unit Economics' },
+      { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+      { to: '/oci/cost-explorer', label: 'Cost Explorer', icon: FileBarChart },
+      { to: '/oci/recommendations', label: 'Recommendations', icon: Lightbulb },
+      { to: '/oci/anomalies', label: 'Cost Anomalies', icon: AlertTriangle },
+      { to: '/oci/unit-economics', label: 'Unit Economics', icon: Calculator },
     ],
   },
   {
     section: 'Resources',
     links: [
-      { to: '/oci/inventory', label: 'Inventory' },
-      { to: '/oci/monitoring', label: 'Monitoring' },
-      { to: '/oci/reports', label: 'Reports' },
+      { to: '/oci/inventory', label: 'Inventory', icon: Boxes },
+      { to: '/oci/monitoring', label: 'Monitoring', icon: Activity },
+      { to: '/oci/reports', label: 'Reports', icon: ScrollText },
     ],
   },
   {
     section: 'Settings',
     links: [
-      { to: '/connections', label: 'Connections' },
-      { to: '/oci/budgets', label: 'Budgets & Alerts' },
-      { to: '/oci/allocation', label: 'Allocations' },
+      { to: '/connections', label: 'Connections', icon: Cable },
+      { to: '/oci/budgets', label: 'Budgets & Alerts', icon: Wallet },
+      { to: '/oci/allocation', label: 'Allocations', icon: PieChart },
     ],
   },
 ]
@@ -42,26 +67,26 @@ const INTERNAL_NAV: NavSection[] = [
   {
     section: 'Identity',
     links: [
-      { to: '/users', label: 'Users' },
-      { to: '/companies', label: 'Companies' },
-      { to: '/memberships', label: 'Memberships' },
+      { to: '/users', label: 'Users', icon: Users },
+      { to: '/companies', label: 'Companies', icon: Building2 },
+      { to: '/memberships', label: 'Memberships', icon: UserCog },
     ],
   },
   {
     section: 'Catalog & Billing',
     links: [
-      { to: '/catalog/plans', label: 'Plans' },
-      { to: '/catalog/features', label: 'Services' },
-      { to: '/billing/subscriptions', label: 'Subscriptions' },
-      { to: '/billing/invoices', label: 'Invoices' },
+      { to: '/catalog/plans', label: 'Plans', icon: Layers },
+      { to: '/catalog/features', label: 'Services', icon: Package },
+      { to: '/billing/subscriptions', label: 'Subscriptions', icon: Repeat },
+      { to: '/billing/invoices', label: 'Invoices', icon: Receipt },
     ],
   },
   {
     section: 'Admin',
     links: [
-      { to: '/audit', label: 'Audit Logs' },
-      { to: '/oci/pricing', label: 'OCI Pricing' },
-      { to: '/admin/maintenance', label: 'Maintenance' },
+      { to: '/audit', label: 'Audit Logs', icon: ClipboardList },
+      { to: '/oci/pricing', label: 'OCI Pricing', icon: Tags },
+      { to: '/admin/maintenance', label: 'Maintenance', icon: Wrench },
     ],
   },
 ]
@@ -82,17 +107,21 @@ function NavSections({ groups, onNavigate }: { groups: NavSection[]; onNavigate:
       {groups.map((group) => (
         <div key={group.section} className="nav-section">
           <p className="nav-section-title">{group.section}</p>
-          {group.links.map((link) => (
-            <NavLink
-              key={link.to}
-              to={link.to}
-              className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
-              end={link.to === '/'}
-              onClick={onNavigate}
-            >
-              {link.label}
-            </NavLink>
-          ))}
+          {group.links.map((link) => {
+            const Icon = link.icon
+            return (
+              <NavLink
+                key={link.to}
+                to={link.to}
+                className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+                end={link.to === '/'}
+                onClick={onNavigate}
+              >
+                <Icon className="nav-link-icon" size={18} strokeWidth={1.75} aria-hidden="true" />
+                <span className="nav-link-label">{link.label}</span>
+              </NavLink>
+            )
+          })}
         </div>
       ))}
     </>
