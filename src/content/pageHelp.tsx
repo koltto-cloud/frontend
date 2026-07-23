@@ -92,7 +92,7 @@ export const recommendationsHelp: ReactNode = (
     <p>
       Lower confidence usually means thinner metrics history or noisier signals. Unattached volume
       findings are high confidence because they use attachment state, not just I/O. Treat noisy
-      util-based leads as investigation, not automatic deletes.
+      util-based leads as investigation, not automatic terminates.
     </p>
   </>
 )
