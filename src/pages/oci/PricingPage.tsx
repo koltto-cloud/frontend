@@ -38,7 +38,7 @@ export default function PricingPage() {
         <button type="button" className="btn btn-primary" onClick={() => void reload()}>
           Search
         </button>
-        <button type="button" className="btn" onClick={() => void handleSync()}>
+        <button type="button" className="btn btn-secondary" onClick={() => void handleSync()}>
           Sync pricing
         </button>
       </div>

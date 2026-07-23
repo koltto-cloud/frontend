@@ -170,14 +170,14 @@ export default function CompaniesPage() {
             ))}
           </select>
         </label>
-        <button type="button" className="btn" onClick={() => void handleDeployAll()}>
+        <button type="button" className="btn btn-secondary" onClick={() => void handleDeployAll()}>
           Deploy all
         </button>
-        {expectedRev && (
-          <span title="alembic_tenant head in this API build">
+        {expectedRev ? (
+          <span className="toolbar-meta" title="alembic_tenant head in this API build">
             Expected schema: {expectedRev}
           </span>
-        )}
+        ) : null}
       </div>
 
       <div className="filters">

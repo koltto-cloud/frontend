@@ -434,7 +434,7 @@ export default function MonitoringPage() {
           {loading ? 'Loading…' : 'Load metrics'}
         </button>
         {loaded && (
-          <button type="button" className="btn" onClick={() => void reload()}>
+          <button type="button" className="btn btn-secondary" onClick={() => void reload()}>
             Refresh
           </button>
         )}

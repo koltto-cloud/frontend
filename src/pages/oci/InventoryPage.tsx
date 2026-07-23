@@ -161,7 +161,7 @@ export default function InventoryPage() {
                 ))}
               </select>
             </label>
-            <button type="button" className="btn" onClick={() => void reloadInventory()}>
+            <button type="button" className="btn btn-secondary" onClick={() => void reloadInventory()}>
               Refresh
             </button>
           </div>

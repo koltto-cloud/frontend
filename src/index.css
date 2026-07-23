@@ -669,14 +669,14 @@ textarea:focus-visible {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  min-height: 40px;
-  padding: 0.55rem 1.1rem;
+  min-height: 44px;
+  padding: 11px 14px;
   border: 1.5px solid var(--line);
   border-radius: var(--radius);
   background: transparent;
   color: var(--ink);
   font-family: var(--font-body);
-  font-size: 0.875rem;
+  font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.01em;
   box-shadow: none;
@@ -2015,9 +2015,30 @@ textarea:focus-visible {
 .toolbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.75rem 1rem;
   align-items: flex-end;
   margin-bottom: 1rem;
+}
+
+.toolbar label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.toolbar input,
+.toolbar select {
+  min-width: 160px;
+}
+
+.toolbar-meta {
+  align-self: center;
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-family: var(--font-mono);
 }
 
 .dashboard-header {
