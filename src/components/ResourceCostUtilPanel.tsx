@@ -235,7 +235,7 @@ export default function ResourceCostUtilPanel({
       </div>
 
       {(costError || utilError) && (
-        <p className="empty" style={{ color: 'var(--danger)' }}>
+        <p className="empty" style={{ color: 'var(--error)' }}>
           {costError || utilError}
         </p>
       )}
@@ -304,8 +304,8 @@ export default function ResourceCostUtilPanel({
             <TimeSeriesChart
               points={utilPoints}
               series={[
-                { key: 'cpu', label: 'CPU %', color: 'var(--accent)' },
-                { key: 'mem', label: 'Memory %', color: '#c2410c', type: 'line' },
+                { key: 'cpu', label: 'CPU %', color: 'var(--primary)' },
+                { key: 'mem', label: 'Memory %', color: 'var(--accent)', type: 'line' },
               ]}
               valueSuffix="%"
               dateOnly
@@ -315,12 +315,12 @@ export default function ResourceCostUtilPanel({
                 {
                   y: DEFAULT_UTILIZATION_THRESHOLDS.under,
                   label: `Under ${DEFAULT_UTILIZATION_THRESHOLDS.under}%`,
-                  color: 'rgba(180, 83, 9, 0.7)',
+                  color: 'var(--warning)',
                 },
                 {
                   y: DEFAULT_UTILIZATION_THRESHOLDS.over,
                   label: `Over ${DEFAULT_UTILIZATION_THRESHOLDS.over}%`,
-                  color: 'rgba(225, 29, 72, 0.65)',
+                  color: 'var(--error)',
                 },
               ]}
             />

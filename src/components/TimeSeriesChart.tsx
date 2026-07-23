@@ -48,7 +48,12 @@ interface TimeSeriesChartProps {
   yDomain?: [number | string, number | string]
 }
 
-const SERIES_COLORS = ['var(--accent)', '#c2410c', '#0f766e', '#7c3aed', '#b45309']
+const SERIES_COLORS = [
+  'var(--cloud-aws)',
+  'var(--cloud-oci)',
+  'var(--cloud-gcp)',
+  'var(--cloud-azure)',
+]
 
 function formatTick(iso: string, dateOnly: boolean): string {
   const d = new Date(iso)
@@ -104,20 +109,30 @@ export default function TimeSeriesChart({
     <div className="time-series-chart" style={{ width: '100%', height }}>
       <ResponsiveContainer>
         <ComposedChart data={points} margin={{ top: 10, right: 16, left: 8, bottom: 4 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
+          <CartesianGrid strokeDasharray="4 4" stroke="var(--line)" />
           <XAxis
             dataKey="t"
             tickFormatter={(v) => formatTick(String(v), dateOnly)}
             minTickGap={40}
-            tick={{ fontSize: 11, fill: 'var(--muted)' }}
+            tick={{ fontSize: 11, fill: 'var(--muted)', fontFamily: 'var(--font-mono)' }}
           />
           <YAxis
             domain={yDomain}
-            tick={{ fontSize: 11, fill: 'var(--muted)' }}
+            tick={{ fontSize: 11, fill: 'var(--muted)', fontFamily: 'var(--font-mono)' }}
             tickFormatter={(v: number) => formatValue(v, valuePrefix, valueSuffix)}
             width={yWidth}
           />
           <Tooltip
+            contentStyle={{
+              background: 'var(--surface)',
+              border: '1px solid var(--line)',
+              borderRadius: 8,
+              boxShadow: 'var(--shadow-panel)',
+              color: 'var(--ink)',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 12,
+            }}
+            labelStyle={{ color: 'var(--ink)', fontFamily: 'var(--font-body)', marginBottom: 4 }}
             labelFormatter={(label) => formatTooltipLabel(String(label), dateOnly)}
             formatter={(value, name) => [
               formatValue(value, valuePrefix, valueSuffix),
@@ -129,7 +144,7 @@ export default function TimeSeriesChart({
             <ReferenceLine
               key={`ref-${line.y}-${line.label ?? ''}`}
               y={line.y}
-              stroke={line.color ?? 'rgba(100, 116, 139, 0.75)'}
+              stroke={line.color ?? 'var(--muted)'}
               strokeDasharray="4 4"
               label={
                 line.label
@@ -144,33 +159,19 @@ export default function TimeSeriesChart({
             />
           ))}
           {multi ? (
-            series!.map((s, i) => {
+            series!.slice(0, 4).map((s, i) => {
               const color = s.color ?? SERIES_COLORS[i % SERIES_COLORS.length]
-              if (s.type === 'line') {
-                return (
-                  <Line
-                    key={s.key}
-                    type="monotone"
-                    dataKey={s.key}
-                    name={s.label}
-                    stroke={color}
-                    strokeWidth={2}
-                    dot={false}
-                    connectNulls={false}
-                  />
-                )
-              }
+              // Brand: multi-series = lines only, no area fill
               return (
-                <Area
+                <Line
                   key={s.key}
                   type="monotone"
                   dataKey={s.key}
                   name={s.label}
                   stroke={color}
-                  fill={color}
-                  fillOpacity={0.12}
-                  strokeWidth={2}
+                  strokeWidth={2.5}
                   dot={false}
+                  activeDot={{ r: 4, strokeWidth: 0, fill: color }}
                   connectNulls={false}
                 />
               )
@@ -180,10 +181,12 @@ export default function TimeSeriesChart({
               type="monotone"
               dataKey="value"
               name={valueLabel}
-              stroke="var(--accent)"
-              fill="rgba(37, 99, 235, 0.15)"
-              strokeWidth={2}
+              stroke="var(--primary)"
+              fill="var(--primary)"
+              fillOpacity={0.12}
+              strokeWidth={2.5}
               dot={false}
+              activeDot={{ r: 4, strokeWidth: 0, fill: 'var(--primary)' }}
               connectNulls={false}
             />
           )}

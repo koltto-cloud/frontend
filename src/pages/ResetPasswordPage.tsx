@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { apiRequest, formatApiError } from '@/api/client'
 import { Alert } from '@/components/Alert'
+import ThemeToggle from '@/components/ThemeToggle'
 
 export default function ResetPasswordPage() {
   const navigate = useNavigate()
@@ -34,6 +35,7 @@ export default function ResetPasswordPage() {
 
   return (
     <div className="auth-page">
+      <ThemeToggle className="auth-theme-toggle" />
       <div className="auth-shell">
         <header className="auth-header">
           <p className="auth-brand">KÖLTTÖ</p>
