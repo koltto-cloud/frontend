@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { apiRequest, formatApiError } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
@@ -18,7 +18,6 @@ type RecKind =
 
 type RecAction = 'stop' | 'review' | 'terminate' | 'downsize' | 'scale_up'
 type SilenceStatus = 'active' | 'silenced' | 'all'
-type CloudFilter = '' | 'oci' | 'aws' | 'gcp'
 
 interface RecommendationItem {
   resource_id: string | null
@@ -54,14 +53,30 @@ interface RecommendationsResponse {
   items: RecommendationItem[]
 }
 
-const KIND_ACTION: Record<RecKind, { action: string; color: string }> = {
-  idle: { action: 'Stop', color: '#c23b3b' },
-  idle_storage: { action: 'Review', color: '#c23b3b' },
-  idle_lb: { action: 'Terminate', color: '#c23b3b' },
-  unattached_volume: { action: 'Terminate', color: '#c23b3b' },
-  oversized: { action: 'Downsize', color: '#b7791f' },
-  overutilized: { action: 'Scale up', color: '#9b3d7a' },
+const KIND_META: Record<RecKind, { label: string; tone: string }> = {
+  idle: { label: 'Stop', tone: 'danger' },
+  idle_storage: { label: 'Review', tone: 'warning' },
+  idle_lb: { label: 'Terminate', tone: 'danger' },
+  unattached_volume: { label: 'Terminate', tone: 'danger' },
+  oversized: { label: 'Downsize', tone: 'warning' },
+  overutilized: { label: 'Scale up', tone: 'accent' },
 }
+
+const ACTION_FILTERS: { value: RecAction; label: string }[] = [
+  { value: 'terminate', label: 'Terminate' },
+  { value: 'downsize', label: 'Downsize' },
+  { value: 'review', label: 'Review' },
+  { value: 'stop', label: 'Stop' },
+  { value: 'scale_up', label: 'Scale up' },
+]
+
+const TYPE_FILTERS: { value: string; label: string }[] = [
+  { value: '', label: 'All types' },
+  { value: 'compute', label: 'Compute' },
+  { value: 'block_storage', label: 'Block storage' },
+  { value: 'file_storage', label: 'File storage' },
+  { value: 'load_balancer', label: 'Load balancer' },
+]
 
 const TYPE_LABEL: Record<string, string> = {
   compute: 'Compute',
@@ -69,23 +84,6 @@ const TYPE_LABEL: Record<string, string> = {
   file_storage: 'File storage',
   load_balancer: 'Load balancer',
 }
-
-const ACTION_OPTIONS: { value: '' | RecAction; label: string }[] = [
-  { value: '', label: 'All actions' },
-  { value: 'downsize', label: 'Downsize' },
-  { value: 'review', label: 'Review' },
-  { value: 'terminate', label: 'Terminate' },
-  { value: 'stop', label: 'Stop' },
-  { value: 'scale_up', label: 'Scale up' },
-]
-
-const TYPE_OPTIONS = [
-  { value: '', label: 'All types' },
-  { value: 'compute', label: 'Compute' },
-  { value: 'block_storage', label: 'Block storage' },
-  { value: 'file_storage', label: 'File storage' },
-  { value: 'load_balancer', label: 'Load balancer' },
-]
 
 function isoDaysAgo(days: number): string {
   const d = new Date()
@@ -122,11 +120,101 @@ function metricPhrase(item: RecommendationItem): string {
 }
 
 function actionLabel(item: RecommendationItem): string {
-  return KIND_ACTION[item.kind]?.action ?? item.action
+  return KIND_META[item.kind]?.label ?? item.action
 }
 
-function actionColor(item: RecommendationItem): string {
-  return KIND_ACTION[item.kind]?.color ?? '#64748b'
+function actionTone(item: RecommendationItem): string {
+  return KIND_META[item.kind]?.tone ?? 'muted'
+}
+
+function costAfter(item: RecommendationItem): number | null {
+  if (item.estimated_monthly_savings <= 0) return null
+  return Math.max(0, item.monthly_cost - item.estimated_monthly_savings)
+}
+
+function RowMenu({
+  item,
+  busy,
+  onSilence,
+  onUnsilence,
+}: {
+  item: RecommendationItem
+  busy: boolean
+  onSilence: (days: number | null) => void
+  onUnsilence: () => void
+}) {
+  const [open, setOpen] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    function onDoc(e: MouseEvent) {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false)
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('mousedown', onDoc)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDoc)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+
+  return (
+    <div className="recs-row-menu" ref={rootRef}>
+      <button
+        type="button"
+        className="btn btn-sm btn-ghost recs-row-menu-trigger"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        disabled={busy}
+        onClick={() => setOpen((v) => !v)}
+      >
+        {busy ? '…' : '⋮'}
+      </button>
+      {open ? (
+        <div className="recs-row-menu-panel" role="menu">
+          {item.silenced ? (
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setOpen(false)
+                onUnsilence()
+              }}
+            >
+              Unsilence
+            </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setOpen(false)
+                  onSilence(30)
+                }}
+              >
+                Silence 30 days
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setOpen(false)
+                  onSilence(null)
+                }}
+              >
+                Ignore
+              </button>
+            </>
+          )}
+        </div>
+      ) : null}
+    </div>
+  )
 }
 
 export default function RecommendationsPage() {
@@ -137,11 +225,10 @@ export default function RecommendationsPage() {
 
   const [startDate] = useState(isoDaysAgo(30))
   const [endDate] = useState(isoDaysAgo(0))
+  const [actionFilter, setActionFilter] = useState<'' | RecAction>('')
   const [resourceType, setResourceType] = useState('')
-  const [action, setAction] = useState<'' | RecAction>('')
   const [compartmentId, setCompartmentId] = useState('')
   const [status, setStatus] = useState<SilenceStatus>('active')
-  const [cloud, setCloud] = useState<CloudFilter>('')
   const [busyKey, setBusyKey] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
 
@@ -156,16 +243,8 @@ export default function RecommendationsPage() {
       ? `/api/v1/cloud/oci/recommendations/${companyId}/connections/${connectionId}/recommendations`
       : null
 
-  const queryKey = [
-    url,
-    startDate,
-    endDate,
-    resourceType,
-    action,
-    compartmentId,
-    status,
-    cloud,
-  ].join('|')
+  // Fetch without action/type so summary cards keep accurate counts.
+  const queryKey = [url, startDate, endDate, compartmentId, status].join('|')
 
   const { data, error, loading, reload } = useAsyncData(
     () => {
@@ -173,13 +252,10 @@ export default function RecommendationsPage() {
       const query: Record<string, string | number> = {
         start_date: startDate,
         end_date: endDate,
-        limit: 100,
+        limit: 200,
         status,
       }
-      if (resourceType) query.resource_type = resourceType
-      if (action) query.action = action
       if (compartmentId) query.compartment_id = compartmentId
-      if (cloud) query.cloud = cloud
       return apiRequest<RecommendationsResponse>(url, { query })
     },
     [queryKey],
@@ -187,16 +263,38 @@ export default function RecommendationsPage() {
   )
 
   const currency = data?.currency ?? 'USD'
-  const items = useMemo(() => data?.items ?? [], [data])
-  const savingsCount = items.filter((i) => !i.silenced && i.estimated_monthly_savings > 0).length
-  const alertsCount = items.filter((i) => !i.silenced && i.estimated_monthly_savings <= 0).length
+  const allItems = useMemo(() => data?.items ?? [], [data])
+
+  const actionCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    for (const item of allItems) {
+      counts[item.action] = (counts[item.action] ?? 0) + 1
+    }
+    return counts
+  }, [allItems])
+
+  const items = useMemo(() => {
+    return allItems.filter((item) => {
+      if (actionFilter && item.action !== actionFilter) return false
+      if (resourceType && item.resource_type !== resourceType) return false
+      return true
+    })
+  }, [allItems, actionFilter, resourceType])
+
+  const filteredSavings = useMemo(
+    () =>
+      items
+        .filter((i) => !i.silenced)
+        .reduce((sum, i) => sum + (i.estimated_monthly_savings || 0), 0),
+    [items],
+  )
 
   const hasCompany = Boolean(companyId)
   const hasConnection = Boolean(connectionId)
 
   async function silenceItem(item: RecommendationItem, days: number | null) {
     if (!companyId || !connectionId || !item.resource_id) return
-    const key = `${item.resource_id}:${item.kind}:silence`
+    const key = `${item.resource_id}:${item.kind}`
     setBusyKey(key)
     setActionError(null)
     try {
@@ -221,7 +319,7 @@ export default function RecommendationsPage() {
 
   async function unsilienceItem(item: RecommendationItem) {
     if (!companyId || !connectionId || !item.silence_id) return
-    const key = `${item.resource_id}:${item.kind}:unsilence`
+    const key = `${item.resource_id}:${item.kind}`
     setBusyKey(key)
     setActionError(null)
     try {
@@ -258,185 +356,205 @@ export default function RecommendationsPage() {
         </p>
       ) : (
         <>
-          <div className="filters recommendations-filters">
-            <label>
-              Cloud
-              <select value={cloud} onChange={(e) => setCloud(e.target.value as CloudFilter)}>
-                <option value="">All clouds</option>
-                <option value="oci">OCI</option>
-                <option value="aws" disabled>
-                  AWS (soon)
-                </option>
-                <option value="gcp" disabled>
-                  GCP (soon)
-                </option>
-              </select>
-            </label>
-            <label>
-              Resource type
-              <select value={resourceType} onChange={(e) => setResourceType(e.target.value)}>
-                {TYPE_OPTIONS.map((o) => (
-                  <option key={o.value || 'all'} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Action
-              <select
-                value={action}
-                onChange={(e) => setAction(e.target.value as '' | RecAction)}
-              >
-                {ACTION_OPTIONS.map((o) => (
-                  <option key={o.value || 'all'} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Scope
-              <select value={compartmentId} onChange={(e) => setCompartmentId(e.target.value)}>
-                <option value="">All scopes</option>
-                {compartments.map((c) => (
-                  <option key={c.compartment_ocid} value={c.compartment_ocid}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Status
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value as SilenceStatus)}
-              >
-                <option value="active">Active</option>
-                <option value="silenced">Silenced</option>
-                <option value="all">All</option>
-              </select>
-            </label>
-          </div>
-
           <Alert type="error">{error || actionError}</Alert>
 
           {loading && !data ? (
             <p className="loading">Analyzing cost vs utilization…</p>
           ) : (
             <>
-              <section className="recommendations-summary" aria-live="polite">
-                <div>
-                  <span className="dashboard-cost-stat-label">Potential monthly savings</span>
-                  <div className="recommendations-summary-value">
-                    {formatMoney(data?.total_estimated_monthly_savings ?? 0, currency)}
+              <section className="recs-stat-grid" aria-label="Recommendation filters">
+                <button
+                  type="button"
+                  className={`recs-stat-card recs-stat-card--savings${actionFilter === '' ? ' is-active' : ''}`}
+                  onClick={() => setActionFilter('')}
+                >
+                  <div className="recs-stat-card-body">
+                    <div className="recs-stat-value">
+                      {formatMoney(
+                        actionFilter || resourceType
+                          ? filteredSavings
+                          : (data?.total_estimated_monthly_savings ?? 0),
+                        currency,
+                      )}
+                    </div>
+                    <div className="recs-stat-label">Potential savings / mo</div>
                   </div>
-                </div>
-                <p className="page-lead recommendations-summary-meta">
-                  {savingsCount} savings · {alertsCount} performance alert
-                  {alertsCount === 1 ? '' : 's'}
-                  {loading ? ' · updating…' : ''}
-                </p>
+                  <span className="recs-stat-hint">All actions</span>
+                </button>
+
+                {ACTION_FILTERS.map((f) => {
+                  const count = actionCounts[f.value] ?? 0
+                  const active = actionFilter === f.value
+                  return (
+                    <button
+                      key={f.value}
+                      type="button"
+                      className={`recs-stat-card${active ? ' is-active' : ''}`}
+                      onClick={() => setActionFilter(active ? '' : f.value)}
+                      disabled={count === 0 && !active}
+                    >
+                      <div className="recs-stat-card-body">
+                        <div className="recs-stat-value">{count}</div>
+                        <div className="recs-stat-label">{f.label}</div>
+                      </div>
+                    </button>
+                  )
+                })}
               </section>
 
-              {items.length === 0 ? (
-                <p className="empty">
-                  No recommendations for these filters. Try All status, or sync cost and monitoring
-                  for the last 30 days.
-                </p>
-              ) : (
-                <ul className="recommendations-list">
-                  {items.map((item) => {
-                    const color = actionColor(item)
-                    const isSaving = item.estimated_monthly_savings > 0
-                    const scopeName =
-                      (item.compartment_id && compartmentNames[item.compartment_id]) || null
-                    const rowKey = `${item.resource_id ?? item.resource_name}:${item.kind}`
-                    const silenceBusy = busyKey === `${item.resource_id}:${item.kind}:silence`
-                    const unsilienceBusy =
-                      busyKey === `${item.resource_id}:${item.kind}:unsilence`
-                    return (
-                      <li
-                        key={rowKey}
-                        className={`recommendations-row${item.silenced ? ' is-silenced' : ''}`}
-                        title={item.summary}
+              <section className="recs-panel">
+                <div className="recs-panel-toolbar">
+                  <div className="tabs recs-status-tabs" role="tablist" aria-label="Recommendation status">
+                    {(
+                      [
+                        ['active', 'Active'],
+                        ['silenced', 'Silenced'],
+                        ['all', 'All'],
+                      ] as const
+                    ).map(([value, label]) => (
+                      <button
+                        key={value}
+                        type="button"
+                        role="tab"
+                        aria-selected={status === value}
+                        className={`tab${status === value ? ' active' : ''}`}
+                        onClick={() => setStatus(value)}
                       >
-                        <div className="recommendations-row-main">
-                          <div className="recommendations-row-identity">
-                            <span
-                              className="recommendations-action"
-                              style={{ color, borderColor: color }}
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="recs-panel-filters">
+                    <label>
+                      Type
+                      <select
+                        value={resourceType}
+                        onChange={(e) => setResourceType(e.target.value)}
+                      >
+                        {TYPE_FILTERS.map((o) => (
+                          <option key={o.value || 'all'} value={o.value}>
+                            {o.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      Scope
+                      <select
+                        value={compartmentId}
+                        onChange={(e) => setCompartmentId(e.target.value)}
+                      >
+                        <option value="">All scopes</option>
+                        {compartments.map((c) => (
+                          <option key={c.compartment_ocid} value={c.compartment_ocid}>
+                            {c.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+                </div>
+
+                {items.length === 0 ? (
+                  <p className="empty" style={{ margin: '1rem 0 0' }}>
+                    No recommendations for these filters. Try another status, or sync cost and
+                    monitoring for the last 30 days.
+                  </p>
+                ) : (
+                  <div className="data-table-wrap recs-table-wrap">
+                    <table className="data-table recs-table">
+                      <thead>
+                        <tr>
+                          <th className="recs-col-action">Action</th>
+                          <th className="recs-col-resource">Resource</th>
+                          <th className="recs-col-rec">Recommendation</th>
+                          <th className="recs-col-cost">Cost</th>
+                          <th className="recs-col-menu">
+                            <span className="sr-only">Row actions</span>
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {items.map((item) => {
+                          const tone = actionTone(item)
+                          const after = costAfter(item)
+                          const scopeName =
+                            (item.compartment_id && compartmentNames[item.compartment_id]) ||
+                            null
+                          const rowKey = `${item.resource_id ?? item.resource_name}:${item.kind}`
+                          const busy = busyKey === `${item.resource_id}:${item.kind}`
+                          return (
+                            <tr
+                              key={rowKey}
+                              className={item.silenced ? 'is-silenced' : undefined}
+                              title={item.summary}
                             >
-                              {actionLabel(item)}
-                            </span>
-                            <div className="recommendations-row-text">
-                              <strong title={item.resource_id ?? undefined}>
-                                {item.resource_name ?? item.resource_id ?? 'unknown'}
-                              </strong>
-                              <span className="page-lead recommendations-row-meta">
-                                {TYPE_LABEL[item.resource_type] ?? item.resource_type}
-                                {scopeName ? ` · ${scopeName}` : ''}
-                                {' · '}
-                                {metricPhrase(item)}
-                                {item.confidence === 'low' ? ' · low confidence' : ''}
-                                {item.silenced ? ' · silenced' : ''}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="recommendations-row-cost">
-                            {isSaving ? (
-                              <span className="recommendations-savings">
-                                save ~{formatMoney(item.estimated_monthly_savings, currency)}/mo
-                              </span>
-                            ) : (
-                              <span className="recommendations-risk" style={{ color }}>
-                                performance risk
-                              </span>
-                            )}
-                            <span className="page-lead">
-                              {formatMoney(item.monthly_cost, currency)}/mo
-                            </span>
-                          </div>
-                        </div>
-                        <div className="recommendations-row-footer">
-                          <p className="recommendations-advice">→ {item.recommendation}</p>
-                          <div className="recommendations-row-actions">
-                            {item.silenced ? (
-                              <button
-                                type="button"
-                                className="btn btn-sm btn-ghost"
-                                disabled={unsilienceBusy}
-                                onClick={() => void unsilienceItem(item)}
-                              >
-                                {unsilienceBusy ? '…' : 'Unsilence'}
-                              </button>
-                            ) : (
-                              <>
-                                <button
-                                  type="button"
-                                  className="btn btn-sm btn-ghost"
-                                  disabled={silenceBusy}
-                                  onClick={() => void silenceItem(item, 30)}
+                              <td className="recs-col-action">
+                                <span className={`recs-badge recs-badge--${tone}`}>
+                                  {actionLabel(item)}
+                                </span>
+                              </td>
+                              <td className="recs-col-resource">
+                                <div
+                                  className="recs-resource-name"
+                                  title={item.resource_id ?? undefined}
                                 >
-                                  {silenceBusy ? '…' : 'Silence 30d'}
-                                </button>
-                                <button
-                                  type="button"
-                                  className="btn btn-sm btn-ghost"
-                                  disabled={silenceBusy}
-                                  onClick={() => void silenceItem(item, null)}
-                                >
-                                  Ignore
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </li>
-                    )
-                  })}
-                </ul>
-              )}
+                                  {item.resource_name ?? item.resource_id ?? 'unknown'}
+                                </div>
+                                <div className="recs-resource-meta">
+                                  {TYPE_LABEL[item.resource_type] ?? item.resource_type}
+                                  {scopeName ? ` · ${scopeName}` : ''}
+                                  {' · '}
+                                  {metricPhrase(item)}
+                                  {item.confidence === 'low' ? ' · low confidence' : ''}
+                                </div>
+                              </td>
+                              <td className="recs-col-rec">
+                                <div className="recs-advice">{item.recommendation}</div>
+                              </td>
+                              <td className="recs-col-cost">
+                                {after != null ? (
+                                  <>
+                                    <div className="recs-cost-after">
+                                      {formatMoney(after, currency)}
+                                      <span className="recs-cost-suffix">/mo after</span>
+                                    </div>
+                                    <div className="recs-cost-current">
+                                      {formatMoney(item.monthly_cost, currency)}/mo now
+                                    </div>
+                                  </>
+                                ) : (
+                                  <>
+                                    <div className="recs-cost-risk">Performance risk</div>
+                                    <div className="recs-cost-current">
+                                      {formatMoney(item.monthly_cost, currency)}/mo now
+                                    </div>
+                                  </>
+                                )}
+                              </td>
+                              <td className="recs-col-menu actions-cell">
+                                <RowMenu
+                                  item={item}
+                                  busy={busy}
+                                  onSilence={(days) => void silenceItem(item, days)}
+                                  onUnsilence={() => void unsilienceItem(item)}
+                                />
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                {loading && data != null ? (
+                  <p className="dashboard-cost-updating" aria-live="polite">
+                    Updating…
+                  </p>
+                ) : null}
+              </section>
             </>
           )}
         </>
