@@ -2597,4 +2597,164 @@ button {
   .sidebar {
     transition: none;
   }
+
+  .recommendations-row {
+    transition: none;
+  }
+}
+
+/* Recommendations */
+.recommendations-filters {
+  margin-bottom: 1.25rem;
+}
+
+.recommendations-summary {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 1rem 1.5rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.recommendations-summary-value {
+  font-family: Sora, system-ui, sans-serif;
+  font-size: 1.65rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin-top: 0.15rem;
+}
+
+.recommendations-summary-meta {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.recommendations-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.recommendations-row {
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.88);
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.recommendations-row:hover {
+  border-color: #cbd5e1;
+  background: #fff;
+}
+
+.recommendations-row.is-silenced {
+  opacity: 0.72;
+}
+
+.recommendations-row-main {
+  display: flex;
+  gap: 0.85rem;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.recommendations-row-identity {
+  display: flex;
+  gap: 0.7rem;
+  align-items: flex-start;
+  min-width: 0;
+  flex: 1;
+}
+
+.recommendations-action {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  border: 1px solid;
+  border-radius: 4px;
+  padding: 0.15rem 0.45rem;
+  white-space: nowrap;
+  margin-top: 0.15rem;
+}
+
+.recommendations-row-text {
+  min-width: 0;
+}
+
+.recommendations-row-text strong {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 650;
+  max-width: 28rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recommendations-row-meta {
+  display: block;
+  font-size: 0.78rem;
+  margin-top: 0.15rem;
+}
+
+.recommendations-row-cost {
+  text-align: right;
+  white-space: nowrap;
+  display: grid;
+  gap: 0.1rem;
+  justify-items: end;
+}
+
+.recommendations-savings {
+  font-weight: 700;
+  color: #1f7a45;
+}
+
+.recommendations-risk {
+  font-weight: 700;
+}
+
+.recommendations-row-footer {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.recommendations-advice {
+  margin: 0;
+  font-size: 0.84rem;
+  color: var(--ink);
+  flex: 1;
+  min-width: 12rem;
+}
+
+.recommendations-row-actions {
+  display: flex;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+@media (max-width: 720px) {
+  .recommendations-row-cost {
+    text-align: left;
+    justify-items: start;
+    width: 100%;
+  }
+
+  .recommendations-row-footer {
+    flex-direction: column;
+  }
 }
