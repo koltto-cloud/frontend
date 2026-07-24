@@ -538,7 +538,7 @@ export default function DashboardPage() {
               <div className="dashboard-section-header">
                 <h2>Opportunities</h2>
                 <p className="dashboard-cost-subtitle">
-                  Top active recommendations (not silenced or ignored)
+                  Top active recommendations
                 </p>
               </div>
               {recommendationsError ? <Alert type="error">{recommendationsError}</Alert> : null}
