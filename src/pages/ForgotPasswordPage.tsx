@@ -1,11 +1,9 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
 import { apiRequest, formatApiError } from '@/api/client'
 import { Alert } from '@/components/Alert'
 
 export default function ForgotPasswordPage() {
-  const { t } = useTranslation()
   const [email, setEmail] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -22,7 +20,7 @@ export default function ForgotPasswordPage() {
         auth: false,
         body: { email },
       })
-      setSuccess(t('auth.resetSent'))
+      setSuccess('If the email exists, a reset link was sent.')
     } catch (err) {
       setError(formatApiError(err))
     } finally {
@@ -35,31 +33,31 @@ export default function ForgotPasswordPage() {
       <div className="auth-shell">
         <header className="auth-header">
           <p className="auth-brand">KÖLTTÖ</p>
-          <p className="auth-tagline">{t('auth.tagline')}</p>
+          <p className="auth-tagline">Cloud cost & inventory</p>
         </header>
         <div className="auth-card">
-          <h1>{t('auth.forgotPasswordTitle')}</h1>
+          <h1>Forgot password</h1>
           <Alert type="error">{error}</Alert>
           <Alert type="success">{success}</Alert>
           <form onSubmit={(e) => void handleSubmit(e)}>
             <div className="form-field">
-              <label htmlFor="email">{t('auth.email')}</label>
+              <label htmlFor="email">Email</label>
               <input
                 id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                placeholder={t('auth.emailPlaceholder')}
+                placeholder="you@company.com"
               />
             </div>
             <div className="form-actions">
               <button type="submit" className="btn btn-primary auth-submit" disabled={loading}>
-                {t('auth.sendResetLink')}
+                Send reset link
               </button>
             </div>
             <p className="auth-footer-link">
-              <Link to="/login">{t('auth.backToLogin')}</Link>
+              <Link to="/login">Back to login</Link>
             </p>
           </form>
         </div>
