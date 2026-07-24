@@ -6,8 +6,8 @@ export const dashboardHelp: ReactNode = (
   <>
     <p>
       The Dashboard is your <strong>spend overview</strong> for the selected company and
-      connection — period totals, daily trend, service and compartment breakdowns, and
-      notable spikes.
+      connection — period totals, daily trend, service and compartment breakdowns,
+      recommendations, and cost anomalies.
     </p>
     <h3>How to use it</h3>
     <ol>
@@ -19,7 +19,7 @@ export const dashboardHelp: ReactNode = (
       <li>Period total and daily average</li>
       <li>Cost by service and by compartment</li>
       <li>Top active recommendations (not silenced or ignored)</li>
-      <li>Day-over-day spikes that may need investigation</li>
+      <li>Top cost anomalies vs recent baseline</li>
     </ul>
     <p>
       Use Cost Explorer when you want to drill into a service or compartment; use Budgets &amp;

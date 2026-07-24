@@ -2280,6 +2280,11 @@ textarea:focus-visible {
   letter-spacing: -0.01em;
   color: var(--ink);
   font-variant-numeric: tabular-nums;
+  text-decoration: none;
+}
+
+a.dashboard-spike-date:hover {
+  color: var(--primary);
 }
 
 .dashboard-spike-delta {

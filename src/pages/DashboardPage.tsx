@@ -4,7 +4,6 @@ import { apiRequest } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
 import { useAsyncData } from '@/hooks/useAsyncData'
 import {
-  notableDayOverDaySpikes,
   periodStatsFromSeries,
   toLocalIsoDate,
 } from '@/dashboard/costInsights'
@@ -46,6 +45,22 @@ interface UsageByCompartmentResponse {
     compartment_name: string | null
     total_cost: number
   }[]
+}
+
+interface SpendAnomaly {
+  date: string
+  total_cost: number
+  baseline_avg: number
+  delta: number
+  pct_change: number
+  currency: string | null
+  driver_service: string | null
+  driver_delta: number
+}
+
+interface SpendAnomaliesResponse {
+  currency: string | null
+  items: SpendAnomaly[]
 }
 
 type RecKind =
@@ -118,6 +133,12 @@ function formatPct(value: number | null | undefined): string {
   return `${value >= 0 ? '+' : ''}${value.toFixed(0)}%`
 }
 
+function formatDay(iso: string): string {
+  const d = new Date(`${iso}T00:00:00`)
+  if (Number.isNaN(d.getTime())) return iso
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
 function isoDaysAgo(days: number): string {
   const d = new Date()
   d.setDate(d.getDate() - days)
@@ -148,7 +169,7 @@ export default function DashboardPage() {
   const hasConnection = Boolean(connectionId)
   const hasCompany = Boolean(companyId)
 
-  const [recsEnabled, setRecsEnabled] = useState(false)
+  const [secondaryEnabled, setSecondaryEnabled] = useState(false)
 
   const usageBase =
     companyId && connectionId
@@ -157,6 +178,10 @@ export default function DashboardPage() {
   const recommendationsBase =
     companyId && connectionId
       ? `/api/v1/cloud/oci/recommendations/${companyId}/connections/${connectionId}/recommendations`
+      : null
+  const anomaliesBase =
+    companyId && connectionId
+      ? `/api/v1/cloud/oci/usage/${companyId}/connections/${connectionId}/usage/anomalies`
       : null
 
   // OCI is the only cloud today and `cloud` is not sent to the API, so `all` and
@@ -167,10 +192,11 @@ export default function DashboardPage() {
   const breakdownKey = usageBase && rangeKey ? `${usageBase}/breakdown:${rangeKey}` : null
   const compartmentKey =
     usageBase && rangeKey ? `${usageBase}/by-compartment:${rangeKey}` : null
-  // Recommendations use a fixed 30-day window (same as Recommendations page),
+  // Recommendations / anomalies use a fixed 30-day window (same as their pages),
   // independent of the dashboard cost chart range.
   const recommendationsKey =
-    recommendationsBase && recsEnabled ? `${recommendationsBase}:active:top5` : null
+    recommendationsBase && secondaryEnabled ? `${recommendationsBase}:active:top5` : null
+  const anomaliesKey = anomaliesBase && secondaryEnabled ? `${anomaliesBase}:top5` : null
 
   const {
     data: costSeries,
@@ -187,20 +213,20 @@ export default function DashboardPage() {
     { keepPreviousData: true },
   )
 
-  // Paint cost charts first; recommendations are a heavier secondary call.
+  // Paint cost charts first; recommendations and anomalies are secondary calls.
   useEffect(() => {
-    setRecsEnabled(false)
+    setSecondaryEnabled(false)
   }, [companyId, connectionId])
 
   useEffect(() => {
-    if (!recommendationsBase) {
-      setRecsEnabled(false)
+    if (!recommendationsBase && !anomaliesBase) {
+      setSecondaryEnabled(false)
       return
     }
     if (costLoading && costSeries == null) return
-    const t = window.setTimeout(() => setRecsEnabled(true), 50)
+    const t = window.setTimeout(() => setSecondaryEnabled(true), 50)
     return () => window.clearTimeout(t)
-  }, [recommendationsBase, costLoading, costSeries])
+  }, [recommendationsBase, anomaliesBase, costLoading, costSeries])
 
   const {
     data: breakdown,
@@ -238,7 +264,7 @@ export default function DashboardPage() {
     loading: recommendationsLoading,
   } = useAsyncData(
     async () => {
-      if (!recsEnabled || !recommendationsBase) return null
+      if (!secondaryEnabled || !recommendationsBase) return null
       return apiRequest<RecommendationsResponse>(recommendationsBase, {
         query: {
           start_date: isoDaysAgo(30),
@@ -252,11 +278,31 @@ export default function DashboardPage() {
     { keepPreviousData: true },
   )
 
+  const {
+    data: anomalies,
+    error: anomaliesError,
+    loading: anomaliesLoading,
+  } = useAsyncData(
+    async () => {
+      if (!secondaryEnabled || !anomaliesBase) return null
+      return apiRequest<SpendAnomaliesResponse>(anomaliesBase, {
+        query: {
+          start_date: isoDaysAgo(30),
+          end_date: isoDaysAgo(0),
+          limit: 5,
+        },
+      })
+    },
+    [anomaliesKey],
+    { keepPreviousData: true },
+  )
+
   const currency =
     costSeries?.currency ??
     breakdown?.currency ??
     compartmentBreakdown?.currency ??
     recommendations?.currency ??
+    anomalies?.currency ??
     'USD'
 
   const chartPoints = useMemo(
@@ -295,10 +341,6 @@ export default function DashboardPage() {
       }
     })
   }, [compartmentBreakdown])
-  const spikes = useMemo(
-    () => notableDayOverDaySpikes(costSeries?.items ?? [], 5),
-    [costSeries],
-  )
 
   function applyPreset(next: RangePreset) {
     setPreset(next)
@@ -310,6 +352,7 @@ export default function DashboardPage() {
 
   const cloudLabel = cloud === 'all' ? 'All clouds' : 'OCI'
   const topRecommendations = recommendations?.items ?? []
+  const topAnomalies = anomalies?.items ?? []
 
   return (
     <>
@@ -499,7 +542,7 @@ export default function DashboardPage() {
                 </p>
               </div>
               {recommendationsError ? <Alert type="error">{recommendationsError}</Alert> : null}
-              {!recsEnabled || (recommendationsLoading && recommendations == null) ? (
+              {!secondaryEnabled || (recommendationsLoading && recommendations == null) ? (
                 <p className="loading">Loading recommendations…</p>
               ) : (
                 <>
@@ -554,33 +597,59 @@ export default function DashboardPage() {
 
             <section className="card dashboard-cost-card dashboard-panel">
               <div className="dashboard-section-header">
-                <h2>Notable changes</h2>
-                <p className="dashboard-cost-subtitle">Biggest day-over-day spend increases</p>
+                <h2>Cost anomalies</h2>
+                <p className="dashboard-cost-subtitle">
+                  Top spend spikes vs recent baseline
+                </p>
               </div>
-              {costLoading && !costSeries ? (
-                <p className="loading">Loading…</p>
-              ) : spikes.length === 0 ? (
-                <p className="empty">No notable daily increases in this range.</p>
+              {anomaliesError ? <Alert type="error">{anomaliesError}</Alert> : null}
+              {!secondaryEnabled || (anomaliesLoading && anomalies == null) ? (
+                <p className="loading">Loading anomalies…</p>
               ) : (
-                <ul className="dashboard-spike-list">
-                  {spikes.map((spike) => (
-                    <li key={spike.date} className="dashboard-spike-row">
-                      <div className="dashboard-spike-main">
-                        <span className="dashboard-spike-date">{spike.date}</span>
-                        <span className="dashboard-spike-delta">
-                          +{formatMoney(spike.delta, currency)}
-                        </span>
-                      </div>
-                      <div className="dashboard-spike-meta">
-                        <span>
-                          {formatMoney(spike.previousCost, currency)} →{' '}
-                          {formatMoney(spike.cost, currency)}
-                        </span>
-                        <span>{formatPct(spike.pctChange)}</span>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+                <>
+                  {anomaliesLoading && anomalies != null && (
+                    <p className="dashboard-cost-updating" aria-live="polite">
+                      Updating…
+                    </p>
+                  )}
+                  {topAnomalies.length === 0 ? (
+                    <p className="empty">No spend spikes in the last 30 days.</p>
+                  ) : (
+                    <ul className="dashboard-spike-list">
+                      {topAnomalies.map((item) => (
+                        <li key={item.date} className="dashboard-spike-row">
+                          <div className="dashboard-spike-main">
+                            <Link to="/oci/anomalies" className="dashboard-spike-date">
+                              {formatDay(item.date)}
+                            </Link>
+                            <span className="dashboard-spike-delta">
+                              +{formatMoney(item.delta, item.currency ?? currency)}
+                            </span>
+                          </div>
+                          <div className="dashboard-spike-meta">
+                            <span>
+                              {formatMoney(item.total_cost, item.currency ?? currency)} vs{' '}
+                              {formatMoney(item.baseline_avg, item.currency ?? currency)} typical
+                            </span>
+                            <span>{formatPct(item.pct_change)}</span>
+                          </div>
+                          <div className="dashboard-spike-meta">
+                            <span>
+                              {item.driver_service
+                                ? `Driven by ${item.driver_service} (+${formatMoney(item.driver_delta, item.currency ?? currency)})`
+                                : 'Mixed drivers'}
+                            </span>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <div className="dashboard-panel-footer">
+                    <Link to="/oci/anomalies" className="btn-link">
+                      View all anomalies
+                    </Link>
+                  </div>
+                </>
               )}
             </section>
           </div>
