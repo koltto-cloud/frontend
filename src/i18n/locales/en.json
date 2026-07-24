@@ -258,6 +258,41 @@
       "see3": "Active recommendations that may reduce monthly spend.",
       "see4": "Recent cost spikes compared with the usual baseline.",
       "footer": "Open any section to investigate its details."
+    },
+    "costExplorer": {
+      "intro": "Cost Explorer is for interactive cost analysis: totals, daily trend, and breakdowns by service, scope, and top resources — plus a resource drill-down that pairs spend with utilization.",
+      "howToTitle": "How to use it",
+      "howTo1": "Set the date range.",
+      "howTo2": "Review the total and charts.",
+      "howTo3": "Click a service or scope bar to filter the daily trend to that slice.",
+      "howTo4": "Open Top resources and click a resource for its daily cost. Compute instances also show CPU/memory vs provisioned capacity, with under (20%) / over (80%) guide lines.",
+      "scopeTitle": "What “Scope” means",
+      "scopeBody": "Scope is the cloud account hierarchy slice: compartment in OCI, account in AWS, subscription / resource group in Azure. Filtering by cloud provider across connections is planned for a later pass.",
+      "whenTitle": "When to use it",
+      "whenBody": "Start here when you need to answer “where did the money go?” or “is this expensive resource actually busy?” For CSV export, use Reports. For cost-per-customer style KPIs, use Unit Economics."
     }
+  },
+  "costExplorer": {
+    "selectContext": "Select a company and cloud connection in the top bar.",
+    "setupConnection": "Set up a connection",
+    "totalCost": "Total cost",
+    "dailyTrend": "Daily trend",
+    "filtered": "Filtered · {{filter}}",
+    "filterService": "Service: {{value}}",
+    "filterScope": "Scope: {{value}}",
+    "clearFilter": "Clear filter",
+    "loadingTrend": "Loading trend…",
+    "loadingBreakdown": "Loading breakdown…",
+    "dimensionTabs": "Cost dimension",
+    "tabService": "Service",
+    "tabScope": "Scope",
+    "tabTopResources": "Top resources",
+    "byService": "By service",
+    "byServiceHint": "Click a service to filter the daily trend.",
+    "byScope": "By scope",
+    "byScopeHint": "Click a scope to filter the daily trend. On OCI this is a compartment; on AWS an account; on Azure a subscription or resource group.",
+    "topResources": "Top resources",
+    "topResourcesHint": "Click a resource to open cost + utilization (compute shows capacity and 20%/80% guides).",
+    "cost": "Cost"
   }
 }

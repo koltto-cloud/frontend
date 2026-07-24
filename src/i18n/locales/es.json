@@ -258,6 +258,41 @@
       "see3": "Recomendaciones activas que pueden reducir el gasto mensual.",
       "see4": "Picos de costo recientes comparados con la referencia habitual.",
       "footer": "Abre cualquier sección para consultar sus detalles."
+    },
+    "costExplorer": {
+      "intro": "El Explorador de costos sirve para el análisis interactivo de costos: totales, tendencia diaria y desgloses por servicio, ámbito y recursos principales, además de un detalle por recurso que combina gasto y utilización.",
+      "howToTitle": "Cómo usarlo",
+      "howTo1": "Define el rango de fechas.",
+      "howTo2": "Revisa el total y los gráficos.",
+      "howTo3": "Haz clic en una barra de servicio o ámbito para filtrar la tendencia diaria a ese segmento.",
+      "howTo4": "Abre Recursos principales y haz clic en un recurso para ver su costo diario. Las instancias de cómputo también muestran CPU/memoria frente a la capacidad aprovisionada, con guías de infrautilización (20%) y sobreutilización (80%).",
+      "scopeTitle": "Qué significa “Ámbito”",
+      "scopeBody": "Ámbito es la porción de la jerarquía de la cuenta en la nube: compartimento en OCI, cuenta en AWS, suscripción / grupo de recursos en Azure. El filtro por proveedor entre conexiones está previsto para más adelante.",
+      "whenTitle": "Cuándo usarlo",
+      "whenBody": "Empieza aquí cuando necesites responder “¿adónde se fue el dinero?” o “¿este recurso caro realmente está ocupado?”. Para exportar CSV, usa Informes. Para KPIs de costo por cliente, usa Economía unitaria."
     }
+  },
+  "costExplorer": {
+    "selectContext": "Selecciona una empresa y una conexión en la nube en la barra superior.",
+    "setupConnection": "Configurar una conexión",
+    "totalCost": "Costo total",
+    "dailyTrend": "Tendencia diaria",
+    "filtered": "Filtrado · {{filter}}",
+    "filterService": "Servicio: {{value}}",
+    "filterScope": "Ámbito: {{value}}",
+    "clearFilter": "Quitar filtro",
+    "loadingTrend": "Cargando tendencia…",
+    "loadingBreakdown": "Cargando desglose…",
+    "dimensionTabs": "Dimensión de costo",
+    "tabService": "Servicio",
+    "tabScope": "Ámbito",
+    "tabTopResources": "Recursos principales",
+    "byService": "Por servicio",
+    "byServiceHint": "Haz clic en un servicio para filtrar la tendencia diaria.",
+    "byScope": "Por ámbito",
+    "byScopeHint": "Haz clic en un ámbito para filtrar la tendencia diaria. En OCI es un compartimento; en AWS una cuenta; en Azure una suscripción o un grupo de recursos.",
+    "topResources": "Recursos principales",
+    "topResourcesHint": "Haz clic en un recurso para abrir costo + utilización (en cómputo se muestran la capacidad y las guías del 20%/80%).",
+    "cost": "Costo"
   }
 }

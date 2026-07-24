@@ -10,7 +10,8 @@ import BarChart from '@/components/BarChart'
 import ResourceCostUtilPanel from '@/components/ResourceCostUtilPanel'
 import { Alert } from '@/components/Alert'
 import PageHeader from '@/components/PageHeader'
-import { costExplorerHelp } from '@/content/pageHelp'
+import { CostExplorerHelp } from '@/content/pageHelp'
+import { intlLocale } from '@/i18n/languages'
 
 type Dimension = 'service' | 'compartment' | 'resources'
 
@@ -65,12 +66,17 @@ function defaultDateRange() {
   }
 }
 
-function formatMoney(amount: number | null | undefined, currency: string | null): string {
-  if (amount == null || Number.isNaN(Number(amount))) return '—'
+function formatMoney(
+  amount: number | null | undefined,
+  currency: string | null,
+  locale: string,
+  emDash: string,
+): string {
+  if (amount == null || Number.isNaN(Number(amount))) return emDash
   const raw = (currency && currency.trim() ? currency.trim() : 'USD').toUpperCase()
   const code = raw === 'US$' || raw === 'USA' ? 'USD' : raw
   try {
-    return Number(amount).toLocaleString(undefined, {
+    return Number(amount).toLocaleString(locale, {
       style: 'currency',
       currency: code.length === 3 ? code : 'USD',
       maximumFractionDigits: 2,
@@ -81,7 +87,11 @@ function formatMoney(amount: number | null | undefined, currency: string | null)
 }
 
 export default function CostExplorerPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const locale = intlLocale(i18n.resolvedLanguage)
+  const emDash = t('common.emDash')
+  const unknownLabel = t('common.unknown')
+
   const { activeCompany, connection } = useAuth()
   const companyId = activeCompany?.company_id
   const connectionId = connection?.connection_id
@@ -171,11 +181,11 @@ export default function CostExplorerPage() {
   const serviceChart = useMemo(
     () =>
       (breakdown?.byService.items ?? []).map((i) => ({
-        label: i.service ?? 'unknown',
+        label: i.service ?? unknownLabel,
         value: i.total_cost ?? 0,
-        id: i.service ?? 'unknown',
+        id: i.service ?? unknownLabel,
       })),
-    [breakdown],
+    [breakdown, unknownLabel],
   )
 
   const compartmentChart = useMemo(
@@ -185,34 +195,37 @@ export default function CostExplorerPage() {
         const id = i.compartment_id
         const shortId = id && id.length > 18 ? `${id.slice(0, 18)}…` : id
         return {
-          label: name || shortId || 'unknown',
+          label: name || shortId || unknownLabel,
           value: i.total_cost ?? 0,
           id: id ?? undefined,
           title: id ?? name ?? undefined,
         }
       }),
-    [breakdown],
+    [breakdown, unknownLabel],
   )
 
   const resourceChart = useMemo(() => {
     const names = breakdown?.names ?? {}
     return (breakdown?.topResources.items ?? []).map((i) => ({
       label: i.resource_id
-        ? resourceDisplayLabel(i.resource_id, names, i.service ?? 'unknown')
-        : (i.service ?? 'unknown'),
+        ? resourceDisplayLabel(i.resource_id, names, i.service ?? unknownLabel)
+        : (i.service ?? unknownLabel),
       value: i.total_cost ?? 0,
       title: i.resource_id ?? i.service ?? undefined,
       id: i.resource_id ?? undefined,
       service: i.service,
     }))
-  }, [breakdown])
+  }, [breakdown, unknownLabel])
 
   const filterLabel =
     trendFilter?.kind === 'service'
-      ? `Service: ${trendFilter.value}`
+      ? t('costExplorer.filterService', { value: trendFilter.value })
       : trendFilter?.kind === 'compartment'
-        ? `Scope: ${trendFilter.label}`
+        ? t('costExplorer.filterScope', { value: trendFilter.label })
         : null
+
+  const money = (amount: number | null | undefined) =>
+    formatMoney(amount, currency, locale, emDash)
 
   if (!companyId || !connectionId) {
     return (
@@ -220,14 +233,14 @@ export default function CostExplorerPage() {
         <PageHeader
           title={t('pages.costExplorer.title')}
           helpTitle={t('pages.costExplorer.helpTitle')}
-          help={costExplorerHelp}
+          help={<CostExplorerHelp />}
         />
         <p className="empty">
-          Select a company and cloud connection in the top bar.
+          {t('costExplorer.selectContext')}
           {companyId && !connectionId ? (
             <>
               {' '}
-              <Link to="/connections">Set up a connection</Link>
+              <Link to="/connections">{t('costExplorer.setupConnection')}</Link>
             </>
           ) : null}
         </p>
@@ -241,16 +254,16 @@ export default function CostExplorerPage() {
         title={t('pages.costExplorer.title')}
         lead={t('pages.costExplorer.lead')}
         helpTitle={t('pages.costExplorer.helpTitle')}
-        help={costExplorerHelp}
+        help={<CostExplorerHelp />}
       />
 
       <div className="filters">
         <label>
-          Start date
+          {t('common.startDate')}
           <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
         </label>
         <label>
-          End date
+          {t('common.endDate')}
           <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
         </label>
       </div>
@@ -259,11 +272,9 @@ export default function CostExplorerPage() {
 
       <div className="stat-grid">
         <div className="stat-card">
-          <div className="label">Total cost</div>
+          <div className="label">{t('costExplorer.totalCost')}</div>
           <div className="value">
-            {breakdownLoading && !breakdown
-              ? '…'
-              : formatMoney(breakdown?.total.total_cost, currency)}
+            {breakdownLoading && !breakdown ? '…' : money(breakdown?.total.total_cost)}
           </div>
         </div>
       </div>
@@ -279,34 +290,34 @@ export default function CostExplorerPage() {
             marginBottom: 8,
           }}
         >
-          <h2 style={{ margin: 0 }}>Daily trend</h2>
+          <h2 style={{ margin: 0 }}>{t('costExplorer.dailyTrend')}</h2>
           {filterLabel ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span className="page-lead" style={{ margin: 0, fontSize: 13 }}>
-                Filtered · {filterLabel}
+                {t('costExplorer.filtered', { filter: filterLabel })}
               </span>
               <button
                 type="button"
                 className="btn btn-sm btn-ghost"
                 onClick={() => setTrendFilter(null)}
               >
-                Clear filter
+                {t('costExplorer.clearFilter')}
               </button>
             </div>
           ) : null}
         </div>
         {trendLoading && !trend ? (
-          <p className="loading">Loading trend…</p>
+          <p className="loading">{t('costExplorer.loadingTrend')}</p>
         ) : (
           <>
             {trendLoading && trend != null ? (
               <p className="dashboard-cost-updating" aria-live="polite">
-                Updating…
+                {t('common.updating')}
               </p>
             ) : null}
             <TimeSeriesChart
               points={chartPoints}
-              valueLabel="Cost"
+              valueLabel={t('costExplorer.cost')}
               valuePrefix="$"
               dateOnly
               height={280}
@@ -315,14 +326,14 @@ export default function CostExplorerPage() {
         )}
       </section>
 
-      <div className="tabs" role="tablist" aria-label="Cost dimension">
+      <div className="tabs" role="tablist" aria-label={t('costExplorer.dimensionTabs')}>
         {(
           [
-            ['service', 'Service'],
-            ['compartment', 'Scope'],
-            ['resources', 'Top resources'],
+            ['service', 'costExplorer.tabService'],
+            ['compartment', 'costExplorer.tabScope'],
+            ['resources', 'costExplorer.tabTopResources'],
           ] as const
-        ).map(([value, label]) => (
+        ).map(([value, labelKey]) => (
           <button
             key={value}
             type="button"
@@ -331,23 +342,23 @@ export default function CostExplorerPage() {
             className={`tab${dimension === value ? ' active' : ''}`}
             onClick={() => setDimension(value)}
           >
-            {label}
+            {t(labelKey)}
           </button>
         ))}
       </div>
 
       <section className="card">
         {breakdownLoading && !breakdown ? (
-          <p className="loading">Loading breakdown…</p>
+          <p className="loading">{t('costExplorer.loadingBreakdown')}</p>
         ) : dimension === 'service' ? (
           <>
-            <h2>By service</h2>
+            <h2>{t('costExplorer.byService')}</h2>
             <p className="page-lead" style={{ marginTop: 0 }}>
-              Click a service to filter the daily trend.
+              {t('costExplorer.byServiceHint')}
             </p>
             <BarChart
               items={serviceChart}
-              formatValue={(v) => formatMoney(v, currency)}
+              formatValue={(v) => money(v)}
               onItemClick={(item) => {
                 if (!item.id) return
                 setTrendFilter({ kind: 'service', value: item.id })
@@ -356,14 +367,13 @@ export default function CostExplorerPage() {
           </>
         ) : dimension === 'compartment' ? (
           <>
-            <h2>By scope</h2>
+            <h2>{t('costExplorer.byScope')}</h2>
             <p className="page-lead" style={{ marginTop: 0 }}>
-              Click a scope to filter the daily trend. On OCI this is a compartment; on AWS an
-              account; on Azure a subscription or resource group.
+              {t('costExplorer.byScopeHint')}
             </p>
             <BarChart
               items={compartmentChart}
-              formatValue={(v) => formatMoney(v, currency)}
+              formatValue={(v) => money(v)}
               onItemClick={(item) => {
                 if (!item.id) return
                 setTrendFilter({
@@ -376,14 +386,13 @@ export default function CostExplorerPage() {
           </>
         ) : (
           <>
-            <h2>Top resources</h2>
+            <h2>{t('costExplorer.topResources')}</h2>
             <p className="page-lead" style={{ marginTop: 0 }}>
-              Click a resource to open cost + utilization (compute shows capacity and 20%/80%
-              guides).
+              {t('costExplorer.topResourcesHint')}
             </p>
             <BarChart
               items={resourceChart}
-              formatValue={(v) => formatMoney(v, currency)}
+              formatValue={(v) => money(v)}
               onItemClick={(item) => {
                 if (!item.id) return
                 setSelectedResource({

@@ -26,40 +26,25 @@ export function DashboardHelp() {
   )
 }
 
-export const costExplorerHelp: ReactNode = (
-  <>
-    <p>
-      Cost Explorer is for <strong>interactive cost analysis</strong>: totals, daily trend, and
-      breakdowns by service, scope, and top resources — plus a resource drill-down that pairs spend
-      with utilization.
-    </p>
-    <h3>How to use it</h3>
-    <ol>
-      <li>Set the date range.</li>
-      <li>Review the total and charts.</li>
-      <li>
-        Click a service or scope bar to <strong>filter the daily trend</strong> to that slice.
-      </li>
-      <li>
-        Open <strong>Top resources</strong> and click a resource for its daily cost. Compute
-        instances also show CPU/memory vs provisioned capacity, with under (20%) / over (80%)
-        guide lines.
-      </li>
-    </ol>
-    <h3>What “Scope” means</h3>
-    <p>
-      Scope is the cloud account hierarchy slice: <strong>compartment</strong> in OCI,{' '}
-      <strong>account</strong> in AWS, <strong>subscription / resource group</strong> in Azure.
-      Filtering by cloud provider across connections is planned for a later pass.
-    </p>
-    <h3>When to use it</h3>
-    <p>
-      Start here when you need to answer “where did the money go?” or “is this expensive resource
-      actually busy?” For CSV export, use Reports. For cost-per-customer style KPIs, use Unit
-      Economics.
-    </p>
-  </>
-)
+export function CostExplorerHelp() {
+  const { t } = useTranslation()
+  return (
+    <>
+      <p>{t('help.costExplorer.intro')}</p>
+      <h3>{t('help.costExplorer.howToTitle')}</h3>
+      <ol>
+        <li>{t('help.costExplorer.howTo1')}</li>
+        <li>{t('help.costExplorer.howTo2')}</li>
+        <li>{t('help.costExplorer.howTo3')}</li>
+        <li>{t('help.costExplorer.howTo4')}</li>
+      </ol>
+      <h3>{t('help.costExplorer.scopeTitle')}</h3>
+      <p>{t('help.costExplorer.scopeBody')}</p>
+      <h3>{t('help.costExplorer.whenTitle')}</h3>
+      <p>{t('help.costExplorer.whenBody')}</p>
+    </>
+  )
+}
 
 export const recommendationsHelp: ReactNode = (
   <>
