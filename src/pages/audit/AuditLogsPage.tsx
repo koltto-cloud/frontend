@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { apiRequestPaged } from '@/api/client'
 import { useAsyncData } from '@/hooks/useAsyncData'
 import PaginationControls, {
@@ -31,6 +32,7 @@ function shortenId(id: string) {
 }
 
 export default function AuditLogsPage() {
+  const { t } = useTranslation()
   const [userId, setUserId] = useState('')
   const [eventType, setEventType] = useState('')
   const [success, setSuccess] = useState('')
@@ -142,7 +144,7 @@ export default function AuditLogsPage() {
       )}
 
       {viewRow && (
-        <Modal title="Audit event details" onClose={() => setViewRow(null)} wide>
+        <Modal title={t('modals.auditEventDetails')} onClose={() => setViewRow(null)} wide>
           <JsonViewer data={viewRow} />
         </Modal>
       )}

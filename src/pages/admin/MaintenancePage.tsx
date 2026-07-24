@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { apiRequest, formatApiError } from '@/api/client'
 import { useClientPagination } from '@/hooks/useClientPagination'
 import { Alert } from '@/components/Alert'
@@ -76,6 +77,7 @@ function rowKey(s: ActiveSync): string {
 }
 
 export default function MaintenancePage() {
+  const { t } = useTranslation()
   const [status, setStatus] = useState<MaintenanceStatus | null>(null)
   const [activeSyncs, setActiveSyncs] = useState<ActiveSync[] | null>(null)
   const [companyFilter, setCompanyFilter] = useState('')
@@ -179,9 +181,7 @@ export default function MaintenancePage() {
 
   const cancelAll = async () => {
     if (
-      !confirm(
-        'Cancel all open inventory runs and abort all queued/in-progress sync jobs across every company?',
-      )
+      !confirm(t('modals.cancelAllSyncsConfirm'))
     ) {
       return
     }
@@ -231,9 +231,7 @@ export default function MaintenancePage() {
 
   const resyncMonitoring = async () => {
     if (
-      !confirm(
-        'Enqueue monitoring re-sync for all companies (every compartment × resource type, last ~90 days)? Jobs appear under Open syncs. Syncs must not be paused.',
-      )
+      !confirm(t('modals.resyncMonitoringConfirm'))
     ) {
       return
     }

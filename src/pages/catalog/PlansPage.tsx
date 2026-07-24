@@ -1,4 +1,5 @@
 import { Fragment, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { apiRequest, formatApiError } from '@/api/client'
 import { useAsyncData } from '@/hooks/useAsyncData'
 import { useClientPagination } from '@/hooks/useClientPagination'
@@ -38,6 +39,7 @@ const emptyBundleForm = {
 }
 
 export default function PlansPage() {
+  const { t } = useTranslation()
   const [name, setName] = useState('')
   const [planType, setPlanType] = useState('')
   const [planStatus, setPlanStatus] = useState('')
@@ -192,7 +194,7 @@ export default function PlansPage() {
   }
 
   const handleDelete = async (row: PlanRow) => {
-    if (!confirm(`Delete plan "${row.name}"?`)) return
+    if (!confirm(t('modals.deletePlanConfirm', { name: row.name }))) return
     setErr('')
     setMsg('')
     try {
@@ -280,7 +282,14 @@ export default function PlansPage() {
   }
 
   const handleDeleteBundle = async (bundle: BundleRow) => {
-    if (!confirm(`Remove service "${bundle.feature_name}" (${bundle.sku}) from this plan?`)) return
+    if (
+      !confirm(
+        t('modals.removeServiceFromPlanConfirm', {
+          name: bundle.feature_name,
+          sku: bundle.sku,
+        }),
+      )
+    ) return
     if (!expandedPlanId) return
     setErr('')
     setMsg('')
@@ -301,7 +310,7 @@ export default function PlansPage() {
       </p>
       <div className="toolbar">
         <button type="button" className="btn btn-primary" onClick={() => setShowCreate(true)}>
-          Create plan
+          {t('modals.createPlan')}
         </button>
       </div>
       <div className="filters">
@@ -378,7 +387,7 @@ export default function PlansPage() {
                         <td>{row.status}</td>
                         <td className="actions-cell">
                           <button type="button" className="btn btn-sm" onClick={() => openEdit(row)}>Edit</button>
-                          <button type="button" className="btn btn-sm btn-danger" onClick={() => void handleDelete(row)}>Delete</button>
+                          <button type="button" className="btn btn-sm btn-danger" onClick={() => void handleDelete(row)}>{t('common.delete')}</button>
                         </td>
                       </tr>
                       {open ? (
@@ -454,7 +463,7 @@ export default function PlansPage() {
         </>
       )}
       {showCreate && (
-        <Modal title="Create plan" onClose={() => setShowCreate(false)}>
+        <Modal title={t('modals.createPlan')} onClose={() => setShowCreate(false)}>
           <form className="inline-form" onSubmit={(e) => void handleCreate(e)}>
             <div className="form-field">
               <label>Plan type</label>
@@ -474,9 +483,9 @@ export default function PlansPage() {
             ))}
             <div className="form-actions">
               <button type="button" className="btn" onClick={() => setShowCreate(false)}>
-                Cancel
+                {t('common.cancel')}
               </button>
-              <button type="submit" className="btn btn-primary">Create</button>
+              <button type="submit" className="btn btn-primary">{t('common.create')}</button>
             </div>
           </form>
         </Modal>
@@ -498,9 +507,9 @@ export default function PlansPage() {
             </div>
             <div className="form-actions">
               <button type="button" className="btn" onClick={() => setEditRow(null)}>
-                Cancel
+                {t('common.cancel')}
               </button>
-              <button type="submit" className="btn btn-primary">Save</button>
+              <button type="submit" className="btn btn-primary">{t('common.saveShort')}</button>
             </div>
           </form>
         </Modal>
@@ -547,7 +556,7 @@ export default function PlansPage() {
             </div>
             <div className="form-actions">
               <button type="button" className="btn" onClick={() => setAddBundlePlan(null)}>
-                Cancel
+                {t('common.cancel')}
               </button>
               <button type="submit" className="btn btn-primary">Add</button>
             </div>
@@ -583,20 +592,20 @@ export default function PlansPage() {
             </div>
             <div className="form-actions">
               <button type="button" className="btn" onClick={() => setEditBundle(null)}>
-                Cancel
+                {t('common.cancel')}
               </button>
-              <button type="submit" className="btn btn-primary">Save</button>
+              <button type="submit" className="btn btn-primary">{t('common.saveShort')}</button>
             </div>
           </form>
         </Modal>
       )}
       {viewId && (
-        <Modal title="Plan details" onClose={() => setViewId(null)} wide>
+        <Modal title={t('modals.planDetails')} onClose={() => setViewId(null)} wide>
           {viewLoading ? <p className="loading">Loading…</p> : viewData && <JsonViewer data={viewData} />}
         </Modal>
       )}
       {viewBundleId && (
-        <Modal title="Service bundle details" onClose={() => setViewBundleId(null)} wide>
+        <Modal title={t('modals.serviceBundleDetails')} onClose={() => setViewBundleId(null)} wide>
           {viewBundleLoading ? <p className="loading">Loading…</p> : viewBundleData && <JsonViewer data={viewBundleData} />}
         </Modal>
       )}

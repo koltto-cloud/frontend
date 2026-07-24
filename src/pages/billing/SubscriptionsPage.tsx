@@ -1,4 +1,5 @@
 import { Fragment, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { apiRequest, formatApiError } from '@/api/client'
 import { useAsyncData } from '@/hooks/useAsyncData'
 import { useClientPagination } from '@/hooks/useClientPagination'
@@ -42,6 +43,7 @@ function shortId(id: string | null | undefined): string {
 }
 
 export default function SubscriptionsPage() {
+  const { t } = useTranslation()
   const [companyId, setCompanyId] = useState('')
   const [subStatus, setSubStatus] = useState('')
   const [msg, setMsg] = useState('')
@@ -197,7 +199,7 @@ export default function SubscriptionsPage() {
         service bundles when you create a subscription (not added manually).
       </p>
       <div className="toolbar">
-        <button type="button" className="btn btn-primary" onClick={() => setShowCreate(true)}>Create subscription</button>
+        <button type="button" className="btn btn-primary" onClick={() => setShowCreate(true)}>{t('modals.createSubscription')}</button>
       </div>
       <div className="filters">
         <label>
@@ -323,7 +325,7 @@ export default function SubscriptionsPage() {
         </>
       )}
       {showCreate && (
-        <Modal title="Create subscription" onClose={() => setShowCreate(false)}>
+        <Modal title={t('modals.createSubscription')} onClose={() => setShowCreate(false)}>
           <form className="inline-form" onSubmit={(e) => void handleCreate(e)}>
             <div className="form-field">
               <label>Company</label>
@@ -355,9 +357,9 @@ export default function SubscriptionsPage() {
             <div className="form-field"><label>End date (optional)</label><input type="date" value={createForm.end_date} onChange={(e) => setCreateForm({ ...createForm, end_date: e.target.value })} /></div>
             <div className="form-actions">
               <button type="button" className="btn" onClick={() => setShowCreate(false)}>
-                Cancel
+                {t('common.cancel')}
               </button>
-              <button type="submit" className="btn btn-primary">Create</button>
+              <button type="submit" className="btn btn-primary">{t('common.create')}</button>
             </div>
           </form>
         </Modal>
@@ -375,15 +377,15 @@ export default function SubscriptionsPage() {
             <div className="form-field"><label>End date</label><input type="date" value={editForm.end_date} onChange={(e) => setEditForm({ ...editForm, end_date: e.target.value })} /></div>
             <div className="form-actions">
               <button type="button" className="btn" onClick={() => setEditRow(null)}>
-                Cancel
+                {t('common.cancel')}
               </button>
-              <button type="submit" className="btn btn-primary">Save</button>
+              <button type="submit" className="btn btn-primary">{t('common.saveShort')}</button>
             </div>
           </form>
         </Modal>
       )}
       {viewId && (
-        <Modal title="Subscription details" onClose={() => setViewId(null)} wide>
+        <Modal title={t('modals.subscriptionDetails')} onClose={() => setViewId(null)} wide>
           {viewLoading ? <p className="loading">Loading…</p> : viewData && <JsonViewer data={viewData} />}
         </Modal>
       )}

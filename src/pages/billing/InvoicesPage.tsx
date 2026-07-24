@@ -1,4 +1,5 @@
 import { Fragment, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { apiRequest, formatApiError } from '@/api/client'
 import { useAsyncData } from '@/hooks/useAsyncData'
 import { useClientPagination } from '@/hooks/useClientPagination'
@@ -46,6 +47,7 @@ function shortId(id: string | null | undefined): string {
 }
 
 export default function InvoicesPage() {
+  const { t } = useTranslation()
   const [subscriptionId, setSubscriptionId] = useState('')
   const [invoiceStatus, setInvoiceStatus] = useState('')
   const [msg, setMsg] = useState('')
@@ -252,7 +254,7 @@ export default function InvoicesPage() {
         Expand an invoice to manage its <strong>line items</strong>.
       </p>
       <div className="toolbar">
-        <button type="button" className="btn btn-primary" onClick={() => setShowCreate(true)}>Create invoice</button>
+        <button type="button" className="btn btn-primary" onClick={() => setShowCreate(true)}>{t('modals.createInvoice')}</button>
       </div>
       <div className="filters">
         <label>
@@ -395,7 +397,7 @@ export default function InvoicesPage() {
         </>
       )}
       {showCreate && (
-        <Modal title="Create invoice" onClose={() => setShowCreate(false)}>
+        <Modal title={t('modals.createInvoice')} onClose={() => setShowCreate(false)}>
           <form className="inline-form" onSubmit={(e) => void handleCreate(e)}>
             <div className="form-field">
               <label>Subscription ID</label>
@@ -417,9 +419,9 @@ export default function InvoicesPage() {
             <div className="form-field"><label>Discount</label><input type="number" step="0.01" value={createForm.discount} onChange={(e) => setCreateForm({ ...createForm, discount: e.target.value })} required /></div>
             <div className="form-actions">
               <button type="button" className="btn" onClick={() => setShowCreate(false)}>
-                Cancel
+                {t('common.cancel')}
               </button>
-              <button type="submit" className="btn btn-primary">Create</button>
+              <button type="submit" className="btn btn-primary">{t('common.create')}</button>
             </div>
           </form>
         </Modal>
@@ -438,9 +440,9 @@ export default function InvoicesPage() {
             <div className="form-field"><label>Discount</label><input type="number" step="0.01" value={editForm.discount} onChange={(e) => setEditForm({ ...editForm, discount: e.target.value })} /></div>
             <div className="form-actions">
               <button type="button" className="btn" onClick={() => setEditRow(null)}>
-                Cancel
+                {t('common.cancel')}
               </button>
-              <button type="submit" className="btn btn-primary">Save</button>
+              <button type="submit" className="btn btn-primary">{t('common.saveShort')}</button>
             </div>
           </form>
         </Modal>
@@ -456,7 +458,7 @@ export default function InvoicesPage() {
             <div className="form-field"><label>Discount</label><input type="number" step="0.01" value={itemForm.discount} onChange={(e) => setItemForm({ ...itemForm, discount: e.target.value })} required /></div>
             <div className="form-actions">
               <button type="button" className="btn" onClick={() => setAddItemInvoice(null)}>
-                Cancel
+                {t('common.cancel')}
               </button>
               <button type="submit" className="btn btn-primary">Add</button>
             </div>
@@ -464,12 +466,12 @@ export default function InvoicesPage() {
         </Modal>
       )}
       {viewId && (
-        <Modal title="Invoice details" onClose={() => setViewId(null)} wide>
+        <Modal title={t('modals.invoiceDetails')} onClose={() => setViewId(null)} wide>
           {viewLoading ? <p className="loading">Loading…</p> : viewData && <JsonViewer data={viewData} />}
         </Modal>
       )}
       {viewItemId && (
-        <Modal title="Invoice item details" onClose={() => setViewItemId(null)} wide>
+        <Modal title={t('modals.invoiceItemDetails')} onClose={() => setViewItemId(null)} wide>
           {viewItemLoading ? <p className="loading">Loading…</p> : viewItemData && <JsonViewer data={viewItemData} />}
         </Modal>
       )}

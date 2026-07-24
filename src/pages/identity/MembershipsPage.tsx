@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { apiRequest, formatApiError } from '@/api/client'
 import { useAsyncData } from '@/hooks/useAsyncData'
 import { useClientPagination } from '@/hooks/useClientPagination'
@@ -17,6 +18,7 @@ interface MembershipRow {
 const ROLES = ['owner', 'admin', 'viewer'] as const
 
 export default function MembershipsPage() {
+  const { t } = useTranslation()
   const [role, setRole] = useState('')
   const [active, setActive] = useState('')
   const [userEmail, setUserEmail] = useState('')
@@ -132,7 +134,14 @@ export default function MembershipsPage() {
   }
 
   const handleDelete = async (row: MembershipRow) => {
-    if (!confirm(`Remove ${row.user.email} from ${row.company.name}?`)) return
+    if (
+      !confirm(
+        t('modals.removeMembershipConfirm', {
+          email: row.user.email,
+          company: row.company.name,
+        }),
+      )
+    ) return
     setErr('')
     setMsg('')
     try {
@@ -153,7 +162,7 @@ export default function MembershipsPage() {
 
       <div className="toolbar">
         <button type="button" className="btn btn-primary" onClick={() => setShowCreate(true)}>
-          Create membership
+          {t('modals.createMembership')}
         </button>
       </div>
 
@@ -234,7 +243,7 @@ export default function MembershipsPage() {
                       className="btn btn-sm btn-danger"
                       onClick={() => void handleDelete(row)}
                     >
-                      Delete
+                      {t('common.delete')}
                     </button>
                   </td>
                 </tr>
@@ -258,7 +267,7 @@ export default function MembershipsPage() {
       )}
 
       {showCreate && (
-        <Modal title="Create membership" onClose={() => setShowCreate(false)}>
+        <Modal title={t('modals.createMembership')} onClose={() => setShowCreate(false)}>
           <form className="inline-form" onSubmit={(e) => void handleCreate(e)}>
             <div className="form-field">
               <label>User</label>
@@ -315,9 +324,9 @@ export default function MembershipsPage() {
             </div>
             <div className="form-actions">
               <button type="button" className="btn" onClick={() => setShowCreate(false)}>
-                Cancel
+                {t('common.cancel')}
               </button>
-              <button type="submit" className="btn btn-primary">Create</button>
+              <button type="submit" className="btn btn-primary">{t('common.create')}</button>
             </div>
           </form>
         </Modal>
@@ -354,16 +363,16 @@ export default function MembershipsPage() {
             </div>
             <div className="form-actions">
               <button type="button" className="btn" onClick={() => setEditRow(null)}>
-                Cancel
+                {t('common.cancel')}
               </button>
-              <button type="submit" className="btn btn-primary">Save</button>
+              <button type="submit" className="btn btn-primary">{t('common.saveShort')}</button>
             </div>
           </form>
         </Modal>
       )}
 
       {viewKey && (
-        <Modal title="Membership details" onClose={() => setViewKey(null)} wide>
+        <Modal title={t('modals.membershipDetails')} onClose={() => setViewKey(null)} wide>
           {viewLoading ? <p className="loading">Loading…</p> : viewData && <JsonViewer data={viewData} />}
         </Modal>
       )}

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { apiRequest, formatApiError } from '@/api/client'
 import { useAsyncData } from '@/hooks/useAsyncData'
 import { useClientPagination } from '@/hooks/useClientPagination'
@@ -17,6 +18,7 @@ interface FeatureRow {
 }
 
 export default function FeaturesPage() {
+  const { t } = useTranslation()
   const [name, setName] = useState('')
   const [featureStatus, setFeatureStatus] = useState('')
   const [msg, setMsg] = useState('')
@@ -108,7 +110,7 @@ export default function FeaturesPage() {
   }
 
   const handleDelete = async (row: FeatureRow) => {
-    if (!confirm(`Delete service "${row.name}"?`)) return
+    if (!confirm(t('modals.deleteServiceConfirm', { name: row.name }))) return
     setErr('')
     setMsg('')
     try {
@@ -124,7 +126,7 @@ export default function FeaturesPage() {
     <>
       <h1 className="page-title">Services</h1>
       <div className="toolbar">
-        <button type="button" className="btn btn-primary" onClick={() => setShowCreate(true)}>Create service</button>
+        <button type="button" className="btn btn-primary" onClick={() => setShowCreate(true)}>{t('modals.createService')}</button>
       </div>
       <div className="filters">
         <label>Name <input value={name} onChange={(e) => setName(e.target.value)} /></label>
@@ -162,7 +164,7 @@ export default function FeaturesPage() {
                   <td>{row.status}</td>
                   <td className="actions-cell">
                     <button type="button" className="btn btn-sm" onClick={() => openEdit(row)}>Edit</button>
-                    <button type="button" className="btn btn-sm btn-danger" onClick={() => void handleDelete(row)}>Delete</button>
+                    <button type="button" className="btn btn-sm btn-danger" onClick={() => void handleDelete(row)}>{t('common.delete')}</button>
                   </td>
                 </tr>
               ))}
@@ -183,7 +185,7 @@ export default function FeaturesPage() {
         </>
       )}
       {showCreate && (
-        <Modal title="Create service" onClose={() => setShowCreate(false)}>
+        <Modal title={t('modals.createService')} onClose={() => setShowCreate(false)}>
           <form className="inline-form" onSubmit={(e) => void handleCreate(e)}>
             {(['name', 'description', 'price', 'notes'] as const).map((f) => (
               <div key={f} className="form-field">
@@ -193,9 +195,9 @@ export default function FeaturesPage() {
             ))}
             <div className="form-actions">
               <button type="button" className="btn" onClick={() => setShowCreate(false)}>
-                Cancel
+                {t('common.cancel')}
               </button>
-              <button type="submit" className="btn btn-primary">Create</button>
+              <button type="submit" className="btn btn-primary">{t('common.create')}</button>
             </div>
           </form>
         </Modal>
@@ -217,15 +219,15 @@ export default function FeaturesPage() {
             </div>
             <div className="form-actions">
               <button type="button" className="btn" onClick={() => setEditRow(null)}>
-                Cancel
+                {t('common.cancel')}
               </button>
-              <button type="submit" className="btn btn-primary">Save</button>
+              <button type="submit" className="btn btn-primary">{t('common.saveShort')}</button>
             </div>
           </form>
         </Modal>
       )}
       {viewId && (
-        <Modal title="Service details" onClose={() => setViewId(null)} wide>
+        <Modal title={t('modals.serviceDetails')} onClose={() => setViewId(null)} wide>
           {viewLoading ? <p className="loading">Loading…</p> : viewData && <JsonViewer data={viewData} />}
         </Modal>
       )}

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { apiRequest, formatApiError } from '@/api/client'
 import { useAsyncData } from '@/hooks/useAsyncData'
 import { useClientPagination } from '@/hooks/useClientPagination'
@@ -21,6 +22,7 @@ const USER_TYPES = ['customer', 'staff', 'super_admin'] as const
 const ACCOUNT_STATUSES = ['active', 'inactive', 'pending', 'locked'] as const
 
 export default function UsersPage() {
+  const { t } = useTranslation()
   const [email, setEmail] = useState('')
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
@@ -127,7 +129,7 @@ export default function UsersPage() {
   }
 
   const handleForceReset = async (row: UserRow) => {
-    if (!confirm(`Send password reset to ${row.email}?`)) return
+    if (!confirm(t('modals.passwordResetConfirm', { email: row.email }))) return
     setErr('')
     setMsg('')
     try {
@@ -144,7 +146,7 @@ export default function UsersPage() {
 
       <div className="toolbar">
         <button type="button" className="btn btn-primary" onClick={() => setShowCreate(true)}>
-          Create user
+          {t('modals.createUser')}
         </button>
       </div>
 
@@ -266,7 +268,7 @@ export default function UsersPage() {
       )}
 
       {showCreate && (
-        <Modal title="Create user" onClose={() => setShowCreate(false)}>
+        <Modal title={t('modals.createUser')} onClose={() => setShowCreate(false)}>
           <form className="inline-form" onSubmit={(e) => void handleCreate(e)}>
             <div className="form-field">
               <label>First name</label>
@@ -295,9 +297,9 @@ export default function UsersPage() {
             </div>
             <div className="form-actions">
               <button type="button" className="btn" onClick={() => setShowCreate(false)}>
-                Cancel
+                {t('common.cancel')}
               </button>
-              <button type="submit" className="btn btn-primary">Create</button>
+              <button type="submit" className="btn btn-primary">{t('common.create')}</button>
             </div>
           </form>
         </Modal>
@@ -355,16 +357,16 @@ export default function UsersPage() {
             </div>
             <div className="form-actions">
               <button type="button" className="btn" onClick={() => setEditUser(null)}>
-                Cancel
+                {t('common.cancel')}
               </button>
-              <button type="submit" className="btn btn-primary">Save</button>
+              <button type="submit" className="btn btn-primary">{t('common.saveShort')}</button>
             </div>
           </form>
         </Modal>
       )}
 
       {viewId && (
-        <Modal title="User details" onClose={() => setViewId(null)} wide>
+        <Modal title={t('modals.userDetails')} onClose={() => setViewId(null)} wide>
           {viewLoading ? <p className="loading">Loading…</p> : viewData && <JsonViewer data={viewData} />}
         </Modal>
       )}

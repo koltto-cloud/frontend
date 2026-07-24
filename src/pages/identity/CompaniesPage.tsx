@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { apiRequest, formatApiError } from '@/api/client'
 import { useAsyncData } from '@/hooks/useAsyncData'
 import { useClientPagination } from '@/hooks/useClientPagination'
@@ -20,6 +21,7 @@ const COMPANY_STATUSES = ['active', 'inactive', 'pending'] as const
 const INTEGRATIONS = ['oci', 'aws', 'gcp'] as const
 
 export default function CompaniesPage() {
+  const { t } = useTranslation()
   const [name, setName] = useState('')
   const [status, setStatus] = useState('')
   const [integration, setIntegration] = useState<string>('oci')
@@ -112,7 +114,7 @@ export default function CompaniesPage() {
   }
 
   const handleDelete = async (row: CompanyRow) => {
-    if (!confirm(`Delete company "${row.name}"?`)) return
+    if (!confirm(t('modals.deleteCompanyConfirm', { name: row.name }))) return
     setErr('')
     setMsg('')
     try {
@@ -140,7 +142,7 @@ export default function CompaniesPage() {
   }
 
   const handleDeployAll = async () => {
-    if (!confirm(`Deploy ${integration} for ALL active companies?`)) return
+    if (!confirm(t('modals.deployAllCompaniesConfirm', { integration }))) return
     setErr('')
     setMsg('')
     try {
@@ -158,7 +160,7 @@ export default function CompaniesPage() {
 
       <div className="toolbar">
         <button type="button" className="btn btn-primary" onClick={() => setShowCreate(true)}>
-          Create company
+          {t('modals.createCompany')}
         </button>
         <label>
           Integration
@@ -244,7 +246,7 @@ export default function CompaniesPage() {
                       Deploy
                     </button>
                     <button type="button" className="btn btn-sm btn-danger" onClick={() => void handleDelete(row)}>
-                      Delete
+                      {t('common.delete')}
                     </button>
                   </td>
                 </tr>
@@ -268,7 +270,7 @@ export default function CompaniesPage() {
       )}
 
       {showCreate && (
-        <Modal title="Create company" onClose={() => setShowCreate(false)}>
+        <Modal title={t('modals.createCompany')} onClose={() => setShowCreate(false)}>
           <form className="inline-form" onSubmit={(e) => void handleCreate(e)}>
             <div className="form-field">
               <label>Name</label>
@@ -276,9 +278,9 @@ export default function CompaniesPage() {
             </div>
             <div className="form-actions">
               <button type="button" className="btn" onClick={() => setShowCreate(false)}>
-                Cancel
+                {t('common.cancel')}
               </button>
-              <button type="submit" className="btn btn-primary">Create</button>
+              <button type="submit" className="btn btn-primary">{t('common.create')}</button>
             </div>
           </form>
         </Modal>
@@ -309,16 +311,16 @@ export default function CompaniesPage() {
             </div>
             <div className="form-actions">
               <button type="button" className="btn" onClick={() => setEditCompany(null)}>
-                Cancel
+                {t('common.cancel')}
               </button>
-              <button type="submit" className="btn btn-primary">Save</button>
+              <button type="submit" className="btn btn-primary">{t('common.saveShort')}</button>
             </div>
           </form>
         </Modal>
       )}
 
       {viewId && (
-        <Modal title="Company details" onClose={() => setViewId(null)} wide>
+        <Modal title={t('modals.companyDetails')} onClose={() => setViewId(null)} wide>
           {viewLoading ? <p className="loading">Loading…</p> : viewData && <JsonViewer data={viewData} />}
         </Modal>
       )}
