@@ -33,12 +33,14 @@ const CLOUD_LABEL: Record<CloudProvider, string> = {
   gcp: 'GCP',
 }
 
-/** Providers that can be created today. AWS/GCP light up when their APIs land. */
+/** Providers that can be created today. GCP lights up when its API lands. */
 const CREATABLE_CLOUDS: { value: CloudProvider; label: string; enabled: boolean }[] = [
   { value: 'oci', label: 'Oracle Cloud (OCI)', enabled: true },
-  { value: 'aws', label: 'Amazon Web Services (AWS)', enabled: false },
+  { value: 'aws', label: 'Amazon Web Services (AWS)', enabled: true },
   { value: 'gcp', label: 'Google Cloud (GCP)', enabled: false },
 ]
+
+const MANAGEABLE_CLOUDS = new Set<CloudProvider>(['oci', 'aws'])
 
 const EMPTY_OCI_CREATE = {
   name: '',
@@ -49,6 +51,15 @@ const EMPTY_OCI_CREATE = {
   key_content: '',
   passphrase: '',
   region: 'us-ashburn-1',
+}
+
+const EMPTY_AWS_CREATE = {
+  name: '',
+  description: '',
+  account_id: '',
+  access_key_id: '',
+  secret_access_key: '',
+  region: 'us-east-1',
 }
 
 export default function ConnectionsPage() {
@@ -64,16 +75,24 @@ export default function ConnectionsPage() {
 
   const [showCreate, setShowCreate] = useState(false)
   const [createCloud, setCreateCloud] = useState<CloudProvider>('oci')
-  const [createForm, setCreateForm] = useState(EMPTY_OCI_CREATE)
+  const [ociCreateForm, setOciCreateForm] = useState(EMPTY_OCI_CREATE)
+  const [awsCreateForm, setAwsCreateForm] = useState(EMPTY_AWS_CREATE)
 
   const [editRow, setEditRow] = useState<ConnectionRow | null>(null)
   const [editForm, setEditForm] = useState({ name: '', description: '', region: '' })
 
   const listBase = companyId ? `/api/v1/cloud/connections/${companyId}` : null
   const ociBase = companyId ? `/api/v1/cloud/oci/connection/${companyId}/connections` : null
+  const awsBase = companyId ? `/api/v1/cloud/aws/connection/${companyId}/connections` : null
   const tenancySyncBase = companyId
     ? `/api/v1/cloud/oci/tenancy/${companyId}/connections`
     : null
+
+  const providerBase = (cloud: CloudProvider) => {
+    if (cloud === 'oci') return ociBase
+    if (cloud === 'aws') return awsBase
+    return null
+  }
 
   const { data, error, loading, reload } = useAsyncData(
     () => (listBase ? apiRequest<ConnectionRow[]>(listBase) : Promise.resolve([])),
@@ -85,13 +104,14 @@ export default function ConnectionsPage() {
     useClientPagination(rows)
 
   const openView = async (row: ConnectionRow) => {
-    if (row.cloud !== 'oci' || !ociBase) return
+    const base = providerBase(row.cloud)
+    if (!base || !MANAGEABLE_CLOUDS.has(row.cloud)) return
     setViewId(row.connection_id)
     setViewData(null)
     setViewLoading(true)
     setErr('')
     try {
-      setViewData(await apiRequest(`${ociBase}/${row.connection_id}`))
+      setViewData(await apiRequest(`${base}/${row.connection_id}`))
     } catch (e) {
       setErr(formatApiError(e))
       setViewId(null)
@@ -101,7 +121,7 @@ export default function ConnectionsPage() {
   }
 
   const openEdit = (row: ConnectionRow) => {
-    if (row.cloud !== 'oci') return
+    if (!MANAGEABLE_CLOUDS.has(row.cloud)) return
     setEditRow(row)
     setEditForm({
       name: row.name,
@@ -111,32 +131,48 @@ export default function ConnectionsPage() {
     setErr('')
   }
 
+  const resetCreateForms = () => {
+    setOciCreateForm(EMPTY_OCI_CREATE)
+    setAwsCreateForm(EMPTY_AWS_CREATE)
+    setCreateCloud('oci')
+  }
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!ociBase || !companyId) return
-    if (createCloud !== 'oci') {
+    if (!companyId) return
+    const base = providerBase(createCloud)
+    if (!base || !MANAGEABLE_CLOUDS.has(createCloud)) {
       setErr(`${CLOUD_LABEL[createCloud]} connections are not available yet.`)
       return
     }
     setErr('')
     setMsg('')
     try {
-      const created = await apiRequest<ConnectionRow>(ociBase, {
+      const body =
+        createCloud === 'oci'
+          ? {
+              ...ociCreateForm,
+              company_id: companyId,
+              description: ociCreateForm.description || null,
+              passphrase: ociCreateForm.passphrase || null,
+            }
+          : {
+              ...awsCreateForm,
+              company_id: companyId,
+              description: awsCreateForm.description || null,
+            }
+
+      const created = await apiRequest<ConnectionRow>(base, {
         method: 'POST',
-        body: {
-          ...createForm,
-          company_id: companyId,
-          description: createForm.description || null,
-          passphrase: createForm.passphrase || null,
-        },
+        body,
       })
       setMsg('Connection created.')
       setShowCreate(false)
-      setCreateForm(EMPTY_OCI_CREATE)
-      setCreateCloud('oci')
+      resetCreateForms()
       void reload()
       await refreshSession()
-      if (tenancySyncBase) {
+
+      if (createCloud === 'oci' && tenancySyncBase) {
         try {
           await apiRequest(`${tenancySyncBase}/${created.connection_id}/tenancy/sync`, {
             method: 'POST',
@@ -147,6 +183,8 @@ export default function ConnectionsPage() {
             `Connection created, but tenancy sync failed: ${formatApiError(tenancyErr)}. Sync compartments will retry tenancy automatically.`,
           )
         }
+      } else {
+        setMsg(`Connection "${created.name}" created.`)
       }
     } catch (e) {
       setErr(formatApiError(e))
@@ -155,11 +193,13 @@ export default function ConnectionsPage() {
 
   const handleEdit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!ociBase || !editRow || editRow.cloud !== 'oci') return
+    if (!editRow || !MANAGEABLE_CLOUDS.has(editRow.cloud)) return
+    const base = providerBase(editRow.cloud)
+    if (!base) return
     setErr('')
     setMsg('')
     try {
-      await apiRequest(`${ociBase}/${editRow.connection_id}`, {
+      await apiRequest(`${base}/${editRow.connection_id}`, {
         method: 'PUT',
         body: {
           name: editForm.name,
@@ -177,12 +217,13 @@ export default function ConnectionsPage() {
   }
 
   const handleDelete = async (row: ConnectionRow) => {
-    if (row.cloud !== 'oci' || !ociBase) return
+    const base = providerBase(row.cloud)
+    if (!base || !MANAGEABLE_CLOUDS.has(row.cloud)) return
     if (!confirm(`Delete connection "${row.name}"?`)) return
     setErr('')
     setMsg('')
     try {
-      await apiRequest(`${ociBase}/${row.connection_id}`, { method: 'DELETE' })
+      await apiRequest(`${base}/${row.connection_id}`, { method: 'DELETE' })
       setMsg('Connection deleted.')
       void reload()
       await refreshSession()
@@ -208,7 +249,7 @@ export default function ConnectionsPage() {
     <>
       <PageHeader
         title="Connections"
-        lead="Cloud account connections for this company. OCI is available today; AWS and GCP will appear here when their connectors ship."
+        lead="Cloud account connections for this company. OCI and AWS are available; GCP will appear here when its connector ships."
         helpTitle="About Connections"
         help={connectionsHelp}
       />
@@ -218,7 +259,7 @@ export default function ConnectionsPage() {
           type="button"
           className="btn btn-primary"
           onClick={() => {
-            setCreateCloud('oci')
+            resetCreateForms()
             setShowCreate(true)
           }}
         >
@@ -245,53 +286,56 @@ export default function ConnectionsPage() {
                 </tr>
               </thead>
               <tbody>
-                {pageItems.map((row) => (
-                  <tr key={`${row.cloud}-${row.connection_id}`}>
-                    <td>
-                      <span className="cloud-badge">{CLOUD_LABEL[row.cloud] ?? row.cloud}</span>
-                    </td>
-                    <td>
-                      <button
-                        type="button"
-                        className="id-link"
-                        onClick={() => void openView(row)}
-                        disabled={row.cloud !== 'oci'}
-                      >
-                        {row.name}
-                      </button>
-                    </td>
-                    <td title={row.account_ref ?? row.tenancy ?? undefined}>
-                      {(row.account_ref ?? row.tenancy)?.slice(0, 24) ?? '—'}
-                      {(row.account_ref ?? row.tenancy) &&
-                      (row.account_ref ?? row.tenancy)!.length > 24
-                        ? '…'
-                        : ''}
-                    </td>
-                    <td>{row.region ?? '—'}</td>
-                    <td className="actions-cell">
-                      {row.cloud === 'oci' ? (
-                        <>
-                          <button
-                            type="button"
-                            className="btn btn-sm"
-                            onClick={() => openEdit(row)}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn-sm btn-danger"
-                            onClick={() => void handleDelete(row)}
-                          >
-                            Delete
-                          </button>
-                        </>
-                      ) : (
-                        <span className="empty">—</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                {pageItems.map((row) => {
+                  const manageable = MANAGEABLE_CLOUDS.has(row.cloud)
+                  return (
+                    <tr key={`${row.cloud}-${row.connection_id}`}>
+                      <td>
+                        <span className="cloud-badge">{CLOUD_LABEL[row.cloud] ?? row.cloud}</span>
+                      </td>
+                      <td>
+                        <button
+                          type="button"
+                          className="id-link"
+                          onClick={() => void openView(row)}
+                          disabled={!manageable}
+                        >
+                          {row.name}
+                        </button>
+                      </td>
+                      <td title={row.account_ref ?? row.tenancy ?? undefined}>
+                        {(row.account_ref ?? row.tenancy)?.slice(0, 24) ?? '—'}
+                        {(row.account_ref ?? row.tenancy) &&
+                        (row.account_ref ?? row.tenancy)!.length > 24
+                          ? '…'
+                          : ''}
+                      </td>
+                      <td>{row.region ?? '—'}</td>
+                      <td className="actions-cell">
+                        {manageable ? (
+                          <>
+                            <button
+                              type="button"
+                              className="btn btn-sm"
+                              onClick={() => openEdit(row)}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-danger"
+                              onClick={() => void handleDelete(row)}
+                            >
+                              Delete
+                            </button>
+                          </>
+                        ) : (
+                          <span className="empty">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
             {(data ?? []).length === 0 && <p className="empty">No connections yet.</p>}
@@ -328,14 +372,16 @@ export default function ConnectionsPage() {
               </select>
             </div>
 
-            {createCloud === 'oci' ? (
+            {createCloud === 'oci' && (
               <>
                 {(['name', 'tenancy', 'user', 'fingerprint', 'region'] as const).map((field) => (
                   <div key={field} className="form-field">
                     <label>{field}</label>
                     <input
-                      value={createForm[field]}
-                      onChange={(e) => setCreateForm({ ...createForm, [field]: e.target.value })}
+                      value={ociCreateForm[field]}
+                      onChange={(e) =>
+                        setOciCreateForm({ ...ociCreateForm, [field]: e.target.value })
+                      }
                       required
                     />
                   </div>
@@ -343,16 +389,20 @@ export default function ConnectionsPage() {
                 <div className="form-field">
                   <label>description (optional)</label>
                   <input
-                    value={createForm.description}
-                    onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
+                    value={ociCreateForm.description}
+                    onChange={(e) =>
+                      setOciCreateForm({ ...ociCreateForm, description: e.target.value })
+                    }
                   />
                 </div>
                 <div className="form-field">
                   <label>key_content</label>
                   <textarea
                     rows={4}
-                    value={createForm.key_content}
-                    onChange={(e) => setCreateForm({ ...createForm, key_content: e.target.value })}
+                    value={ociCreateForm.key_content}
+                    onChange={(e) =>
+                      setOciCreateForm({ ...ociCreateForm, key_content: e.target.value })
+                    }
                     required
                   />
                 </div>
@@ -360,22 +410,96 @@ export default function ConnectionsPage() {
                   <label>passphrase (optional)</label>
                   <input
                     type="password"
-                    value={createForm.passphrase}
-                    onChange={(e) => setCreateForm({ ...createForm, passphrase: e.target.value })}
+                    value={ociCreateForm.passphrase}
+                    onChange={(e) =>
+                      setOciCreateForm({ ...ociCreateForm, passphrase: e.target.value })
+                    }
                   />
                 </div>
-            <div className="form-actions">
-              <button type="button" className="btn" onClick={() => setShowCreate(false)}>
-                Cancel
-              </button>
-              <button type="submit" className="btn btn-primary">Create</button>
-            </div>
               </>
-            ) : (
+            )}
+
+            {createCloud === 'aws' && (
+              <>
+                <div className="form-field">
+                  <label>name</label>
+                  <input
+                    value={awsCreateForm.name}
+                    onChange={(e) => setAwsCreateForm({ ...awsCreateForm, name: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="form-field">
+                  <label>account_id</label>
+                  <input
+                    value={awsCreateForm.account_id}
+                    onChange={(e) =>
+                      setAwsCreateForm({ ...awsCreateForm, account_id: e.target.value })
+                    }
+                    inputMode="numeric"
+                    pattern="[0-9]{12}"
+                    maxLength={12}
+                    placeholder="12-digit AWS account id"
+                    required
+                  />
+                </div>
+                <div className="form-field">
+                  <label>access_key_id</label>
+                  <input
+                    value={awsCreateForm.access_key_id}
+                    onChange={(e) =>
+                      setAwsCreateForm({ ...awsCreateForm, access_key_id: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+                <div className="form-field">
+                  <label>secret_access_key</label>
+                  <input
+                    type="password"
+                    value={awsCreateForm.secret_access_key}
+                    onChange={(e) =>
+                      setAwsCreateForm({ ...awsCreateForm, secret_access_key: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+                <div className="form-field">
+                  <label>region</label>
+                  <input
+                    value={awsCreateForm.region}
+                    onChange={(e) =>
+                      setAwsCreateForm({ ...awsCreateForm, region: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+                <div className="form-field">
+                  <label>description (optional)</label>
+                  <input
+                    value={awsCreateForm.description}
+                    onChange={(e) =>
+                      setAwsCreateForm({ ...awsCreateForm, description: e.target.value })
+                    }
+                  />
+                </div>
+              </>
+            )}
+
+            {createCloud === 'gcp' ? (
               <p className="empty" style={{ margin: 0 }}>
-                {CLOUD_LABEL[createCloud]} connections are not available yet. Choose OCI to create
-                a connection today.
+                GCP connections are not available yet. Choose OCI or AWS to create a connection
+                today.
               </p>
+            ) : (
+              <div className="form-actions">
+                <button type="button" className="btn" onClick={() => setShowCreate(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Create
+                </button>
+              </div>
             )}
           </form>
         </Modal>
@@ -410,13 +534,17 @@ export default function ConnectionsPage() {
               />
             </div>
             <p className="empty" style={{ margin: 0 }}>
-              Credentials (user, fingerprint, key) cannot be updated via this endpoint.
+              {editRow.cloud === 'aws'
+                ? 'Credentials (access key / secret) cannot be updated via this endpoint.'
+                : 'Credentials (user, fingerprint, key) cannot be updated via this endpoint.'}
             </p>
             <div className="form-actions">
               <button type="button" className="btn" onClick={() => setEditRow(null)}>
                 Cancel
               </button>
-              <button type="submit" className="btn btn-primary">Save</button>
+              <button type="submit" className="btn btn-primary">
+                Save
+              </button>
             </div>
           </form>
         </Modal>
