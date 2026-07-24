@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { apiRequest, apiRequestPaged } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
 import { useAsyncData } from '@/hooks/useAsyncData'
@@ -93,6 +94,7 @@ function statusClass(status: UtilizationStatus): string {
 }
 
 export default function MonitoringPage() {
+  const { t } = useTranslation()
   const { activeCompany, connection } = useAuth()
   const defaults = defaultDateRange()
   const [startDate, setStartDate] = useState(defaults.start)
@@ -321,7 +323,11 @@ export default function MonitoringPage() {
   if (!companyId || !connectionId) {
     return (
       <>
-        <PageHeader title="Monitoring" helpTitle="About Monitoring" help={monitoringHelp} />
+        <PageHeader
+          title={t('pages.monitoring.title')}
+          helpTitle={t('pages.monitoring.helpTitle')}
+          help={monitoringHelp}
+        />
         <p className="empty">Select a company and connection from the top bar.</p>
       </>
     )
@@ -345,9 +351,9 @@ export default function MonitoringPage() {
   return (
     <>
       <PageHeader
-        title="Monitoring"
-        lead="Utilization and performance metrics for resources in the selected connection."
-        helpTitle="About Monitoring"
+        title={t('pages.monitoring.title')}
+        lead={t('pages.monitoring.lead')}
+        helpTitle={t('pages.monitoring.helpTitle')}
         help={monitoringHelp}
       />
 
