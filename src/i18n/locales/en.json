@@ -187,7 +187,8 @@
       "terminate": "Terminate",
       "downsize": "Downsize",
       "scaleUp": "Scale up"
-    }
+    },
+    "greetingNameFallback": "there"
   },
   "chart": {
     "noSeriesData": "No series data for this range.",

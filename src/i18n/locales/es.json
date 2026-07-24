@@ -187,7 +187,8 @@
       "terminate": "Eliminar",
       "downsize": "Reducir tamaño",
       "scaleUp": "Ampliar capacidad"
-    }
+    },
+    "greetingNameFallback": "usuario"
   },
   "chart": {
     "noSeriesData": "No hay datos de serie para este rango.",

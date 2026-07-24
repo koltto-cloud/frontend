@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { apiRequest } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
 import { useAsyncData } from '@/hooks/useAsyncData'
@@ -8,10 +9,11 @@ import {
   toLocalIsoDate,
 } from '@/dashboard/costInsights'
 import PageHeader from '@/components/PageHeader'
-import { dashboardHelp } from '@/content/pageHelp'
+import { DashboardHelp } from '@/content/pageHelp'
 import TimeSeriesChart from '@/components/TimeSeriesChart'
 import BarChart from '@/components/BarChart'
 import { Alert } from '@/components/Alert'
+import { intlLocale } from '@/i18n/languages'
 
 type RangePreset = 'day' | '3m' | '12m' | 'custom'
 /** `all` = sum across clouds (OCI only until AWS/GCP exist). */
@@ -89,13 +91,22 @@ interface RecommendationsResponse {
   items: RecommendationItem[]
 }
 
-const REC_KIND_META: Record<RecKind, { label: string; tone: string }> = {
-  idle: { label: 'Stop', tone: 'danger' },
-  idle_storage: { label: 'Review', tone: 'warning' },
-  idle_lb: { label: 'Terminate', tone: 'danger' },
-  unattached_volume: { label: 'Terminate', tone: 'danger' },
-  oversized: { label: 'Downsize', tone: 'warning' },
-  overutilized: { label: 'Scale up', tone: 'accent' },
+const REC_KIND_TONE: Record<RecKind, string> = {
+  idle: 'danger',
+  idle_storage: 'warning',
+  idle_lb: 'danger',
+  unattached_volume: 'danger',
+  oversized: 'warning',
+  overutilized: 'accent',
+}
+
+const REC_KIND_LABEL_KEY: Record<RecKind, string> = {
+  idle: 'dashboard.actions.stop',
+  idle_storage: 'dashboard.actions.review',
+  idle_lb: 'dashboard.actions.terminate',
+  unattached_volume: 'dashboard.actions.terminate',
+  oversized: 'dashboard.actions.downsize',
+  overutilized: 'dashboard.actions.scaleUp',
 }
 
 function rangeForPreset(preset: RangePreset): { start: string; end: string } {
@@ -113,12 +124,17 @@ function rangeForPreset(preset: RangePreset): { start: string; end: string } {
   return { start: toLocalIsoDate(start), end: toLocalIsoDate(end) }
 }
 
-function formatMoney(amount: number | null | undefined, currency: string | null): string {
-  if (amount == null || Number.isNaN(Number(amount))) return '—'
+function formatMoney(
+  amount: number | null | undefined,
+  currency: string | null,
+  locale: string,
+  emDash: string,
+): string {
+  if (amount == null || Number.isNaN(Number(amount))) return emDash
   const raw = (currency && currency.trim() ? currency.trim() : 'USD').toUpperCase()
   const code = raw === 'US$' || raw === 'USA' ? 'USD' : raw
   try {
-    return Number(amount).toLocaleString(undefined, {
+    return Number(amount).toLocaleString(locale, {
       style: 'currency',
       currency: code.length === 3 ? code : 'USD',
       maximumFractionDigits: 2,
@@ -128,15 +144,15 @@ function formatMoney(amount: number | null | undefined, currency: string | null)
   }
 }
 
-function formatPct(value: number | null | undefined): string {
-  if (value == null || Number.isNaN(value)) return '—'
+function formatPct(value: number | null | undefined, emDash: string): string {
+  if (value == null || Number.isNaN(value)) return emDash
   return `${value >= 0 ? '+' : ''}${value.toFixed(0)}%`
 }
 
-function formatDay(iso: string): string {
+function formatDay(iso: string, locale: string): string {
   const d = new Date(`${iso}T00:00:00`)
   if (Number.isNaN(d.getTime())) return iso
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+  return d.toLocaleDateString(locale, { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 function isoDaysAgo(days: number): string {
@@ -145,15 +161,16 @@ function isoDaysAgo(days: number): string {
   return toLocalIsoDate(d)
 }
 
-function recActionLabel(item: RecommendationItem): string {
-  return REC_KIND_META[item.kind]?.label ?? item.action
-}
-
 function recActionTone(item: RecommendationItem): string {
-  return REC_KIND_META[item.kind]?.tone ?? 'muted'
+  return REC_KIND_TONE[item.kind] ?? 'muted'
 }
 
 export default function DashboardPage() {
+  const { t, i18n } = useTranslation()
+  const locale = intlLocale(i18n.resolvedLanguage)
+  const emDash = t('common.emDash')
+  const unknownLabel = t('common.unknown')
+
   const { user, activeCompany, connection } = useAuth()
   const defaults = rangeForPreset('3m')
   const [preset, setPreset] = useState<RangePreset>('3m')
@@ -165,7 +182,7 @@ export default function DashboardPage() {
   const connectionId = connection?.connection_id
 
   const firstName = user?.first_name?.trim()
-  const greetingName = firstName || user?.email || 'there'
+  const greetingName = firstName || user?.email || t('dashboard.greetingNameFallback')
   const hasConnection = Boolean(connectionId)
   const hasCompany = Boolean(companyId)
 
@@ -224,8 +241,8 @@ export default function DashboardPage() {
       return
     }
     if (costLoading && costSeries == null) return
-    const t = window.setTimeout(() => setSecondaryEnabled(true), 50)
-    return () => window.clearTimeout(t)
+    const timer = window.setTimeout(() => setSecondaryEnabled(true), 50)
+    return () => window.clearTimeout(timer)
   }, [recommendationsBase, anomaliesBase, costLoading, costSeries])
 
   const {
@@ -323,10 +340,10 @@ export default function DashboardPage() {
   const serviceChart = useMemo(() => {
     const items = breakdown?.items ?? []
     return items.slice(0, 10).map((i) => ({
-      label: i.service ?? 'unknown',
+      label: i.service ?? unknownLabel,
       value: i.total_cost ?? 0,
     }))
-  }, [breakdown])
+  }, [breakdown, unknownLabel])
 
   const compartmentChart = useMemo(() => {
     const items = compartmentBreakdown?.items ?? []
@@ -335,12 +352,12 @@ export default function DashboardPage() {
       const id = i.compartment_id
       const shortId = id && id.length > 18 ? `${id.slice(0, 18)}…` : id
       return {
-        label: name || shortId || 'unknown',
+        label: name || shortId || unknownLabel,
         value: i.total_cost ?? 0,
         title: id ?? name ?? undefined,
       }
     })
-  }, [compartmentBreakdown])
+  }, [compartmentBreakdown, unknownLabel])
 
   function applyPreset(next: RangePreset) {
     setPreset(next)
@@ -350,26 +367,29 @@ export default function DashboardPage() {
     setEndDate(range.end)
   }
 
-  const cloudLabel = cloud === 'all' ? 'All clouds' : 'OCI'
+  const cloudLabel = cloud === 'all' ? t('dashboard.allClouds') : 'OCI'
   const topRecommendations = recommendations?.items ?? []
   const topAnomalies = anomalies?.items ?? []
+
+  const money = (amount: number | null | undefined, cur: string | null = currency) =>
+    formatMoney(amount, cur, locale, emDash)
 
   return (
     <>
       <PageHeader
-        title="Dashboard"
-        lead={`Hi ${greetingName} — here’s your cloud spend overview.`}
-        helpTitle="About the Dashboard"
-        help={dashboardHelp}
+        title={t('dashboard.title')}
+        lead={t('dashboard.greeting', { name: greetingName })}
+        helpTitle={t('dashboard.helpTitle')}
+        help={<DashboardHelp />}
       />
 
       {!hasCompany || !hasConnection ? (
         <p className="empty">
-          Select a company and connection in the top bar to view daily total cost.
+          {t('dashboard.selectContext')}
           {!hasConnection && hasCompany && (
             <>
               {' '}
-              <Link to="/connections">Set up a connection</Link>
+              <Link to="/connections">{t('dashboard.setupConnection')}</Link>
             </>
           )}
         </p>
@@ -378,13 +398,15 @@ export default function DashboardPage() {
           <section className="card dashboard-cost-card">
             <div className="dashboard-cost-header">
               <div>
-                <h2>Total cost</h2>
-                <p className="dashboard-cost-subtitle">Daily spend ({cloudLabel})</p>
+                <h2>{t('dashboard.totalCost')}</h2>
+                <p className="dashboard-cost-subtitle">
+                  {t('dashboard.dailySpend', { cloud: cloudLabel })}
+                </p>
               </div>
               <label className="dashboard-cloud-filter">
-                Cloud
+                {t('dashboard.cloud')}
                 <select value={cloud} onChange={(e) => setCloud(e.target.value as CloudFilter)}>
-                  <option value="all">All clouds</option>
+                  <option value="all">{t('dashboard.allClouds')}</option>
                   <option value="oci">OCI</option>
                 </select>
               </label>
@@ -392,40 +414,36 @@ export default function DashboardPage() {
 
             <div className="dashboard-cost-stats">
               <div className="dashboard-cost-stat">
-                <span className="dashboard-cost-stat-label">Period total</span>
-                <span className="dashboard-cost-stat-value">
-                  {formatMoney(periodTotal, currency)}
-                </span>
+                <span className="dashboard-cost-stat-label">{t('dashboard.periodTotal')}</span>
+                <span className="dashboard-cost-stat-value">{money(periodTotal)}</span>
               </div>
               <div className="dashboard-cost-stat">
-                <span className="dashboard-cost-stat-label">Daily average</span>
-                <span className="dashboard-cost-stat-value">
-                  {formatMoney(dailyAverage, currency)}
-                </span>
+                <span className="dashboard-cost-stat-label">{t('dashboard.dailyAverage')}</span>
+                <span className="dashboard-cost-stat-value">{money(dailyAverage)}</span>
                 {periodStats != null && periodStats.dayCount > 0 && (
                   <span className="dashboard-cost-stat-hint">
-                    over {periodStats.dayCount} day{periodStats.dayCount === 1 ? '' : 's'} with data
+                    {t('dashboard.daysWithData', { count: periodStats.dayCount })}
                   </span>
                 )}
               </div>
             </div>
 
-            <div className="dashboard-cost-presets" role="group" aria-label="Date range">
+            <div className="dashboard-cost-presets" role="group" aria-label={t('dashboard.dateRange')}>
               {(
                 [
-                  ['day', 'Last day'],
-                  ['3m', '3 months'],
-                  ['12m', '12 months'],
-                  ['custom', 'Custom'],
+                  ['day', 'dashboard.presets.lastDay'],
+                  ['3m', 'dashboard.presets.threeMonths'],
+                  ['12m', 'dashboard.presets.twelveMonths'],
+                  ['custom', 'dashboard.presets.custom'],
                 ] as const
-              ).map(([value, label]) => (
+              ).map(([value, labelKey]) => (
                 <button
                   key={value}
                   type="button"
                   className={`btn dashboard-preset-btn${preset === value ? ' is-active' : ''}`}
                   onClick={() => applyPreset(value)}
                 >
-                  {label}
+                  {t(labelKey)}
                 </button>
               ))}
             </div>
@@ -433,7 +451,7 @@ export default function DashboardPage() {
             {preset === 'custom' && (
               <div className="filters dashboard-cost-custom">
                 <label>
-                  Start date
+                  {t('common.startDate')}
                   <input
                     type="date"
                     value={startDate}
@@ -444,7 +462,7 @@ export default function DashboardPage() {
                   />
                 </label>
                 <label>
-                  End date
+                  {t('common.endDate')}
                   <input
                     type="date"
                     value={endDate}
@@ -460,17 +478,17 @@ export default function DashboardPage() {
             <Alert type="error">{costError}</Alert>
 
             {costLoading && !costSeries ? (
-              <p className="loading">Loading cost series…</p>
+              <p className="loading">{t('dashboard.loadingCostSeries')}</p>
             ) : (
               <>
                 {costLoading && costSeries != null && (
                   <p className="dashboard-cost-updating" aria-live="polite">
-                    Updating…
+                    {t('common.updating')}
                   </p>
                 )}
                 <TimeSeriesChart
                   points={chartPoints}
-                  valueLabel="Cost"
+                  valueLabel={t('dashboard.cost')}
                   valuePrefix="$"
                   dateOnly
                   height={300}
@@ -482,25 +500,25 @@ export default function DashboardPage() {
           <div className="dashboard-breakdown-grid">
             <section className="card dashboard-cost-card dashboard-panel">
               <div className="dashboard-section-header">
-                <h2>By service</h2>
+                <h2>{t('dashboard.byService')}</h2>
                 <p className="dashboard-cost-subtitle">
-                  Top 10 services ({cloudLabel})
+                  {t('dashboard.topServices', { cloud: cloudLabel })}
                 </p>
               </div>
               <Alert type="error">{breakdownError}</Alert>
               {breakdownLoading && !breakdown ? (
-                <p className="loading">Loading…</p>
+                <p className="loading">{t('common.loading')}</p>
               ) : (
                 <>
                   {breakdownLoading && breakdown != null && (
                     <p className="dashboard-cost-updating" aria-live="polite">
-                      Updating…
+                      {t('common.updating')}
                     </p>
                   )}
                   <BarChart
                     variant="dashboard"
                     items={serviceChart}
-                    formatValue={(v) => formatMoney(v, currency)}
+                    formatValue={(v) => money(v)}
                   />
                 </>
               )}
@@ -508,25 +526,25 @@ export default function DashboardPage() {
 
             <section className="card dashboard-cost-card dashboard-panel">
               <div className="dashboard-section-header">
-                <h2>By compartment</h2>
+                <h2>{t('dashboard.byCompartment')}</h2>
                 <p className="dashboard-cost-subtitle">
-                  Top 10 compartments ({cloudLabel})
+                  {t('dashboard.topCompartments', { cloud: cloudLabel })}
                 </p>
               </div>
               <Alert type="error">{compartmentError}</Alert>
               {compartmentLoading && !compartmentBreakdown ? (
-                <p className="loading">Loading…</p>
+                <p className="loading">{t('common.loading')}</p>
               ) : (
                 <>
                   {compartmentLoading && compartmentBreakdown != null && (
                     <p className="dashboard-cost-updating" aria-live="polite">
-                      Updating…
+                      {t('common.updating')}
                     </p>
                   )}
                   <BarChart
                     variant="dashboard"
                     items={compartmentChart}
-                    formatValue={(v) => formatMoney(v, currency)}
+                    formatValue={(v) => money(v)}
                   />
                 </>
               )}
@@ -536,29 +554,29 @@ export default function DashboardPage() {
           <div className="dashboard-breakdown-grid">
             <section className="card dashboard-cost-card dashboard-panel">
               <div className="dashboard-section-header">
-                <h2>Opportunities</h2>
-                <p className="dashboard-cost-subtitle">
-                  Top active recommendations
-                </p>
+                <h2>{t('dashboard.opportunities')}</h2>
+                <p className="dashboard-cost-subtitle">{t('dashboard.topRecommendations')}</p>
               </div>
               {recommendationsError ? <Alert type="error">{recommendationsError}</Alert> : null}
               {!secondaryEnabled || (recommendationsLoading && recommendations == null) ? (
-                <p className="loading">Loading recommendations…</p>
+                <p className="loading">{t('dashboard.loadingRecommendations')}</p>
               ) : (
                 <>
                   {recommendationsLoading && recommendations != null && (
                     <p className="dashboard-cost-updating" aria-live="polite">
-                      Updating…
+                      {t('common.updating')}
                     </p>
                   )}
                   {topRecommendations.length === 0 ? (
-                    <p className="empty">No active recommendations right now.</p>
+                    <p className="empty">{t('dashboard.noRecommendations')}</p>
                   ) : (
                     <ul className="dashboard-opportunity-list">
                       {topRecommendations.map((item) => {
                         const tone = recActionTone(item)
                         const rowKey = `${item.resource_id ?? item.resource_name}:${item.kind}`
-                        const name = item.resource_name ?? item.resource_id ?? 'unknown'
+                        const name = item.resource_name ?? item.resource_id ?? unknownLabel
+                        const labelKey = REC_KIND_LABEL_KEY[item.kind]
+                        const actionLabel = labelKey ? t(labelKey) : item.action
                         return (
                           <li key={rowKey} className="dashboard-opportunity-row">
                             <div className="dashboard-opportunity-main">
@@ -570,16 +588,24 @@ export default function DashboardPage() {
                                 {name}
                               </Link>
                               <span className={`recs-badge recs-badge--${tone}`}>
-                                {recActionLabel(item)}
+                                {actionLabel}
                               </span>
                             </div>
                             <p className="dashboard-opportunity-advice">{item.recommendation}</p>
                             <div className="dashboard-opportunity-meta">
                               <span className="dashboard-opportunity-savings">
-                                save {formatMoney(item.estimated_monthly_savings, item.currency ?? currency)}
-                                /mo
+                                {t('dashboard.savePerMonth', {
+                                  amount: money(
+                                    item.estimated_monthly_savings,
+                                    item.currency ?? currency,
+                                  ),
+                                })}
                               </span>
-                              <span>{formatMoney(item.monthly_cost, item.currency ?? currency)} current</span>
+                              <span>
+                                {t('dashboard.currentCost', {
+                                  amount: money(item.monthly_cost, item.currency ?? currency),
+                                })}
+                              </span>
                             </div>
                           </li>
                         )
@@ -588,7 +614,7 @@ export default function DashboardPage() {
                   )}
                   <div className="dashboard-panel-footer">
                     <Link to="/oci/recommendations" className="btn-link">
-                      View all recommendations
+                      {t('dashboard.viewRecommendations')}
                     </Link>
                   </div>
                 </>
@@ -597,47 +623,50 @@ export default function DashboardPage() {
 
             <section className="card dashboard-cost-card dashboard-panel">
               <div className="dashboard-section-header">
-                <h2>Cost anomalies</h2>
-                <p className="dashboard-cost-subtitle">
-                  Top spend spikes vs recent baseline
-                </p>
+                <h2>{t('dashboard.costAnomalies')}</h2>
+                <p className="dashboard-cost-subtitle">{t('dashboard.topSpendSpikes')}</p>
               </div>
               {anomaliesError ? <Alert type="error">{anomaliesError}</Alert> : null}
               {!secondaryEnabled || (anomaliesLoading && anomalies == null) ? (
-                <p className="loading">Loading anomalies…</p>
+                <p className="loading">{t('dashboard.loadingAnomalies')}</p>
               ) : (
                 <>
                   {anomaliesLoading && anomalies != null && (
                     <p className="dashboard-cost-updating" aria-live="polite">
-                      Updating…
+                      {t('common.updating')}
                     </p>
                   )}
                   {topAnomalies.length === 0 ? (
-                    <p className="empty">No spend spikes in the last 30 days.</p>
+                    <p className="empty">{t('dashboard.noSpendSpikes')}</p>
                   ) : (
                     <ul className="dashboard-spike-list">
                       {topAnomalies.map((item) => (
                         <li key={item.date} className="dashboard-spike-row">
                           <div className="dashboard-spike-main">
                             <Link to="/oci/anomalies" className="dashboard-spike-date">
-                              {formatDay(item.date)}
+                              {formatDay(item.date, locale)}
                             </Link>
                             <span className="dashboard-spike-delta">
-                              +{formatMoney(item.delta, item.currency ?? currency)}
+                              +{money(item.delta, item.currency ?? currency)}
                             </span>
                           </div>
                           <div className="dashboard-spike-meta">
                             <span>
-                              {formatMoney(item.total_cost, item.currency ?? currency)} vs{' '}
-                              {formatMoney(item.baseline_avg, item.currency ?? currency)} typical
+                              {t('dashboard.versusTypical', {
+                                total: money(item.total_cost, item.currency ?? currency),
+                                baseline: money(item.baseline_avg, item.currency ?? currency),
+                              })}
                             </span>
-                            <span>{formatPct(item.pct_change)}</span>
+                            <span>{formatPct(item.pct_change, emDash)}</span>
                           </div>
                           <div className="dashboard-spike-meta">
                             <span>
                               {item.driver_service
-                                ? `Driven by ${item.driver_service} (+${formatMoney(item.driver_delta, item.currency ?? currency)})`
-                                : 'Mixed drivers'}
+                                ? t('dashboard.drivenBy', {
+                                    service: item.driver_service,
+                                    delta: money(item.driver_delta, item.currency ?? currency),
+                                  })
+                                : t('dashboard.mixedDrivers')}
                             </span>
                           </div>
                         </li>
@@ -646,7 +675,7 @@ export default function DashboardPage() {
                   )}
                   <div className="dashboard-panel-footer">
                     <Link to="/oci/anomalies" className="btn-link">
-                      View all anomalies
+                      {t('dashboard.viewAnomalies')}
                     </Link>
                   </div>
                 </>
