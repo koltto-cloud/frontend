@@ -10,10 +10,6 @@ import {
 } from '@/dashboard/costInsights'
 import PageHeader from '@/components/PageHeader'
 import { dashboardHelp } from '@/content/pageHelp'
-import {
-  loadUnderutilizedOpportunities,
-  type TopResourceItem,
-} from '@/dashboard/opportunities'
 import TimeSeriesChart from '@/components/TimeSeriesChart'
 import BarChart from '@/components/BarChart'
 import { Alert } from '@/components/Alert'
@@ -52,11 +48,39 @@ interface UsageByCompartmentResponse {
   }[]
 }
 
-interface TopResourcesResponse {
-  start_date: string
-  end_date: string
+type RecKind =
+  | 'idle'
+  | 'oversized'
+  | 'overutilized'
+  | 'idle_storage'
+  | 'idle_lb'
+  | 'unattached_volume'
+
+interface RecommendationItem {
+  resource_id: string | null
+  resource_name: string | null
+  resource_type: string
+  kind: RecKind
+  action: string
+  monthly_cost: number
   currency: string | null
-  items: TopResourceItem[]
+  estimated_monthly_savings: number
+  recommendation: string
+  silenced?: boolean
+}
+
+interface RecommendationsResponse {
+  currency: string | null
+  items: RecommendationItem[]
+}
+
+const REC_KIND_META: Record<RecKind, { label: string; tone: string }> = {
+  idle: { label: 'Stop', tone: 'danger' },
+  idle_storage: { label: 'Review', tone: 'warning' },
+  idle_lb: { label: 'Terminate', tone: 'danger' },
+  unattached_volume: { label: 'Terminate', tone: 'danger' },
+  oversized: { label: 'Downsize', tone: 'warning' },
+  overutilized: { label: 'Scale up', tone: 'accent' },
 }
 
 function rangeForPreset(preset: RangePreset): { start: string; end: string } {
@@ -94,9 +118,18 @@ function formatPct(value: number | null | undefined): string {
   return `${value >= 0 ? '+' : ''}${value.toFixed(0)}%`
 }
 
-function formatUtilPct(value: number | null | undefined): string {
-  if (value == null || Number.isNaN(value)) return '—'
-  return `${value.toFixed(1)}%`
+function isoDaysAgo(days: number): string {
+  const d = new Date()
+  d.setDate(d.getDate() - days)
+  return toLocalIsoDate(d)
+}
+
+function recActionLabel(item: RecommendationItem): string {
+  return REC_KIND_META[item.kind]?.label ?? item.action
+}
+
+function recActionTone(item: RecommendationItem): string {
+  return REC_KIND_META[item.kind]?.tone ?? 'muted'
 }
 
 export default function DashboardPage() {
@@ -115,11 +148,15 @@ export default function DashboardPage() {
   const hasConnection = Boolean(connectionId)
   const hasCompany = Boolean(companyId)
 
-  const [opportunitiesEnabled, setOpportunitiesEnabled] = useState(false)
+  const [recsEnabled, setRecsEnabled] = useState(false)
 
   const usageBase =
     companyId && connectionId
       ? `/api/v1/cloud/oci/usage/${companyId}/connections/${connectionId}/usage`
+      : null
+  const recommendationsBase =
+    companyId && connectionId
+      ? `/api/v1/cloud/oci/recommendations/${companyId}/connections/${connectionId}/recommendations`
       : null
 
   // OCI is the only cloud today and `cloud` is not sent to the API, so `all` and
@@ -130,10 +167,10 @@ export default function DashboardPage() {
   const breakdownKey = usageBase && rangeKey ? `${usageBase}/breakdown:${rangeKey}` : null
   const compartmentKey =
     usageBase && rangeKey ? `${usageBase}/by-compartment:${rangeKey}` : null
-  const opportunitiesKey =
-    usageBase && companyId && connectionId && rangeKey && opportunitiesEnabled
-      ? `${usageBase}/opportunities:${rangeKey}`
-      : null
+  // Recommendations use a fixed 30-day window (same as Recommendations page),
+  // independent of the dashboard cost chart range.
+  const recommendationsKey =
+    recommendationsBase && recsEnabled ? `${recommendationsBase}:active:top5` : null
 
   const {
     data: costSeries,
@@ -150,20 +187,20 @@ export default function DashboardPage() {
     { keepPreviousData: true },
   )
 
-  // Paint cost charts first; opportunities need extra monitoring/inventory calls.
+  // Paint cost charts first; recommendations are a heavier secondary call.
   useEffect(() => {
-    setOpportunitiesEnabled(false)
-  }, [rangeKey])
+    setRecsEnabled(false)
+  }, [companyId, connectionId])
 
   useEffect(() => {
-    if (!usageBase) {
-      setOpportunitiesEnabled(false)
+    if (!recommendationsBase) {
+      setRecsEnabled(false)
       return
     }
     if (costLoading && costSeries == null) return
-    const t = window.setTimeout(() => setOpportunitiesEnabled(true), 50)
+    const t = window.setTimeout(() => setRecsEnabled(true), 50)
     return () => window.clearTimeout(t)
-  }, [usageBase, costLoading, costSeries, rangeKey])
+  }, [recommendationsBase, costLoading, costSeries])
 
   const {
     data: breakdown,
@@ -196,27 +233,31 @@ export default function DashboardPage() {
   )
 
   const {
-    data: opportunities,
-    error: opportunitiesError,
-    loading: opportunitiesLoading,
+    data: recommendations,
+    error: recommendationsError,
+    loading: recommendationsLoading,
   } = useAsyncData(
     async () => {
-      if (!opportunitiesEnabled || !usageBase || !companyId || !connectionId) return []
-      const top = await apiRequest<TopResourcesResponse>(`${usageBase}/summary/top-resources`, {
-        query: { start_date: startDate, end_date: endDate, limit: 10 },
-      })
-      return loadUnderutilizedOpportunities({
-        companyId,
-        connectionId,
-        topResources: top.items ?? [],
+      if (!recsEnabled || !recommendationsBase) return null
+      return apiRequest<RecommendationsResponse>(recommendationsBase, {
+        query: {
+          start_date: isoDaysAgo(30),
+          end_date: isoDaysAgo(0),
+          limit: 5,
+          status: 'active',
+        },
       })
     },
-    [opportunitiesKey],
+    [recommendationsKey],
     { keepPreviousData: true },
   )
 
   const currency =
-    costSeries?.currency ?? breakdown?.currency ?? compartmentBreakdown?.currency ?? 'USD'
+    costSeries?.currency ??
+    breakdown?.currency ??
+    compartmentBreakdown?.currency ??
+    recommendations?.currency ??
+    'USD'
 
   const chartPoints = useMemo(
     () =>
@@ -268,7 +309,7 @@ export default function DashboardPage() {
   }
 
   const cloudLabel = cloud === 'all' ? 'All clouds' : 'OCI'
-  const opportunityRows = opportunities ?? []
+  const topRecommendations = recommendations?.items ?? []
 
   return (
     <>
@@ -454,46 +495,59 @@ export default function DashboardPage() {
               <div className="dashboard-section-header">
                 <h2>Opportunities</h2>
                 <p className="dashboard-cost-subtitle">
-                  Underutilized compute among top spenders
+                  Top active recommendations (not silenced or ignored)
                 </p>
               </div>
-              {opportunitiesError ? <Alert type="error">{opportunitiesError}</Alert> : null}
-              {!opportunitiesEnabled || (opportunitiesLoading && opportunities == null) ? (
-                <p className="loading">Loading opportunities…</p>
+              {recommendationsError ? <Alert type="error">{recommendationsError}</Alert> : null}
+              {!recsEnabled || (recommendationsLoading && recommendations == null) ? (
+                <p className="loading">Loading recommendations…</p>
               ) : (
                 <>
-                  {opportunitiesLoading && opportunities != null && (
+                  {recommendationsLoading && recommendations != null && (
                     <p className="dashboard-cost-updating" aria-live="polite">
                       Updating…
                     </p>
                   )}
-                  {opportunityRows.length === 0 ? (
-                    <p className="empty">
-                      No underutilized high-cost compute in the top spenders.
-                    </p>
+                  {topRecommendations.length === 0 ? (
+                    <p className="empty">No active recommendations right now.</p>
                   ) : (
                     <ul className="dashboard-opportunity-list">
-                      {opportunityRows.map((row) => (
-                        <li key={row.resourceId} className="dashboard-opportunity-row">
-                          <div className="dashboard-opportunity-main">
-                            <Link
-                              to="/oci/monitoring"
-                              className="dashboard-opportunity-name"
-                              title={row.resourceId}
-                            >
-                              {row.name}
-                            </Link>
-                            <span className="util-badge util-badge-under">{row.statusLabel}</span>
-                          </div>
-                          <div className="dashboard-opportunity-meta">
-                            <span>{formatMoney(row.totalCost, currency)}</span>
-                            <span>CPU {formatUtilPct(row.cpuMean)}</span>
-                            <span>Mem {formatUtilPct(row.memMean)}</span>
-                          </div>
-                        </li>
-                      ))}
+                      {topRecommendations.map((item) => {
+                        const tone = recActionTone(item)
+                        const rowKey = `${item.resource_id ?? item.resource_name}:${item.kind}`
+                        const name = item.resource_name ?? item.resource_id ?? 'unknown'
+                        return (
+                          <li key={rowKey} className="dashboard-opportunity-row">
+                            <div className="dashboard-opportunity-main">
+                              <Link
+                                to="/oci/recommendations"
+                                className="dashboard-opportunity-name"
+                                title={item.resource_id ?? undefined}
+                              >
+                                {name}
+                              </Link>
+                              <span className={`recs-badge recs-badge--${tone}`}>
+                                {recActionLabel(item)}
+                              </span>
+                            </div>
+                            <p className="dashboard-opportunity-advice">{item.recommendation}</p>
+                            <div className="dashboard-opportunity-meta">
+                              <span>
+                                save {formatMoney(item.estimated_monthly_savings, item.currency ?? currency)}
+                                /mo
+                              </span>
+                              <span>{formatMoney(item.monthly_cost, item.currency ?? currency)} current</span>
+                            </div>
+                          </li>
+                        )
+                      })}
                     </ul>
                   )}
+                  <div className="dashboard-panel-footer">
+                    <Link to="/oci/recommendations" className="btn-link">
+                      View all recommendations
+                    </Link>
+                  </div>
                 </>
               )}
             </section>

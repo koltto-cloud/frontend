@@ -18,7 +18,7 @@ export const dashboardHelp: ReactNode = (
     <ul>
       <li>Period total and daily average</li>
       <li>Cost by service and by compartment</li>
-      <li>Savings / right-sizing opportunities when available</li>
+      <li>Top active recommendations (not silenced or ignored)</li>
       <li>Day-over-day spikes that may need investigation</li>
     </ul>
     <p>
