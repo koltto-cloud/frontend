@@ -7,7 +7,6 @@ import { useLanguage } from '@/context/LanguageContext'
 import { useAsyncData } from '@/hooks/useAsyncData'
 import { Alert } from '@/components/Alert'
 import {
-  intlLocale,
   LANGUAGE_OPTIONS,
   normalizeLanguage,
   type AppLanguage,
@@ -16,14 +15,14 @@ import {
 type TotpStatus = { enabled: boolean }
 type TotpSetup = { provisioning_uri: string; secret: string }
 
-function formatWhen(value: string | undefined, empty: string, locale: string): string {
+function formatWhen(value: string | undefined, empty: string): string {
   if (!value) return empty
   const d = new Date(value)
-  return Number.isNaN(d.getTime()) ? value : d.toLocaleString(locale)
+  return Number.isNaN(d.getTime()) ? value : d.toLocaleString()
 }
 
 export default function ProfilePage() {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const { user, refreshSession } = useAuth()
   const { language, setLanguage } = useLanguage()
   const [firstName, setFirstName] = useState(user?.first_name ?? '')
@@ -69,7 +68,6 @@ export default function ProfilePage() {
   const toggleOn = totpEnabled || enrolling
   const initials = `${user?.first_name?.[0] ?? ''}${user?.last_name?.[0] ?? ''}`.toUpperCase() || '?'
   const empty = t('common.emDash')
-  const locale = intlLocale(i18n.resolvedLanguage)
 
   useEffect(() => {
     if (!setup?.provisioning_uri) {
@@ -268,11 +266,11 @@ export default function ProfilePage() {
               </div>
               <div className="identity-detail">
                 <dt>{t('settings.created')}</dt>
-                <dd>{formatWhen(user.created_at, empty, locale)}</dd>
+                <dd>{formatWhen(user.created_at, empty)}</dd>
               </div>
               <div className="identity-detail">
                 <dt>{t('settings.updated')}</dt>
-                <dd>{formatWhen(user.updated_at, empty, locale)}</dd>
+                <dd>{formatWhen(user.updated_at, empty)}</dd>
               </div>
             </dl>
           </div>
@@ -455,7 +453,7 @@ export default function ProfilePage() {
               <img
                 className="totp-qr"
                 src={qrDataUrl}
-                alt={t('settings.totpQrAlt')}
+                alt="TOTP QR code"
                 width={200}
                 height={200}
               />

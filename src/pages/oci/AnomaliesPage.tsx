@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
 import { apiRequest } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
 import { useAsyncData } from '@/hooks/useAsyncData'
@@ -53,7 +52,6 @@ function formatDay(iso: string): string {
 }
 
 export default function AnomaliesPage() {
-  const { t } = useTranslation()
   const { activeCompany, connection } = useAuth()
   const companyId = activeCompany?.company_id
   const connectionId = connection?.connection_id
@@ -85,9 +83,9 @@ export default function AnomaliesPage() {
   return (
     <div className="page">
       <PageHeader
-        title={t('pages.anomalies.title')}
-        lead={t('pages.anomalies.lead')}
-        helpTitle={t('pages.anomalies.helpTitle')}
+        title="Cost Anomalies"
+        lead="Days where spend jumped well above its recent trend — what changed, by how much, and what drove it."
+        helpTitle="About Cost Anomalies"
         help={anomaliesHelp}
       />
 

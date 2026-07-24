@@ -1,7 +1,6 @@
 {
   "common": {
     "loading": "Cargando…",
-    "loadingEllipsis": "Cargando…",
     "save": "Guardar cambios",
     "back": "Volver",
     "menu": "Menú",
@@ -14,28 +13,7 @@
     "internal": "Interno",
     "accountMenu": "Menú de cuenta",
     "closeNav": "Cerrar navegación",
-    "emDash": "—",
-    "close": "Cerrar",
-    "cancel": "Cancelar",
-    "create": "Crear",
-    "edit": "Editar",
-    "delete": "Eliminar",
-    "saveShort": "Guardar",
-    "search": "Buscar",
-    "refresh": "Actualizar",
-    "details": "Detalles",
-    "actions": "Acciones",
-    "status": "Estado",
-    "all": "Todos",
-    "yes": "Sí",
-    "no": "No",
-    "disabled": "Desactivado",
-    "updating": "Actualizando…",
-    "startDate": "Fecha de inicio",
-    "endDate": "Fecha de finalización",
-    "unknown": "desconocido",
-    "aboutTitle": "Acerca de {{title}}",
-    "noData": "Sin datos."
+    "emDash": "—"
   },
   "nav": {
     "sections": {
@@ -132,132 +110,10 @@
     "languageSpanish": "Español",
     "languageUpdated": "Preferencia de idioma guardada.",
     "languageSavedLocally": "Idioma actualizado en este dispositivo. La configuración del servidor aún no está disponible.",
-    "saveLanguage": "Guardar idioma",
-    "totpQrAlt": "Código QR de TOTP"
+    "saveLanguage": "Guardar idioma"
   },
   "errors": {
     "network": "Error de red: no se pudo contactar la API. El backend puede estar redesplegándose o no estar disponible temporalmente.",
     "unknown": "Error desconocido"
-  },
-  "dashboard": {
-    "title": "Panel",
-    "greeting": "Hola {{name}} — aquí tienes un resumen de tu gasto en la nube.",
-    "helpTitle": "Acerca del panel",
-    "selectContext": "Selecciona una empresa y una conexión en la barra superior para ver el costo total diario.",
-    "setupConnection": "Configurar una conexión",
-    "totalCost": "Costo total",
-    "dailySpend": "Gasto diario ({{cloud}})",
-    "cloud": "Nube",
-    "allClouds": "Todas las nubes",
-    "periodTotal": "Total del período",
-    "dailyAverage": "Promedio diario",
-    "daysWithData_one": "durante {{count}} día con datos",
-    "daysWithData_other": "durante {{count}} días con datos",
-    "dateRange": "Rango de fechas",
-    "presets": {
-      "lastDay": "Último día",
-      "threeMonths": "3 meses",
-      "twelveMonths": "12 meses",
-      "custom": "Personalizado"
-    },
-    "loadingCostSeries": "Cargando serie de costos…",
-    "cost": "Costo",
-    "byService": "Por servicio",
-    "topServices": "10 servicios principales ({{cloud}})",
-    "byCompartment": "Por compartimento",
-    "topCompartments": "10 compartimentos principales ({{cloud}})",
-    "opportunities": "Oportunidades",
-    "topRecommendations": "Principales recomendaciones activas",
-    "loadingRecommendations": "Cargando recomendaciones…",
-    "noRecommendations": "No hay recomendaciones activas en este momento.",
-    "savePerMonth": "ahorra {{amount}}/mes",
-    "currentCost": "{{amount}} actual",
-    "viewRecommendations": "Ver todas las recomendaciones",
-    "costAnomalies": "Anomalías de costo",
-    "topSpendSpikes": "Principales picos de gasto frente a la referencia reciente",
-    "loadingAnomalies": "Cargando anomalías…",
-    "noSpendSpikes": "No hubo picos de gasto en los últimos 30 días.",
-    "versusTypical": "{{total}} frente a {{baseline}} habitual",
-    "drivenBy": "Impulsado por {{service}} (+{{delta}})",
-    "mixedDrivers": "Varios factores",
-    "viewAnomalies": "Ver todas las anomalías",
-    "actions": {
-      "stop": "Detener",
-      "review": "Revisar",
-      "terminate": "Eliminar",
-      "downsize": "Reducir tamaño",
-      "scaleUp": "Ampliar capacidad"
-    },
-    "greetingNameFallback": "usuario"
-  },
-  "chart": {
-    "noSeriesData": "No hay datos de serie para este rango.",
-    "value": "Valor"
-  },
-  "pages": {
-    "costExplorer": {
-      "title": "Explorador de costos",
-      "lead": "Explora el gasto diario por servicio, ámbito o recursos principales. Selecciona un servicio o ámbito para filtrar la tendencia, o un recurso principal para ver su costo y utilización.",
-      "helpTitle": "Acerca del explorador de costos"
-    },
-    "recommendations": {
-      "title": "Recomendaciones",
-      "lead": "Descubre qué recursos cuestan más de lo que se utilizan, junto con la solución y el ahorro.",
-      "helpTitle": "Acerca de las recomendaciones"
-    },
-    "anomalies": {
-      "title": "Anomalías de costo",
-      "lead": "Días en los que el gasto superó ampliamente su tendencia reciente: qué cambió, cuánto y cuál fue la causa.",
-      "helpTitle": "Acerca de las anomalías de costo"
-    },
-    "unitEconomics": {
-      "title": "Economía unitaria",
-      "lead": "Divide tu factura de la nube por una métrica empresarial relevante (clientes, puestos o pedidos) para conocer el costo unitario.",
-      "helpTitle": "Cómo funciona la economía unitaria"
-    },
-    "inventory": {
-      "title": "Inventario",
-      "lead": "Recursos de la nube sincronizados para la conexión seleccionada; explóralos por tipo y compartimento.",
-      "helpTitle": "Acerca del inventario"
-    },
-    "monitoring": {
-      "title": "Monitoreo",
-      "lead": "Métricas de utilización y rendimiento de los recursos de la conexión seleccionada.",
-      "helpTitle": "Acerca del monitoreo"
-    },
-    "reports": {
-      "title": "Informes",
-      "lead": "Descarga un informe de costos en CSV para el rango de fechas seleccionado.",
-      "helpTitle": "Acerca de los informes"
-    },
-    "connections": {
-      "title": "Conexiones",
-      "lead": "Conexiones de cuentas de nube para esta empresa. OCI está disponible actualmente; AWS y GCP aparecerán aquí cuando se publiquen sus conectores.",
-      "helpTitle": "Acerca de las conexiones"
-    },
-    "budgets": {
-      "title": "Presupuestos y alertas",
-      "lead": "Define límites de gasto y preferencias de correo electrónico. Los presupuestos y las alertas se guardan en el servidor.",
-      "helpTitle": "Acerca de los presupuestos y las alertas"
-    },
-    "allocations": {
-      "title": "Asignaciones",
-      "lead": "Asigna el gasto a equipos y productos mediante etiquetas y reglas de repercusión de costos. La sincronización de etiquetas estará disponible próximamente.",
-      "helpTitle": "Acerca de las asignaciones"
-    }
-  },
-  "help": {
-    "dashboard": {
-      "intro": "El panel resume el gasto en la nube, las oportunidades de ahorro y los cambios de costo inusuales.",
-      "howToTitle": "Cómo usarlo",
-      "howTo1": "Selecciona una empresa y una conexión de nube en la barra superior.",
-      "howTo2": "Elige una nube y un rango de fechas para delimitar la vista de costos.",
-      "whatYouSeeTitle": "Qué verás",
-      "see1": "El gasto total y el promedio diario del período seleccionado.",
-      "see2": "Los servicios y compartimentos que generan los mayores costos.",
-      "see3": "Recomendaciones activas que pueden reducir el gasto mensual.",
-      "see4": "Picos de costo recientes comparados con la referencia habitual.",
-      "footer": "Abre cualquier sección para consultar sus detalles."
-    }
   }
 }

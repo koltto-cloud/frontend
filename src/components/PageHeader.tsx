@@ -1,5 +1,4 @@
 import { useState, type ReactNode } from 'react'
-import { useTranslation } from 'react-i18next'
 import Modal from '@/components/Modal'
 
 interface PageHeaderProps {
@@ -18,10 +17,9 @@ export default function PageHeader({
   help,
   className,
 }: PageHeaderProps) {
-  const { t } = useTranslation()
   const [helpOpen, setHelpOpen] = useState(false)
   const hasHelp = Boolean(help)
-  const modalTitle = helpTitle ?? t('common.aboutTitle', { title })
+  const modalTitle = helpTitle ?? `About ${title}`
 
   return (
     <>

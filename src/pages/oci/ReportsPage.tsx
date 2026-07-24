@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
 import { apiRequestText, formatApiError } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
 import { Alert } from '@/components/Alert'
@@ -28,7 +27,6 @@ function downloadCsv(filename: string, content: string) {
 }
 
 export default function ReportsPage() {
-  const { t } = useTranslation()
   const { activeCompany, connection } = useAuth()
   const companyId = activeCompany?.company_id
   const connectionId = connection?.connection_id
@@ -59,11 +57,7 @@ export default function ReportsPage() {
   if (!companyId || !connectionId) {
     return (
       <div className="page">
-        <PageHeader
-          title={t('pages.reports.title')}
-          helpTitle={t('pages.reports.helpTitle')}
-          help={reportsHelp}
-        />
+        <PageHeader title="Reports" helpTitle="About Reports" help={reportsHelp} />
         <p className="empty">
           Select a company and cloud connection in the top bar.
           {companyId && !connectionId ? (
@@ -80,9 +74,9 @@ export default function ReportsPage() {
   return (
     <div className="page">
       <PageHeader
-        title={t('pages.reports.title')}
-        lead={t('pages.reports.lead')}
-        helpTitle={t('pages.reports.helpTitle')}
+        title="Reports"
+        lead="Download a CSV cost report for the selected date range."
+        helpTitle="About Reports"
         help={reportsHelp}
       />
 

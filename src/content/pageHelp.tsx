@@ -1,30 +1,32 @@
-/* eslint-disable react-refresh/only-export-components */
 import type { ReactNode } from 'react'
-import { useTranslation } from 'react-i18next'
 
 /** Shared help copy for customer-facing pages (cloud-agnostic where possible). */
 
-export function DashboardHelp() {
-  const { t } = useTranslation()
-  return (
-    <>
-      <p>{t('help.dashboard.intro')}</p>
-      <h3>{t('help.dashboard.howToTitle')}</h3>
-      <ol>
-        <li>{t('help.dashboard.howTo1')}</li>
-        <li>{t('help.dashboard.howTo2')}</li>
-      </ol>
-      <h3>{t('help.dashboard.whatYouSeeTitle')}</h3>
-      <ul>
-        <li>{t('help.dashboard.see1')}</li>
-        <li>{t('help.dashboard.see2')}</li>
-        <li>{t('help.dashboard.see3')}</li>
-        <li>{t('help.dashboard.see4')}</li>
-      </ul>
-      <p>{t('help.dashboard.footer')}</p>
-    </>
-  )
-}
+export const dashboardHelp: ReactNode = (
+  <>
+    <p>
+      The Dashboard is your <strong>spend overview</strong> for the selected company and
+      connection — period totals, daily trend, service and compartment breakdowns,
+      recommendations, and cost anomalies.
+    </p>
+    <h3>How to use it</h3>
+    <ol>
+      <li>Pick a company and cloud connection in the top bar.</li>
+      <li>Choose a date preset or custom range.</li>
+    </ol>
+    <h3>What you’ll see</h3>
+    <ul>
+      <li>Period total and daily average</li>
+      <li>Cost by service and by compartment</li>
+      <li>Top active recommendations</li>
+      <li>Top cost anomalies vs recent baseline</li>
+    </ul>
+    <p>
+      Use Cost Explorer when you want to drill into a service or compartment; use Budgets &amp;
+      Alerts when you want thresholds and email notifications.
+    </p>
+  </>
+)
 
 export const costExplorerHelp: ReactNode = (
   <>

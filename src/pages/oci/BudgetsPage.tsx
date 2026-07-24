@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
 import { apiRequest, formatApiError } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
 import { useAsyncData } from '@/hooks/useAsyncData'
@@ -80,7 +79,6 @@ function formatMoney(amount: number, currency: string): string {
 }
 
 export default function BudgetsPage() {
-  const { t } = useTranslation()
   const { activeCompany, connection } = useAuth()
   const companyId = activeCompany?.company_id
   const connectionId = connection?.connection_id
@@ -266,8 +264,8 @@ export default function BudgetsPage() {
     return (
       <div className="page">
         <PageHeader
-          title={t('pages.budgets.title')}
-          helpTitle={t('pages.budgets.helpTitle')}
+          title="Budgets & Alerts"
+          helpTitle="About Budgets & Alerts"
           help={budgetsHelp}
         />
         <p className="empty">
@@ -289,9 +287,9 @@ export default function BudgetsPage() {
   return (
     <div className="page">
       <PageHeader
-        title={t('pages.budgets.title')}
-        lead={t('pages.budgets.lead')}
-        helpTitle={t('pages.budgets.helpTitle')}
+        title="Budgets & Alerts"
+        lead="Set spend caps and email preferences. Budgets and alerts are stored on the server."
+        helpTitle="About Budgets & Alerts"
         help={budgetsHelp}
       />
 

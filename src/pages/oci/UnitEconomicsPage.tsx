@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
 import { apiRequest, formatApiError } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
 import { useAsyncData } from '@/hooks/useAsyncData'
@@ -66,7 +65,6 @@ function formatMoney(amount: number | null | undefined, currency: string | null)
 }
 
 export default function UnitEconomicsPage() {
-  const { t } = useTranslation()
   const { activeCompany, connection } = useAuth()
   const companyId = activeCompany?.company_id
   const connectionId = connection?.connection_id
@@ -164,8 +162,8 @@ export default function UnitEconomicsPage() {
     return (
       <div className="page">
         <PageHeader
-          title={t('pages.unitEconomics.title')}
-          helpTitle={t('pages.unitEconomics.helpTitle')}
+          title="Unit Economics"
+          helpTitle="How Unit Economics works"
           help={unitEconomicsHelp}
         />
         <p className="empty">
@@ -187,9 +185,9 @@ export default function UnitEconomicsPage() {
   return (
     <div className="page">
       <PageHeader
-        title={t('pages.unitEconomics.title')}
-        lead={t('pages.unitEconomics.lead')}
-        helpTitle={t('pages.unitEconomics.helpTitle')}
+        title="Unit Economics"
+        lead="Divide your cloud bill by a business count you care about (customers, seats, orders) to see cost each."
+        helpTitle="How Unit Economics works"
         help={unitEconomicsHelp}
       />
 

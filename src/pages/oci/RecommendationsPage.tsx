@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
 import { apiRequest, formatApiError } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
 import { useAsyncData } from '@/hooks/useAsyncData'
@@ -224,7 +223,6 @@ function RowMenu({
 }
 
 export default function RecommendationsPage() {
-  const { t } = useTranslation()
   const { activeCompany, connection } = useAuth()
   const companyId = activeCompany?.company_id
   const connectionId = connection?.connection_id
@@ -345,9 +343,9 @@ export default function RecommendationsPage() {
   return (
     <div className="page recommendations-page">
       <PageHeader
-        title={t('pages.recommendations.title')}
-        lead={t('pages.recommendations.lead')}
-        helpTitle={t('pages.recommendations.helpTitle')}
+        title="Recommendations"
+        lead="Where resources cost more than they’re used — with the fix and the savings."
+        helpTitle="About Recommendations"
         help={recommendationsHelp}
       />
 
