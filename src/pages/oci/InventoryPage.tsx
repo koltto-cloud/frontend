@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import { apiRequest, apiRequestPaged } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
 import { useAsyncData } from '@/hooks/useAsyncData'
@@ -32,7 +31,6 @@ function resourceBase(companyId: string, connectionId: string, tab: (typeof INVE
 }
 
 export default function InventoryPage() {
-  const { t } = useTranslation()
   const { activeCompany, connection } = useAuth()
   const [tab, setTab] = useState<TabKey>('compartments')
   const [compartmentFilter, setCompartmentFilter] = useState(ALL_COMPARTMENTS)
@@ -107,11 +105,7 @@ export default function InventoryPage() {
   if (!companyId || !connectionId) {
     return (
       <>
-        <PageHeader
-          title={t('pages.inventory.title')}
-          helpTitle={t('pages.inventory.helpTitle')}
-          help={inventoryHelp}
-        />
+        <PageHeader title="Inventory" helpTitle="About Inventory" help={inventoryHelp} />
         <p className="empty">Select a company and connection from the top bar.</p>
       </>
     )
@@ -120,9 +114,9 @@ export default function InventoryPage() {
   return (
     <>
       <PageHeader
-        title={t('pages.inventory.title')}
-        lead={t('pages.inventory.lead')}
-        helpTitle={t('pages.inventory.helpTitle')}
+        title="Inventory"
+        lead="Synced cloud resources for the selected connection — browse by type and compartment."
+        helpTitle="About Inventory"
         help={inventoryHelp}
       />
 

@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
 import { apiRequest } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
 import { useAsyncData } from '@/hooks/useAsyncData'
@@ -81,7 +80,6 @@ function formatMoney(amount: number | null | undefined, currency: string | null)
 }
 
 export default function CostExplorerPage() {
-  const { t } = useTranslation()
   const { activeCompany, connection } = useAuth()
   const companyId = activeCompany?.company_id
   const connectionId = connection?.connection_id
@@ -218,8 +216,8 @@ export default function CostExplorerPage() {
     return (
       <div className="page">
         <PageHeader
-          title={t('pages.costExplorer.title')}
-          helpTitle={t('pages.costExplorer.helpTitle')}
+          title="Cost Explorer"
+          helpTitle="About Cost Explorer"
           help={costExplorerHelp}
         />
         <p className="empty">
@@ -238,9 +236,9 @@ export default function CostExplorerPage() {
   return (
     <div className="page">
       <PageHeader
-        title={t('pages.costExplorer.title')}
-        lead={t('pages.costExplorer.lead')}
-        helpTitle={t('pages.costExplorer.helpTitle')}
+        title="Cost Explorer"
+          lead="Explore daily spend by service, scope, or top resources. Click a service/scope to filter the trend, or a top resource for cost + utilization."
+        helpTitle="About Cost Explorer"
         help={costExplorerHelp}
       />
 

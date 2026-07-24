@@ -1,12 +1,10 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
 import { formatApiError, login, loginTotp } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
 import { Alert } from '@/components/Alert'
 
 export default function LoginPage() {
-  const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
   const { setSessionTokens, refreshSession } = useAuth()
@@ -31,13 +29,13 @@ export default function LoginPage() {
         return
       }
       if (!data.access_token) {
-        setError(t('auth.noAccessToken'))
+        setError('Login succeeded but no access token was returned.')
         return
       }
       setSessionTokens(data.access_token, data.refresh_token)
       const ok = await refreshSession()
       if (!ok) {
-        setError(t('auth.sessionLoadFailed'))
+        setError('Logged in but could not load your session. Check the browser console or Railway logs.')
         return
       }
       navigate('/')
@@ -56,13 +54,15 @@ export default function LoginPage() {
     try {
       const data = await loginTotp(tempToken, totpCode)
       if (!data.access_token) {
-        setError(t('auth.totpNoAccessToken'))
+        setError('TOTP verified but no access token was returned.')
         return
       }
       setSessionTokens(data.access_token, data.refresh_token)
       const ok = await refreshSession()
       if (!ok) {
-        setError(t('auth.totpSessionLoadFailed'))
+        setError(
+          'TOTP verified but could not load your session. The API may still be deploying — wait a moment and try again. Check the browser console for details.',
+        )
         return
       }
       navigate('/')
@@ -78,18 +78,18 @@ export default function LoginPage() {
       <div className="auth-shell">
         <header className="auth-header">
           <p className="auth-brand">KÖLTTÖ</p>
-          <p className="auth-tagline">{t('auth.tagline')}</p>
+          <p className="auth-tagline">Cloud cost & inventory</p>
         </header>
 
         <div className="auth-card">
-          <h1>{tempToken ? t('auth.twoFactor') : t('auth.welcomeBack')}</h1>
+          <h1>{tempToken ? 'Two-factor verification' : 'Welcome back'}</h1>
           <Alert type="error">{error}</Alert>
           <Alert type="success">{success}</Alert>
 
           {!tempToken ? (
             <form onSubmit={(e) => void handleLogin(e)}>
               <div className="form-field">
-                <label htmlFor="email">{t('auth.email')}</label>
+                <label htmlFor="email">Email</label>
                 <input
                   id="email"
                   type="email"
@@ -97,11 +97,11 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   autoComplete="username"
-                  placeholder={t('auth.emailPlaceholder')}
+                  placeholder="you@company.com"
                 />
               </div>
               <div className="form-field">
-                <label htmlFor="password">{t('auth.password')}</label>
+                <label htmlFor="password">Password</label>
                 <input
                   id="password"
                   type="password"
@@ -113,18 +113,18 @@ export default function LoginPage() {
               </div>
               <div className="form-actions">
                 <button type="submit" className="btn btn-primary auth-submit" disabled={loading}>
-                  {loading ? t('auth.signingIn') : t('auth.signIn')}
+                  {loading ? 'Signing in…' : 'Sign in'}
                 </button>
               </div>
               <p className="auth-footer-link">
-                <Link to="/forgot-password">{t('auth.forgotPassword')}</Link>
+                <Link to="/forgot-password">Forgot password?</Link>
               </p>
             </form>
           ) : (
             <form onSubmit={(e) => void handleTotp(e)}>
-              <p className="auth-hint">{t('auth.totpHint')}</p>
+              <p className="auth-hint">Enter the 6-digit code from your authenticator app.</p>
               <div className="form-field">
-                <label htmlFor="totp">{t('auth.totpCode')}</label>
+                <label htmlFor="totp">TOTP code</label>
                 <input
                   id="totp"
                   value={totpCode}
@@ -137,10 +137,10 @@ export default function LoginPage() {
               </div>
               <div className="form-actions">
                 <button type="button" className="btn" onClick={() => setTempToken(null)}>
-                  {t('common.back')}
+                  Back
                 </button>
                 <button type="submit" className="btn btn-primary auth-submit" disabled={loading}>
-                  {t('auth.verify')}
+                  Verify
                 </button>
               </div>
             </form>

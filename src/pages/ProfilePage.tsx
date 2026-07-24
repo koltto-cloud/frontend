@@ -1,31 +1,21 @@
 import { useEffect, useState } from 'react'
 import QRCode from 'qrcode'
-import { useTranslation } from 'react-i18next'
 import { apiRequest, formatApiError } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
-import { useLanguage } from '@/context/LanguageContext'
 import { useAsyncData } from '@/hooks/useAsyncData'
 import { Alert } from '@/components/Alert'
-import {
-  intlLocale,
-  LANGUAGE_OPTIONS,
-  normalizeLanguage,
-  type AppLanguage,
-} from '@/i18n/languages'
 
 type TotpStatus = { enabled: boolean }
 type TotpSetup = { provisioning_uri: string; secret: string }
 
-function formatWhen(value: string | undefined, empty: string, locale: string): string {
-  if (!value) return empty
+function formatWhen(value: string | undefined): string {
+  if (!value) return '—'
   const d = new Date(value)
-  return Number.isNaN(d.getTime()) ? value : d.toLocaleString(locale)
+  return Number.isNaN(d.getTime()) ? value : d.toLocaleString()
 }
 
 export default function ProfilePage() {
-  const { t, i18n } = useTranslation()
   const { user, refreshSession } = useAuth()
-  const { language, setLanguage } = useLanguage()
   const [firstName, setFirstName] = useState(user?.first_name ?? '')
   const [lastName, setLastName] = useState(user?.last_name ?? '')
   const [profileError, setProfileError] = useState('')
@@ -44,21 +34,12 @@ export default function ProfilePage() {
   const [passwordError, setPasswordError] = useState('')
   const [passwordSuccess, setPasswordSuccess] = useState('')
 
-  const [selectedLanguage, setSelectedLanguage] = useState<AppLanguage>(language)
-  const [languageError, setLanguageError] = useState('')
-  const [languageSuccess, setLanguageSuccess] = useState('')
-  const [languageBusy, setLanguageBusy] = useState(false)
-
   useEffect(() => {
     if (user) {
       setFirstName(user.first_name)
       setLastName(user.last_name)
     }
   }, [user])
-
-  useEffect(() => {
-    setSelectedLanguage(language)
-  }, [language])
 
   const totpStatus = useAsyncData<TotpStatus>(
     () => apiRequest('/api/v1/auth/totp/totp/status'),
@@ -68,8 +49,6 @@ export default function ProfilePage() {
   const totpEnabled = totpStatus.data?.enabled === true
   const toggleOn = totpEnabled || enrolling
   const initials = `${user?.first_name?.[0] ?? ''}${user?.last_name?.[0] ?? ''}`.toUpperCase() || '?'
-  const empty = t('common.emDash')
-  const locale = intlLocale(i18n.resolvedLanguage)
 
   useEffect(() => {
     if (!setup?.provisioning_uri) {
@@ -105,7 +84,7 @@ export default function ProfilePage() {
         method: 'PUT',
         body: { first_name: firstName, last_name: lastName },
       })
-      setProfileSuccess(t('settings.profileUpdated'))
+      setProfileSuccess('Profile updated.')
       await refreshSession()
     } catch (err) {
       setProfileError(formatApiError(err))
@@ -125,29 +104,12 @@ export default function ProfilePage() {
           confirm_password: confirmPassword,
         },
       })
-      setPasswordSuccess(t('settings.passwordUpdated'))
+      setPasswordSuccess('Password updated.')
       setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')
     } catch (err) {
       setPasswordError(formatApiError(err))
-    }
-  }
-
-  const handleLanguageUpdate = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLanguageError('')
-    setLanguageSuccess('')
-    setLanguageBusy(true)
-    try {
-      const result = await setLanguage(normalizeLanguage(selectedLanguage))
-      setLanguageSuccess(
-        result === 'saved' ? t('settings.languageUpdated') : t('settings.languageSavedLocally'),
-      )
-    } catch (err) {
-      setLanguageError(formatApiError(err))
-    } finally {
-      setLanguageBusy(false)
     }
   }
 
@@ -179,7 +141,7 @@ export default function ProfilePage() {
       }
       totpStatus.setData({ enabled: false })
       clearEnrollment()
-      if (totpEnabled) setTotpSuccess(t('settings.totpDisabled'))
+      if (totpEnabled) setTotpSuccess('TOTP disabled.')
     } catch (err) {
       setTotpError(formatApiError(err))
     } finally {
@@ -199,7 +161,7 @@ export default function ProfilePage() {
       })
       totpStatus.setData({ enabled: true })
       clearEnrollment()
-      setTotpSuccess(t('settings.totpEnabledSuccess'))
+      setTotpSuccess('TOTP enabled.')
     } catch (err) {
       setTotpError(formatApiError(err))
     } finally {
@@ -210,8 +172,8 @@ export default function ProfilePage() {
   return (
     <div className="settings-page">
       <header className="settings-header">
-        <h1 className="page-title">{t('settings.title')}</h1>
-        <p className="page-lead">{t('settings.lead')}</p>
+        <h1 className="page-title">Profile</h1>
+        <p className="page-lead">Your account details, password, and authenticator.</p>
       </header>
 
       <section className="card settings-card settings-account">
@@ -241,57 +203,57 @@ export default function ProfilePage() {
 
             <dl className="identity-details">
               <div className="identity-detail identity-detail--wide">
-                <dt>{t('settings.userId')}</dt>
+                <dt>User ID</dt>
                 <dd className="mono" title={user.user_id}>
                   {user.user_id}
                 </dd>
               </div>
               <div className="identity-detail">
-                <dt>{t('settings.firstName')}</dt>
-                <dd>{user.first_name || empty}</dd>
+                <dt>First name</dt>
+                <dd>{user.first_name || '—'}</dd>
               </div>
               <div className="identity-detail">
-                <dt>{t('settings.lastName')}</dt>
-                <dd>{user.last_name || empty}</dd>
+                <dt>Last name</dt>
+                <dd>{user.last_name || '—'}</dd>
               </div>
               <div className="identity-detail">
-                <dt>{t('settings.email')}</dt>
+                <dt>Email</dt>
                 <dd>{user.email}</dd>
               </div>
               <div className="identity-detail">
-                <dt>{t('settings.accountStatus')}</dt>
+                <dt>Account status</dt>
                 <dd>{user.account_status}</dd>
               </div>
               <div className="identity-detail">
-                <dt>{t('settings.userType')}</dt>
+                <dt>User type</dt>
                 <dd>{user.user_type}</dd>
               </div>
               <div className="identity-detail">
-                <dt>{t('settings.created')}</dt>
-                <dd>{formatWhen(user.created_at, empty, locale)}</dd>
+                <dt>Created</dt>
+                <dd>{formatWhen(user.created_at)}</dd>
               </div>
               <div className="identity-detail">
-                <dt>{t('settings.updated')}</dt>
-                <dd>{formatWhen(user.updated_at, empty, locale)}</dd>
+                <dt>Updated</dt>
+                <dd>{formatWhen(user.updated_at)}</dd>
               </div>
             </dl>
           </div>
         ) : (
-          <p className="loading">{t('settings.loadingProfile')}</p>
+          <p className="loading">Loading profile…</p>
         )}
       </section>
 
       <div className="settings-grid">
         <section className="card settings-card">
           <div className="settings-card-head">
-            <h2>{t('settings.updateProfile')}</h2>
+            <h2>Update profile</h2>
           </div>
           <Alert type="error">{profileError}</Alert>
           <Alert type="success">{profileSuccess}</Alert>
           <form className="settings-form" onSubmit={(e) => void handleProfileUpdate(e)}>
             <div className="form-row form-row--2">
               <div className="form-field">
-                <label htmlFor="profile-first-name">{t('settings.firstName')}</label>
+                <label htmlFor="profile-first-name">First name</label>
                 <input
                   id="profile-first-name"
                   value={firstName}
@@ -299,7 +261,7 @@ export default function ProfilePage() {
                 />
               </div>
               <div className="form-field">
-                <label htmlFor="profile-last-name">{t('settings.lastName')}</label>
+                <label htmlFor="profile-last-name">Last name</label>
                 <input
                   id="profile-last-name"
                   value={lastName}
@@ -309,7 +271,7 @@ export default function ProfilePage() {
             </div>
             <div className="form-actions">
               <button type="submit" className="btn btn-primary">
-                {t('common.save')}
+                Save changes
               </button>
             </div>
           </form>
@@ -317,45 +279,13 @@ export default function ProfilePage() {
 
         <section className="card settings-card">
           <div className="settings-card-head">
-            <h2>{t('settings.language')}</h2>
-          </div>
-          <p className="page-lead" style={{ marginTop: 0 }}>
-            {t('settings.languageLead')}
-          </p>
-          <Alert type="error">{languageError}</Alert>
-          <Alert type="success">{languageSuccess}</Alert>
-          <form className="settings-form" onSubmit={(e) => void handleLanguageUpdate(e)}>
-            <div className="form-field">
-              <label htmlFor="profile-language">{t('settings.languageLabel')}</label>
-              <select
-                id="profile-language"
-                value={selectedLanguage}
-                onChange={(e) => setSelectedLanguage(normalizeLanguage(e.target.value))}
-              >
-                {LANGUAGE_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {t(opt.labelKey)}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="form-actions">
-              <button type="submit" className="btn btn-primary" disabled={languageBusy}>
-                {t('settings.saveLanguage')}
-              </button>
-            </div>
-          </form>
-        </section>
-
-        <section className="card settings-card">
-          <div className="settings-card-head">
-            <h2>{t('settings.password')}</h2>
+            <h2>Password</h2>
           </div>
           <Alert type="error">{passwordError}</Alert>
           <Alert type="success">{passwordSuccess}</Alert>
           <form className="settings-form" onSubmit={(e) => void handlePasswordUpdate(e)}>
             <div className="form-field">
-              <label htmlFor="profile-current-password">{t('settings.currentPassword')}</label>
+              <label htmlFor="profile-current-password">Current password</label>
               <input
                 id="profile-current-password"
                 type="password"
@@ -367,7 +297,7 @@ export default function ProfilePage() {
             </div>
             <div className="form-row form-row--2">
               <div className="form-field">
-                <label htmlFor="profile-new-password">{t('settings.newPassword')}</label>
+                <label htmlFor="profile-new-password">New password</label>
                 <input
                   id="profile-new-password"
                   type="password"
@@ -378,7 +308,7 @@ export default function ProfilePage() {
                 />
               </div>
               <div className="form-field">
-                <label htmlFor="profile-confirm-password">{t('settings.confirmNewPassword')}</label>
+                <label htmlFor="profile-confirm-password">Confirm new password</label>
                 <input
                   id="profile-confirm-password"
                   type="password"
@@ -391,7 +321,7 @@ export default function ProfilePage() {
             </div>
             <div className="form-actions">
               <button type="submit" className="btn btn-primary">
-                {t('settings.updatePassword')}
+                Update password
               </button>
             </div>
           </form>
@@ -400,18 +330,16 @@ export default function ProfilePage() {
 
       <section className="card settings-card">
         <div className="settings-card-head">
-          <h2>{t('settings.authenticator')}</h2>
+          <h2>Authenticator</h2>
           <span className={`badge ${totpEnabled ? 'badge-success' : 'badge-neutral'}`}>
-            {totpEnabled ? t('common.enabled') : t('common.off')}
+            {totpEnabled ? 'Enabled' : 'Off'}
           </span>
         </div>
         <Alert type="error">{totpStatus.error || totpError}</Alert>
         <Alert type="success">{totpSuccess}</Alert>
 
         <label className="toggle-row">
-          <span className="toggle-label">
-            {totpEnabled ? t('settings.totpEnabled') : t('settings.enableTotp')}
-          </span>
+          <span className="toggle-label">{totpEnabled ? 'TOTP is enabled' : 'Enable TOTP'}</span>
           <input
             type="checkbox"
             className="toggle-input"
@@ -426,14 +354,17 @@ export default function ProfilePage() {
         {enrolling && setup ? (
           <div className="totp-enroll">
             <div className="totp-enroll-copy">
-              <p className="totp-enroll-hint">{t('settings.totpEnrollHint')}</p>
+              <p className="totp-enroll-hint">
+                Scan this QR code with your authenticator app, then enter the 6-digit code to
+                confirm.
+              </p>
               <div className="form-field">
-                <label>{t('settings.secretManual')}</label>
+                <label>Secret (manual entry)</label>
                 <code className="totp-secret">{setup.secret}</code>
               </div>
               <form className="settings-form" onSubmit={(e) => void handleTotpVerify(e)}>
                 <div className="form-field">
-                  <label htmlFor="profile-totp-code">{t('settings.verifyCode')}</label>
+                  <label htmlFor="profile-totp-code">Verify code</label>
                   <input
                     id="profile-totp-code"
                     value={totpCode}
@@ -446,7 +377,7 @@ export default function ProfilePage() {
                 </div>
                 <div className="form-actions">
                   <button type="submit" className="btn btn-primary" disabled={totpBusy}>
-                    {t('settings.confirmEnable')}
+                    Confirm & enable
                   </button>
                 </div>
               </form>
@@ -455,12 +386,12 @@ export default function ProfilePage() {
               <img
                 className="totp-qr"
                 src={qrDataUrl}
-                alt={t('settings.totpQrAlt')}
+                alt="TOTP QR code"
                 width={200}
                 height={200}
               />
             ) : (
-              <p className="muted">{t('settings.generatingQr')}</p>
+              <p className="muted">Generating QR code…</p>
             )}
           </div>
         ) : null}

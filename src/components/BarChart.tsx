@@ -1,5 +1,3 @@
-import { useTranslation } from 'react-i18next'
-
 export interface BarChartItem {
   label: string
   value: number
@@ -24,9 +22,7 @@ export default function BarChart({
   variant = 'default',
   onItemClick,
 }: BarChartProps) {
-  const { t } = useTranslation()
-
-  if (items.length === 0) return <p className="empty">{t('common.noData')}</p>
+  if (items.length === 0) return <p className="empty">No data.</p>
 
   const max = Math.max(...items.map((i) => i.value), 1)
   const clickable = Boolean(onItemClick)

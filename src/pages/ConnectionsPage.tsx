@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import { apiRequest, formatApiError } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
 import { useAsyncData } from '@/hooks/useAsyncData'
@@ -53,7 +52,6 @@ const EMPTY_OCI_CREATE = {
 }
 
 export default function ConnectionsPage() {
-  const { t } = useTranslation()
   const { activeCompany, refreshSession } = useAuth()
   const companyId = activeCompany?.company_id ?? ''
 
@@ -197,8 +195,8 @@ export default function ConnectionsPage() {
     return (
       <>
         <PageHeader
-          title={t('pages.connections.title')}
-          helpTitle={t('pages.connections.helpTitle')}
+          title="Connections"
+          helpTitle="About Connections"
           help={connectionsHelp}
         />
         <p className="empty">Select a company from the top bar.</p>
@@ -209,9 +207,9 @@ export default function ConnectionsPage() {
   return (
     <>
       <PageHeader
-        title={t('pages.connections.title')}
-        lead={t('pages.connections.lead')}
-        helpTitle={t('pages.connections.helpTitle')}
+        title="Connections"
+        lead="Cloud account connections for this company. OCI is available today; AWS and GCP will appear here when their connectors ship."
+        helpTitle="About Connections"
         help={connectionsHelp}
       />
 
