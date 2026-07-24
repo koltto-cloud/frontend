@@ -27,6 +27,7 @@
     "actions": "Acciones",
     "status": "Estado",
     "all": "Todos",
+    "confirm": "Confirmar",
     "yes": "Sí",
     "no": "No",
     "disabled": "Desactivado",
@@ -270,6 +271,95 @@
       "scopeBody": "Ámbito es la porción de la jerarquía de la cuenta en la nube: compartimento en OCI, cuenta en AWS, suscripción / grupo de recursos en Azure. El filtro por proveedor entre conexiones está previsto para más adelante.",
       "whenTitle": "Cuándo usarlo",
       "whenBody": "Empieza aquí cuando necesites responder “¿adónde se fue el dinero?” o “¿este recurso caro realmente está ocupado?”. Para exportar CSV, usa Informes. Para KPIs de costo por cliente, usa Economía unitaria."
+    },
+    "recommendations": {
+      "intro": "Las recomendaciones destacan oportunidades prácticas de ahorro y rendimiento a partir de señales de monitoreo, uso e inventario.",
+      "howToTitle": "Cómo usarlo",
+      "howTo1": "Compara el ahorro mensual estimado con las alertas de rendimiento.",
+      "howTo2": "Filtra por acción, estado, tipo de recurso o ámbito.",
+      "howTo3": "Revisa la acción sugerida, las señales del recurso y el costo actual frente al proyectado.",
+      "howTo4": "Silencia un elemento durante 30 días, ignóralo hasta restaurarlo o valídalo en Inventario y Monitoreo antes de actuar.",
+      "confidenceTitle": "Cómo interpretar la confianza",
+      "confidenceBody": "Una confianza baja suele indicar un historial de métricas limitado o ruidoso. Los hallazgos de volúmenes no adjuntos usan el estado de asociación y suelen ser señales más sólidas; trata los hallazgos de utilización como indicios que debes investigar."
+    },
+    "anomalies": {
+      "intro": "Las anomalías de costo destacan cambios de gasto inusuales frente a la referencia reciente, incluidos picos que pueden indicar nuevas cargas, uso descontrolado o errores de configuración.",
+      "howToTitle": "Cómo usarlo",
+      "howTo1": "Elige el rango de fechas que deseas analizar.",
+      "howTo2": "Investiga primero las anomalías con los mayores cambios.",
+      "howTo3": "Usa el servicio causante como punto de partida en el Explorador de costos.",
+      "footer": "Usa Presupuestos y alertas para recibir un correo cuando ocurran eventos similares."
+    },
+    "unitEconomics": {
+      "intro": "Economía unitaria divide tu factura de la nube por una métrica empresarial para mostrar el costo por cliente, puesto, pedido u otra unidad.",
+      "example": "Por ejemplo, una factura de $12,000 dividida entre 120 clientes activos equivale a $100 por cliente.",
+      "formula": "costo unitario = factura total de la nube del rango de fechas ÷ métrica empresarial",
+      "howToTitle": "Cómo usarlo",
+      "howTo1": "Añade una métrica empresarial, su etiqueta en singular y su valor actual.",
+      "howTo2": "Elige el rango de fechas que determina la factura de la nube.",
+      "howTo3": "Revisa Costo unitario en la nube para ver la factura dividida por esa métrica.",
+      "termsTitle": "Qué significan los campos",
+      "terms1": "Cuántos es un valor de tu empresa, como clientes, puestos o llamadas de API.",
+      "terms2": "Contado como es la etiqueta en singular que se muestra con el resultado.",
+      "limitsTitle": "Límites actuales",
+      "limits1": "El cálculo usa la factura completa de la conexión seleccionada.",
+      "limits2": "Aún no divide el costo por nube, servicio, recurso o etiqueta.",
+      "limits3": "El costo unitario por producto requerirá Asignaciones y etiquetas.",
+      "footer": "Úsalo para conocer el costo de infraestructura por cliente, puesto, pedido u otra métrica empresarial."
+    },
+    "reports": {
+      "intro": "Informes exporta un informe de costos en CSV para la conexión y el rango de fechas seleccionados, útil para finanzas, auditorías o análisis sin conexión.",
+      "howToTitle": "Cómo usarlo",
+      "howTo1": "Elige las fechas de inicio y finalización.",
+      "howTo2": "Descarga el CSV.",
+      "footer": "Usa el Explorador de costos para análisis interactivos y Presupuestos y alertas para una gestión recurrente."
+    },
+    "inventory": {
+      "intro": "Inventario es el catálogo de recursos sincronizados de cómputo, almacenamiento, redes y otros servicios de la conexión seleccionada.",
+      "howToTitle": "Cómo usarlo",
+      "howTo1": "Cambia de pestaña para explorar una familia de recursos.",
+      "howTo2": "Filtra los recursos por compartimento cuando esté disponible.",
+      "howTo3": "Confirma qué existe antes de aplicar una recomendación.",
+      "footer": "Monitoreo muestra métricas de ejecución y Recomendaciones usa esas señales para identificar oportunidades."
+    },
+    "monitoring": {
+      "intro": "Monitoreo muestra métricas de utilización y rendimiento de los recursos de la conexión seleccionada.",
+      "howToTitle": "Cómo usarlo",
+      "howTo1": "Elige un tipo de recurso, un recurso, una métrica y un rango de fechas.",
+      "howTo2": "Carga las métricas para ver el gráfico y los valores promedio, mínimo y máximo.",
+      "howTo3": "Selecciona el nombre de un recurso en la tabla para abrir su gráfico.",
+      "howTo4": "Los gráficos de cómputo incluyen la capacidad aprovisionada y guías de utilización del 20 % y el 80 %.",
+      "footer": "Los indicadores de capacidad pueden mantenerse planos; usa CPU y rendimiento para entender la actividad, o el Explorador de costos para comparar costo y utilización."
+    },
+    "connections": {
+      "intro": "Las conexiones permiten que Koltto se autentique en cuentas de nube y delimitan la sincronización de costos, inventario y monitoreo.",
+      "howToTitle": "Cómo usarlo",
+      "howTo1": "Crea una conexión con las credenciales que exige el proveedor de nube.",
+      "howTo2": "Selecciona la conexión en la barra superior cuando trabajes con Costos o Recursos.",
+      "howTo3": "Una empresa puede tener varias conexiones de distintos proveedores de nube.",
+      "footer": "Las funciones de costos usan actualmente los datos sincronizados de la conexión activa."
+    },
+    "budgets": {
+      "intro": "Presupuestos y alertas define límites de gasto y notificaciones por correo para detectar automáticamente las sorpresas de costos.",
+      "howToTitle": "Cómo usar los presupuestos",
+      "howTo1": "Crea un presupuesto con un importe, período y ámbito de cuenta, servicio o compartimento.",
+      "howTo2": "Define el porcentaje en el que debe activarse una alerta.",
+      "howTo3": "Usa una plantilla para comenzar con un patrón habitual.",
+      "alertsTitle": "Preferencias de alertas",
+      "alertsBody": "Elige qué eventos de anomalías, recomendaciones y umbrales de presupuesto envían correos y quién los recibe.",
+      "nextTitle": "Próximamente",
+      "nextBody": "Los ámbitos por etiqueta y organización llegarán con Asignaciones; los ámbitos actuales se aplican a la conexión seleccionada."
+    },
+    "allocations": {
+      "intro": "Asignaciones asociará el gasto en la nube con equipos, productos y centros de costos mediante etiquetas y reglas de asignación.",
+      "howToTitle": "Por qué es importante",
+      "howTo1": "Repercusión y visualización de costos por equipo.",
+      "howTo2": "Presupuestos por organización o etiqueta.",
+      "howTo3": "Economía unitaria filtrada por producto o entorno.",
+      "howTo4": "Costos comparables entre nubes mediante etiquetas compartidas.",
+      "statusTitle": "Estado",
+      "statusBody": "Esta página es provisional hasta que estén disponibles la sincronización de etiquetas y las reglas de asignación.",
+      "footer": "Las etiquetas atribuyen el gasto; las métricas empresariales convierten ese gasto en costo unitario."
     }
   },
   "recommendations": {
@@ -283,7 +373,63 @@
       "idleFileSystem": "Revísalo: si nada necesita este sistema de archivos, elimínalo.",
       "unattachedBlock": "Elimina este volumen de bloque si nada necesita los datos, o adjúntalo a una instancia si aún se requiere.",
       "unattachedBoot": "Elimina este volumen de arranque si nada necesita los datos, o adjúntalo a una instancia si aún se requiere."
-    }
+    },
+    "actions": {
+      "terminate": "Eliminar",
+      "downsize": "Reducir tamaño",
+      "review": "Revisar",
+      "stop": "Detener",
+      "scaleUp": "Ampliar"
+    },
+    "potentialSavings": "Ahorro potencial / mes",
+    "allActions": "Todas las acciones",
+    "filtersAria": "Filtros de recomendaciones",
+    "statusAria": "Estado de recomendaciones",
+    "status": {
+      "active": "Activas",
+      "silenced": "Silenciadas",
+      "all": "Todas"
+    },
+    "type": "Tipo",
+    "scope": "Ámbito",
+    "allTypes": "Todos los tipos",
+    "allScopes": "Todos los ámbitos",
+    "types": {
+      "compute": "Cómputo",
+      "block_storage": "Almacenamiento de bloques",
+      "file_storage": "Almacenamiento de archivos",
+      "load_balancer": "Balanceador de carga"
+    },
+    "selectContext": "Selecciona una empresa y una conexión en la nube en la barra superior para ver recomendaciones.",
+    "setupConnection": "Configurar una conexión",
+    "loading": "Analizando costo frente a utilización…",
+    "empty": "No hay recomendaciones para estos filtros. Prueba otro estado o sincroniza los costos y el monitoreo de los últimos 30 días.",
+    "columns": {
+      "action": "Acción",
+      "resource": "Recurso",
+      "recommendation": "Recomendación",
+      "cost": "Costo"
+    },
+    "rowActions": "Acciones de fila",
+    "unsilence": "Dejar de silenciar",
+    "silence30d": "Silenciar 30 días",
+    "ignore": "Ignorar",
+    "metrics": {
+      "unattached": "no adjunto",
+      "noTraffic": "sin tráfico",
+      "nearZeroIo": "E/S casi nula",
+      "cpuMem": "CPU {{cpu}} · Mem {{mem}}",
+      "na": "n/d",
+      "lowConfidence": "confianza baja"
+    },
+    "saveMo": "ahorra {{amount}}",
+    "perMo": "/mes",
+    "nowToZero": "{{amount}}/mes ahora → $0 después",
+    "perMoAfter": "/mes después",
+    "perMoNow": "{{amount}}/mes ahora",
+    "performanceRisk": "Riesgo de rendimiento",
+    "silenceFailed": "No se pudo silenciar la recomendación",
+    "unsilenceFailed": "No se pudo quitar el silencio"
   },
   "costExplorer": {
     "selectContext": "Selecciona una empresa y una conexión en la nube en la barra superior.",
@@ -307,5 +453,178 @@
     "topResources": "Recursos principales",
     "topResourcesHint": "Haz clic en un recurso para abrir costo + utilización (en cómputo se muestran la capacidad y las guías del 20%/80%).",
     "cost": "Costo"
+  },
+  "anomalies": {
+    "selectContext": "Selecciona una empresa y una conexión en la nube en la barra superior para ver anomalías.",
+    "setupConnection": "Configurar una conexión",
+    "loading": "Analizando el gasto en busca de anomalías…",
+    "empty": "No hubo picos de gasto en los últimos 30 días; el costo diario se mantuvo dentro de su rango normal.",
+    "drivenBy": "impulsado por {{service}}",
+    "mixedDrivers": "varios factores",
+    "typical": "habitual",
+    "up": "{{service}} aumentó {{amount}}",
+    "viewTrend": "ver tendencia"
+  },
+  "inventory": {
+    "selectContext": "Selecciona una empresa y una conexión en la barra superior.",
+    "loading": "Cargando inventario…",
+    "refresh": "Actualizar",
+    "compartment": "Compartimento",
+    "allCompartments": "Todos los compartimentos",
+    "tabs": {
+      "compartments": "Compartimentos",
+      "compute": "Cómputo",
+      "blockStorage": "Almacenamiento de bloques",
+      "objectStorage": "Almacenamiento de objetos",
+      "fileStorage": "Almacenamiento de archivos",
+      "loadBalancers": "Balanceadores de carga"
+    },
+    "empty": "No se encontraron recursos para esta selección."
+  },
+  "monitoring": {
+    "selectContext": "Selecciona una empresa y una conexión en la barra superior.",
+    "info": "Sincroniza el monitoreo desde Inventario y luego elige un tipo de recurso y un recurso para graficar.",
+    "loading": "Cargando métricas…",
+    "loadMetrics": "Cargar métricas",
+    "refresh": "Actualizar",
+    "filters": {
+      "startDate": "Fecha de inicio",
+      "endDate": "Fecha de finalización",
+      "compartment": "Compartimento",
+      "allCompartments": "Todos los compartimentos",
+      "resourceType": "Tipo de recurso",
+      "allTypes": "Todos los tipos",
+      "resource": "Recurso",
+      "allResources": "Todos los recursos",
+      "metric": "Métrica",
+      "allMetrics": "Todas las métricas"
+    },
+    "empty": "Elige un tipo de recurso y un recurso, y luego carga las métricas para ver el gráfico.",
+    "noMetrics": "No se encontraron métricas de monitoreo.",
+    "selectResource": "Selecciona un recurso para ver su gráfico de serie temporal.",
+    "details": "Detalles",
+    "columns": {
+      "date": "Fecha",
+      "resourceType": "Tipo de recurso",
+      "metric": "Métrica",
+      "resource": "Recurso",
+      "mean": "Promedio",
+      "max": "Máximo",
+      "min": "Mínimo",
+      "synced": "Sincronizado"
+    },
+    "metricDetailsTitle": "Detalles de la métrica de monitoreo"
+  },
+  "reports": {
+    "selectContext": "Selecciona una empresa y una conexión en la nube en la barra superior.",
+    "setupConnection": "Configurar una conexión",
+    "downloadCsv": "Descargar CSV",
+    "preparing": "Preparando…",
+    "empty": "No hay datos de informe disponibles para este rango de fechas."
+  },
+  "budgets": {
+    "selectContext": "Selecciona una empresa y una conexión en la nube en la barra superior.",
+    "setupConnection": "Configurar una conexión",
+    "budgets": "Presupuestos",
+    "createBudget": "Crear presupuesto",
+    "editBudget": "Editar presupuesto",
+    "deleteBudget": "Eliminar presupuesto",
+    "templates": "Plantillas de presupuesto",
+    "useTemplate": "Usar: {{name}}",
+    "empty": "Aún no hay presupuestos. Crea uno o usa una plantilla.",
+    "confirmDelete": "¿Eliminar este presupuesto?",
+    "confirmDeleteNamed": "¿Eliminar el presupuesto «{{name}}»?",
+    "alertPreferences": "Preferencias de alertas",
+    "deleteAlert": "Eliminar preferencia de alerta",
+    "confirmDeleteAlert": "¿Eliminar esta preferencia de alerta?",
+    "name": "Nombre",
+    "amount": "Importe",
+    "period": "Período",
+    "scope": "Ámbito",
+    "scopeValue": "Valor del ámbito",
+    "alertThreshold": "Umbral de alerta %",
+    "monthly": "Mensual",
+    "quarterly": "Trimestral",
+    "annual": "Anual"
+  },
+  "unitEconomics": {
+    "selectContext": "Selecciona una empresa y una conexión en la nube en la barra superior.",
+    "setupConnection": "Configurar una conexión",
+    "cloudCostEach": "Costo unitario en la nube",
+    "fullBillHint": "Usa la factura completa de la conexión y el rango de fechas seleccionados.",
+    "computing": "Calculando…",
+    "empty": "Aún no hay métricas. Añade una métrica empresarial abajo.",
+    "billForRange": "Factura de este rango: {{amount}}",
+    "businessCounts": "Tus métricas empresariales",
+    "businessCountsHint": "Estos valores provienen de tu empresa, no de la nube.",
+    "noBusinessCounts": "Aún no hay métricas empresariales.",
+    "form": {
+      "name": "Nombre",
+      "countedAs": "Contado como",
+      "howMany": "Cuántos",
+      "period": "Período",
+      "addCount": "Añadir métrica",
+      "monthly": "Mensual",
+      "quarterly": "Trimestral",
+      "annual": "Anual"
+    },
+    "confirmDelete": "¿Eliminar esta métrica empresarial?"
+  },
+  "connections": {
+    "selectContext": "Selecciona una empresa en la barra superior.",
+    "createConnection": "Crear conexión",
+    "editConnection": "Editar conexión",
+    "deleteConnection": "Eliminar conexión",
+    "createTitle": "Crear conexión",
+    "editTitle": "Editar conexión — {{name}}",
+    "deleteTitle": "Eliminar conexión",
+    "detailsTitle": "Detalles de la conexión",
+    "confirmDelete": "¿Eliminar la conexión «{{name}}»?",
+    "empty": "Aún no hay conexiones.",
+    "comingSoon": "Las conexiones de {{cloud}} estarán disponibles próximamente.",
+    "table": {
+      "cloud": "Nube",
+      "name": "Nombre",
+      "account": "Cuenta",
+      "region": "Región",
+      "actions": "Acciones"
+    },
+    "fields": {
+      "cloud": "Nube",
+      "name": "Nombre",
+      "description": "Descripción",
+      "tenancy": "Tenencia",
+      "user": "Usuario",
+      "fingerprint": "Huella digital",
+      "region": "Región",
+      "keyContent": "Clave privada",
+      "passphrase": "Frase de contraseña"
+    }
+  },
+  "allocations": {
+    "empty": "Asignaciones estará disponible próximamente. La sincronización de etiquetas y las reglas de asignación asociarán el gasto en la nube con equipos, productos y centros de costos."
+  },
+  "modals": {
+    "createUser": "Crear usuario",
+    "userDetails": "Detalles del usuario",
+    "createMembership": "Crear membresía",
+    "membershipDetails": "Detalles de la membresía",
+    "createCompany": "Crear empresa",
+    "companyDetails": "Detalles de la empresa",
+    "createService": "Crear servicio",
+    "serviceDetails": "Detalles del servicio",
+    "createPlan": "Crear plan",
+    "planDetails": "Detalles del plan",
+    "serviceBundleDetails": "Detalles del paquete de servicios",
+    "createSubscription": "Crear suscripción",
+    "subscriptionDetails": "Detalles de la suscripción",
+    "createInvoice": "Crear factura",
+    "invoiceDetails": "Detalles de la factura",
+    "invoiceItemDetails": "Detalles del concepto de factura",
+    "auditEventDetails": "Detalles del evento de auditoría",
+    "monitoringMetricDetails": "Detalles de la métrica de monitoreo",
+    "createConnection": "Crear conexión",
+    "editConnection": "Editar conexión",
+    "connectionDetails": "Detalles de la conexión"
   }
 }

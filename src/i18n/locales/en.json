@@ -27,6 +27,7 @@
     "actions": "Actions",
     "status": "Status",
     "all": "All",
+    "confirm": "Confirm",
     "yes": "Yes",
     "no": "No",
     "disabled": "Disabled",
@@ -270,6 +271,95 @@
       "scopeBody": "Scope is the cloud account hierarchy slice: compartment in OCI, account in AWS, subscription / resource group in Azure. Filtering by cloud provider across connections is planned for a later pass.",
       "whenTitle": "When to use it",
       "whenBody": "Start here when you need to answer “where did the money go?” or “is this expensive resource actually busy?” For CSV export, use Reports. For cost-per-customer style KPIs, use Unit Economics."
+    },
+    "recommendations": {
+      "intro": "Recommendations highlight actionable savings and performance opportunities from monitoring, usage, and inventory signals.",
+      "howToTitle": "How to use it",
+      "howTo1": "Compare estimated monthly savings with performance alerts.",
+      "howTo2": "Filter by action, status, resource type, or scope.",
+      "howTo3": "Review the suggested action, resource signals, and current versus projected cost.",
+      "howTo4": "Silence an item for 30 days, ignore it until restored, or validate it in Inventory and Monitoring before acting.",
+      "confidenceTitle": "How to read confidence",
+      "confidenceBody": "Low confidence usually means limited or noisy metric history. Unattached-volume findings use attachment state and are typically stronger signals; treat utilization findings as leads to investigate."
+    },
+    "anomalies": {
+      "intro": "Cost Anomalies highlight unusual spend changes against the recent baseline, including spikes that may indicate new workloads, runaway usage, or misconfiguration.",
+      "howToTitle": "How to use it",
+      "howTo1": "Choose the date range to scan.",
+      "howTo2": "Investigate anomalies with the largest changes first.",
+      "howTo3": "Use the driver service as a starting point in Cost Explorer.",
+      "footer": "Use Budgets & Alerts to receive email when similar events occur."
+    },
+    "unitEconomics": {
+      "intro": "Unit Economics divides your cloud bill by a business count to show cost per customer, seat, order, or another unit.",
+      "example": "For example, a $12,000 bill divided by 120 active customers equals $100 per customer.",
+      "formula": "cost each = total cloud bill for the date range ÷ business count",
+      "howToTitle": "How to use it",
+      "howTo1": "Add a business count, its singular label, and its current value.",
+      "howTo2": "Choose the date range that determines the cloud bill.",
+      "howTo3": "Review Cloud cost each for the bill divided by that count.",
+      "termsTitle": "What the fields mean",
+      "terms1": "How many is a value from your business, such as customers, seats, or API calls.",
+      "terms2": "Counted as is the singular label displayed with the result.",
+      "limitsTitle": "Current limits",
+      "limits1": "The calculation uses the full bill for the selected connection.",
+      "limits2": "It does not yet split cost by cloud, service, resource, or tag.",
+      "limits3": "Product-level cost per unit will require Allocations and tags.",
+      "footer": "Use it for infrastructure cost per customer, seat, order, or similar business measure."
+    },
+    "reports": {
+      "intro": "Reports exports a CSV cost report for the selected connection and date range for finance, audits, or offline analysis.",
+      "howToTitle": "How to use it",
+      "howTo1": "Choose start and end dates.",
+      "howTo2": "Download the CSV.",
+      "footer": "Use Cost Explorer for interactive analysis and Budgets & Alerts for recurring governance."
+    },
+    "inventory": {
+      "intro": "Inventory is the catalog of synced compute, storage, networking, and related cloud resources for the selected connection.",
+      "howToTitle": "How to use it",
+      "howTo1": "Switch tabs to browse a resource family.",
+      "howTo2": "Filter resources by compartment when available.",
+      "howTo3": "Confirm what exists before acting on a recommendation.",
+      "footer": "Monitoring shows runtime metrics, while Recommendations uses those signals to identify opportunities."
+    },
+    "monitoring": {
+      "intro": "Monitoring shows utilization and performance metrics for resources in the selected connection.",
+      "howToTitle": "How to use it",
+      "howTo1": "Choose a resource type, resource, metric, and date range.",
+      "howTo2": "Load metrics to view the chart and mean, minimum, and maximum values.",
+      "howTo3": "Select a resource name in the table to open its chart.",
+      "howTo4": "Compute charts include provisioned capacity and 20% and 80% utilization guides.",
+      "footer": "Capacity gauges may stay flat; use CPU and throughput to understand activity, or Cost Explorer to compare cost and utilization."
+    },
+    "connections": {
+      "intro": "Connections let Koltto authenticate to cloud accounts and scope cost, inventory, and monitoring sync.",
+      "howToTitle": "How to use it",
+      "howTo1": "Create a connection with the credentials required by the cloud provider.",
+      "howTo2": "Select the connection in the top bar when working with Costs or Resources.",
+      "howTo3": "A company can have multiple connections across cloud providers.",
+      "footer": "Cost features currently use the active connection’s synced data."
+    },
+    "budgets": {
+      "intro": "Budgets & Alerts sets spend caps and email notifications so cost surprises can be detected automatically.",
+      "howToTitle": "How to use budgets",
+      "howTo1": "Create a budget with an amount, period, and account, service, or compartment scope.",
+      "howTo2": "Set the percentage at which an alert should fire.",
+      "howTo3": "Use a template to start from a common pattern.",
+      "alertsTitle": "Alert preferences",
+      "alertsBody": "Choose which anomalies, recommendations, and budget threshold events send email and who receives them.",
+      "nextTitle": "What’s next",
+      "nextBody": "Tag and organization scopes will arrive with Allocations; current scopes apply to the selected connection."
+    },
+    "allocations": {
+      "intro": "Allocations will map cloud spend to teams, products, and cost centers using tags and allocation rules.",
+      "howToTitle": "Why it matters",
+      "howTo1": "Chargeback and showback by team.",
+      "howTo2": "Budgets by organization or tag.",
+      "howTo3": "Unit economics filtered to a product or environment.",
+      "howTo4": "Comparable costs across clouds using shared tags.",
+      "statusTitle": "Status",
+      "statusBody": "This page is a placeholder until tag sync and allocation rules are available.",
+      "footer": "Tags attribute spend; business metrics turn attributed spend into cost per unit."
     }
   },
   "recommendations": {
@@ -283,7 +373,63 @@
       "idleFileSystem": "Review it — if nothing needs this file system, terminate it.",
       "unattachedBlock": "Terminate this block volume if nothing needs the data, or attach it to an instance if it is still required.",
       "unattachedBoot": "Terminate this boot volume if nothing needs the data, or attach it to an instance if it is still required."
-    }
+    },
+    "actions": {
+      "terminate": "Terminate",
+      "downsize": "Downsize",
+      "review": "Review",
+      "stop": "Stop",
+      "scaleUp": "Scale up"
+    },
+    "potentialSavings": "Potential savings / mo",
+    "allActions": "All actions",
+    "filtersAria": "Recommendation filters",
+    "statusAria": "Recommendation status",
+    "status": {
+      "active": "Active",
+      "silenced": "Silenced",
+      "all": "All"
+    },
+    "type": "Type",
+    "scope": "Scope",
+    "allTypes": "All types",
+    "allScopes": "All scopes",
+    "types": {
+      "compute": "Compute",
+      "block_storage": "Block storage",
+      "file_storage": "File storage",
+      "load_balancer": "Load balancer"
+    },
+    "selectContext": "Select a company and cloud connection in the top bar to see recommendations.",
+    "setupConnection": "Set up a connection",
+    "loading": "Analyzing cost vs utilization…",
+    "empty": "No recommendations for these filters. Try another status, or sync cost and monitoring for the last 30 days.",
+    "columns": {
+      "action": "Action",
+      "resource": "Resource",
+      "recommendation": "Recommendation",
+      "cost": "Cost"
+    },
+    "rowActions": "Row actions",
+    "unsilence": "Unsilence",
+    "silence30d": "Silence 30 days",
+    "ignore": "Ignore",
+    "metrics": {
+      "unattached": "unattached",
+      "noTraffic": "no traffic",
+      "nearZeroIo": "near-zero I/O",
+      "cpuMem": "CPU {{cpu}} · Mem {{mem}}",
+      "na": "n/a",
+      "lowConfidence": "low confidence"
+    },
+    "saveMo": "save {{amount}}",
+    "perMo": "/mo",
+    "nowToZero": "{{amount}}/mo now → $0 after",
+    "perMoAfter": "/mo after",
+    "perMoNow": "{{amount}}/mo now",
+    "performanceRisk": "Performance risk",
+    "silenceFailed": "Could not silence recommendation",
+    "unsilenceFailed": "Could not clear silence"
   },
   "costExplorer": {
     "selectContext": "Select a company and cloud connection in the top bar.",
@@ -307,5 +453,178 @@
     "topResources": "Top resources",
     "topResourcesHint": "Click a resource to open cost + utilization (compute shows capacity and 20%/80% guides).",
     "cost": "Cost"
+  },
+  "anomalies": {
+    "selectContext": "Select a company and cloud connection in the top bar to see anomalies.",
+    "setupConnection": "Set up a connection",
+    "loading": "Scanning spend for anomalies…",
+    "empty": "No spend spikes in the last 30 days — daily cost stayed within its normal range.",
+    "drivenBy": "driven by {{service}}",
+    "mixedDrivers": "mixed drivers",
+    "typical": "typical",
+    "up": "{{service}} up {{amount}}",
+    "viewTrend": "view trend"
+  },
+  "inventory": {
+    "selectContext": "Select a company and connection from the top bar.",
+    "loading": "Loading inventory…",
+    "refresh": "Refresh",
+    "compartment": "Compartment",
+    "allCompartments": "All compartments",
+    "tabs": {
+      "compartments": "Compartments",
+      "compute": "Compute",
+      "blockStorage": "Block Storage",
+      "objectStorage": "Object Storage",
+      "fileStorage": "File Storage",
+      "loadBalancers": "Load Balancers"
+    },
+    "empty": "No resources found for this selection."
+  },
+  "monitoring": {
+    "selectContext": "Select a company and connection from the top bar.",
+    "info": "Sync monitoring from Inventory, then choose a resource type and resource to chart.",
+    "loading": "Loading metrics…",
+    "loadMetrics": "Load metrics",
+    "refresh": "Refresh",
+    "filters": {
+      "startDate": "Start date",
+      "endDate": "End date",
+      "compartment": "Compartment",
+      "allCompartments": "All compartments",
+      "resourceType": "Resource type",
+      "allTypes": "All types",
+      "resource": "Resource",
+      "allResources": "All resources",
+      "metric": "Metric",
+      "allMetrics": "All metrics"
+    },
+    "empty": "Pick a resource type and resource, then load metrics to see the chart.",
+    "noMetrics": "No monitoring metrics found.",
+    "selectResource": "Select a resource to see its time-series chart.",
+    "details": "Details",
+    "columns": {
+      "date": "Date",
+      "resourceType": "Resource type",
+      "metric": "Metric",
+      "resource": "Resource",
+      "mean": "Mean",
+      "max": "Max",
+      "min": "Min",
+      "synced": "Synced"
+    },
+    "metricDetailsTitle": "Monitoring metric details"
+  },
+  "reports": {
+    "selectContext": "Select a company and cloud connection in the top bar.",
+    "setupConnection": "Set up a connection",
+    "downloadCsv": "Download CSV",
+    "preparing": "Preparing…",
+    "empty": "No report data is available for this date range."
+  },
+  "budgets": {
+    "selectContext": "Select a company and cloud connection in the top bar.",
+    "setupConnection": "Set up a connection",
+    "budgets": "Budgets",
+    "createBudget": "Create budget",
+    "editBudget": "Edit budget",
+    "deleteBudget": "Delete budget",
+    "templates": "Budget templates",
+    "useTemplate": "Use: {{name}}",
+    "empty": "No budgets yet. Create one or use a template.",
+    "confirmDelete": "Delete this budget?",
+    "confirmDeleteNamed": "Delete budget “{{name}}”?",
+    "alertPreferences": "Alert preferences",
+    "deleteAlert": "Delete alert preference",
+    "confirmDeleteAlert": "Delete this alert preference?",
+    "name": "Name",
+    "amount": "Amount",
+    "period": "Period",
+    "scope": "Scope",
+    "scopeValue": "Scope value",
+    "alertThreshold": "Alert threshold %",
+    "monthly": "Monthly",
+    "quarterly": "Quarterly",
+    "annual": "Annual"
+  },
+  "unitEconomics": {
+    "selectContext": "Select a company and cloud connection in the top bar.",
+    "setupConnection": "Set up a connection",
+    "cloudCostEach": "Cloud cost each",
+    "fullBillHint": "Uses the full bill for the selected connection and date range.",
+    "computing": "Computing…",
+    "empty": "No counts yet. Add a business count below.",
+    "billForRange": "Bill for this range: {{amount}}",
+    "businessCounts": "Your business counts",
+    "businessCountsHint": "These values come from your business, not from the cloud.",
+    "noBusinessCounts": "No business counts yet.",
+    "form": {
+      "name": "Name",
+      "countedAs": "Counted as",
+      "howMany": "How many",
+      "period": "Period",
+      "addCount": "Add count",
+      "monthly": "Monthly",
+      "quarterly": "Quarterly",
+      "annual": "Annual"
+    },
+    "confirmDelete": "Delete this business count?"
+  },
+  "connections": {
+    "selectContext": "Select a company from the top bar.",
+    "createConnection": "Create connection",
+    "editConnection": "Edit connection",
+    "deleteConnection": "Delete connection",
+    "createTitle": "Create connection",
+    "editTitle": "Edit connection — {{name}}",
+    "deleteTitle": "Delete connection",
+    "detailsTitle": "Connection details",
+    "confirmDelete": "Delete connection “{{name}}”?",
+    "empty": "No connections yet.",
+    "comingSoon": "{{cloud}} connections are coming soon.",
+    "table": {
+      "cloud": "Cloud",
+      "name": "Name",
+      "account": "Account",
+      "region": "Region",
+      "actions": "Actions"
+    },
+    "fields": {
+      "cloud": "Cloud",
+      "name": "Name",
+      "description": "Description",
+      "tenancy": "Tenancy",
+      "user": "User",
+      "fingerprint": "Fingerprint",
+      "region": "Region",
+      "keyContent": "Private key",
+      "passphrase": "Passphrase"
+    }
+  },
+  "allocations": {
+    "empty": "Allocations are coming soon. Tag sync and allocation rules will map cloud spend to teams, products, and cost centers."
+  },
+  "modals": {
+    "createUser": "Create user",
+    "userDetails": "User details",
+    "createMembership": "Create membership",
+    "membershipDetails": "Membership details",
+    "createCompany": "Create company",
+    "companyDetails": "Company details",
+    "createService": "Create service",
+    "serviceDetails": "Service details",
+    "createPlan": "Create plan",
+    "planDetails": "Plan details",
+    "serviceBundleDetails": "Service bundle details",
+    "createSubscription": "Create subscription",
+    "subscriptionDetails": "Subscription details",
+    "createInvoice": "Create invoice",
+    "invoiceDetails": "Invoice details",
+    "invoiceItemDetails": "Invoice item details",
+    "auditEventDetails": "Audit event details",
+    "monitoringMetricDetails": "Monitoring metric details",
+    "createConnection": "Create connection",
+    "editConnection": "Edit connection",
+    "connectionDetails": "Connection details"
   }
 }
