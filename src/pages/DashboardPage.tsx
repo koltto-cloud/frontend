@@ -575,7 +575,7 @@ export default function DashboardPage() {
                             </div>
                             <p className="dashboard-opportunity-advice">{item.recommendation}</p>
                             <div className="dashboard-opportunity-meta">
-                              <span>
+                              <span className="dashboard-opportunity-savings">
                                 save {formatMoney(item.estimated_monthly_savings, item.currency ?? currency)}
                                 /mo
                               </span>

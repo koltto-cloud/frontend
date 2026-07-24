@@ -2267,6 +2267,11 @@ textarea:focus-visible {
   font-variant-numeric: tabular-nums;
 }
 
+.dashboard-opportunity-savings {
+  color: var(--success);
+  font-weight: 600;
+}
+
 .dashboard-panel-footer {
   margin-top: 0.85rem;
   padding-top: 0.75rem;
