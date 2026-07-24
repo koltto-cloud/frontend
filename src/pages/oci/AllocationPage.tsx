@@ -13,7 +13,7 @@ export default function AllocationPage() {
         helpTitle={t('pages.allocations.helpTitle')}
         help={<AllocationHelp />}
       />
-      <p className="empty">No allocation rules yet — check back after tag support ships.</p>
+      <p className="empty">{t('allocations.empty')}</p>
     </div>
   )
 }

@@ -15,12 +15,12 @@ import PageHeader from '@/components/PageHeader'
 import { InventoryHelp } from '@/content/pageHelp'
 
 const INVENTORY_TABS = [
-  { key: 'compartments', label: 'Compartments', segment: 'compartment', resource: 'compartments' },
-  { key: 'compute', label: 'Compute', segment: 'compute', resource: 'compute' },
-  { key: 'block-storage', label: 'Block Storage', segment: 'block-storage', resource: 'block-storage' },
-  { key: 'object-storage', label: 'Object Storage', segment: 'object-storage', resource: 'object-storage' },
-  { key: 'file-storage', label: 'File Storage', segment: 'file-storage', resource: 'file-storage' },
-  { key: 'load-balancer', label: 'Load Balancers', segment: 'load-balancer', resource: 'load-balancers' },
+  { key: 'compartments', labelKey: 'compartments', segment: 'compartment', resource: 'compartments' },
+  { key: 'compute', labelKey: 'compute', segment: 'compute', resource: 'compute' },
+  { key: 'block-storage', labelKey: 'blockStorage', segment: 'block-storage', resource: 'block-storage' },
+  { key: 'object-storage', labelKey: 'objectStorage', segment: 'object-storage', resource: 'object-storage' },
+  { key: 'file-storage', labelKey: 'fileStorage', segment: 'file-storage', resource: 'file-storage' },
+  { key: 'load-balancer', labelKey: 'loadBalancers', segment: 'load-balancer', resource: 'load-balancers' },
 ] as const
 
 type TabKey = (typeof INVENTORY_TABS)[number]['key']
@@ -99,7 +99,7 @@ export default function InventoryPage() {
 
   const handleSyncCompartments = async () => {
     if (!companyId || !connectionId) {
-      throw new Error('Select a company and connection first.')
+      throw new Error(t('inventory.selectContext'))
     }
     return apiRequest(`${ociCompartmentsPath(companyId, connectionId)}/sync`, { method: 'POST' })
   }
@@ -112,7 +112,7 @@ export default function InventoryPage() {
           helpTitle={t('pages.inventory.helpTitle')}
           help={<InventoryHelp />}
         />
-        <p className="empty">Select a company and connection from the top bar.</p>
+        <p className="empty">{t('inventory.selectContext')}</p>
       </>
     )
   }
@@ -127,14 +127,14 @@ export default function InventoryPage() {
       />
 
       <div className="tabs">
-        {INVENTORY_TABS.map((t) => (
+        {INVENTORY_TABS.map((item) => (
           <button
-            key={t.key}
+            key={item.key}
             type="button"
-            className={`tab${tab === t.key ? ' active' : ''}`}
-            onClick={() => setTab(t.key)}
+            className={`tab${tab === item.key ? ' active' : ''}`}
+            onClick={() => setTab(item.key)}
           >
-            {t.label}
+            {t(`inventory.tabs.${item.labelKey}`)}
           </button>
         ))}
       </div>
@@ -153,13 +153,13 @@ export default function InventoryPage() {
         <>
           <div className="filters">
             <label>
-              Compartment
+              {t('inventory.compartment')}
               <select
                 value={compartmentFilter}
                 onChange={(e) => setCompartmentFilter(e.target.value)}
                 disabled={compartmentsLoading}
               >
-                <option value={ALL_COMPARTMENTS}>All compartments</option>
+                <option value={ALL_COMPARTMENTS}>{t('inventory.allCompartments')}</option>
                 {compartments.map((c) => (
                   <option key={c.compartment_ocid} value={c.compartment_ocid}>
                     {c.name} ({c.compartment_ocid.slice(0, 24)}…)
@@ -168,14 +168,14 @@ export default function InventoryPage() {
               </select>
             </label>
             <button type="button" className="btn btn-secondary" onClick={() => void reloadInventory()}>
-              Refresh
+              {t('inventory.refresh')}
             </button>
           </div>
 
           <Alert type="error">{error || compartmentsError}</Alert>
 
           {loading ? (
-            <p className="loading">Loading…</p>
+            <p className="loading">{t('inventory.loading')}</p>
           ) : (
             <>
               <InventoryResourceTable

@@ -65,11 +65,11 @@ export default function ReportsPage() {
           help={<ReportsHelp />}
         />
         <p className="empty">
-          Select a company and cloud connection in the top bar.
+          {t('reports.selectContext')}
           {companyId && !connectionId ? (
             <>
               {' '}
-              <Link to="/connections">Set up a connection</Link>
+              <Link to="/connections">{t('reports.setupConnection')}</Link>
             </>
           ) : null}
         </p>
@@ -88,11 +88,11 @@ export default function ReportsPage() {
 
       <div className="filters">
         <label>
-          Start date
+          {t('reports.startDate')}
           <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
         </label>
         <label>
-          End date
+          {t('reports.endDate')}
           <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
         </label>
         <button
@@ -101,7 +101,7 @@ export default function ReportsPage() {
           disabled={loading}
           onClick={() => void download()}
         >
-          {loading ? 'Preparing…' : 'Download CSV'}
+          {loading ? t('reports.preparing') : t('reports.downloadCsv')}
         </button>
       </div>
 

@@ -41,6 +41,14 @@ const CREATABLE_CLOUDS: { value: CloudProvider; label: string; enabled: boolean 
   { value: 'gcp', label: 'Google Cloud (GCP)', enabled: false },
 ]
 
+const OCI_CREATE_FIELDS = [
+  { key: 'name', labelKey: 'name' },
+  { key: 'tenancy', labelKey: 'tenancy' },
+  { key: 'user', labelKey: 'user' },
+  { key: 'fingerprint', labelKey: 'fingerprint' },
+  { key: 'region', labelKey: 'region' },
+] as const
+
 const EMPTY_OCI_CREATE = {
   name: '',
   description: '',
@@ -117,7 +125,7 @@ export default function ConnectionsPage() {
     e.preventDefault()
     if (!ociBase || !companyId) return
     if (createCloud !== 'oci') {
-      setErr(`${CLOUD_LABEL[createCloud]} connections are not available yet.`)
+      setErr(t('connections.unavailable', { cloud: CLOUD_LABEL[createCloud] }))
       return
     }
     setErr('')
@@ -132,7 +140,7 @@ export default function ConnectionsPage() {
           passphrase: createForm.passphrase || null,
         },
       })
-      setMsg('Connection created.')
+      setMsg(t('connections.created'))
       setShowCreate(false)
       setCreateForm(EMPTY_OCI_CREATE)
       setCreateCloud('oci')
@@ -143,10 +151,10 @@ export default function ConnectionsPage() {
           await apiRequest(`${tenancySyncBase}/${created.connection_id}/tenancy/sync`, {
             method: 'POST',
           })
-          setMsg(`Connection "${created.name}" created and tenancy synced.`)
+          setMsg(t('connections.createdAndSynced', { name: created.name }))
         } catch (tenancyErr) {
           setErr(
-            `Connection created, but tenancy sync failed: ${formatApiError(tenancyErr)}. Sync compartments will retry tenancy automatically.`,
+            t('connections.syncFailed', { error: formatApiError(tenancyErr) }),
           )
         }
       }
@@ -169,7 +177,7 @@ export default function ConnectionsPage() {
           region: editForm.region,
         },
       })
-      setMsg('Connection updated.')
+      setMsg(t('connections.updated'))
       setEditRow(null)
       void reload()
       await refreshSession()
@@ -180,12 +188,12 @@ export default function ConnectionsPage() {
 
   const handleDelete = async (row: ConnectionRow) => {
     if (row.cloud !== 'oci' || !ociBase) return
-    if (!confirm(`Delete connection "${row.name}"?`)) return
+    if (!confirm(t('connections.confirmDelete', { name: row.name }))) return
     setErr('')
     setMsg('')
     try {
       await apiRequest(`${ociBase}/${row.connection_id}`, { method: 'DELETE' })
-      setMsg('Connection deleted.')
+      setMsg(t('connections.deleted'))
       void reload()
       await refreshSession()
     } catch (e) {
@@ -201,7 +209,7 @@ export default function ConnectionsPage() {
           helpTitle={t('pages.connections.helpTitle')}
           help={<ConnectionsHelp />}
         />
-        <p className="empty">Select a company from the top bar.</p>
+        <p className="empty">{t('connections.selectContext')}</p>
       </>
     )
   }
@@ -224,7 +232,7 @@ export default function ConnectionsPage() {
             setShowCreate(true)
           }}
         >
-          Create connection
+          {t('connections.createConnection')}
         </button>
       </div>
 
@@ -232,18 +240,18 @@ export default function ConnectionsPage() {
       <Alert type="success">{msg}</Alert>
 
       {loading ? (
-        <p className="loading">Loading…</p>
+        <p className="loading">{t('connections.loading')}</p>
       ) : (
         <>
           <div className="data-table-wrap">
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Cloud</th>
-                  <th>Name</th>
-                  <th>Account</th>
-                  <th>Region</th>
-                  <th>Actions</th>
+                  <th>{t('connections.table.cloud')}</th>
+                  <th>{t('connections.table.name')}</th>
+                  <th>{t('connections.table.account')}</th>
+                  <th>{t('connections.table.region')}</th>
+                  <th>{t('connections.table.actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -278,14 +286,14 @@ export default function ConnectionsPage() {
                             className="btn btn-sm"
                             onClick={() => openEdit(row)}
                           >
-                            Edit
+                            {t('connections.editConnection')}
                           </button>
                           <button
                             type="button"
                             className="btn btn-sm btn-danger"
                             onClick={() => void handleDelete(row)}
                           >
-                            Delete
+                            {t('connections.deleteConnection')}
                           </button>
                         </>
                       ) : (
@@ -296,7 +304,7 @@ export default function ConnectionsPage() {
                 ))}
               </tbody>
             </table>
-            {(data ?? []).length === 0 && <p className="empty">No connections yet.</p>}
+            {(data ?? []).length === 0 && <p className="empty">{t('connections.empty')}</p>}
           </div>
 
           {!loading && rows.length > 0 && (
@@ -313,10 +321,10 @@ export default function ConnectionsPage() {
       )}
 
       {showCreate && (
-        <Modal title="Create connection" onClose={() => setShowCreate(false)} wide>
+        <Modal title={t('modals.createConnection')} onClose={() => setShowCreate(false)} wide>
           <form className="inline-form" onSubmit={(e) => void handleCreate(e)}>
             <div className="form-field">
-              <label>Cloud</label>
+              <label>{t('connections.fields.cloud')}</label>
               <select
                 value={createCloud}
                 onChange={(e) => setCreateCloud(e.target.value as CloudProvider)}
@@ -324,7 +332,7 @@ export default function ConnectionsPage() {
                 {CREATABLE_CLOUDS.map((c) => (
                   <option key={c.value} value={c.value} disabled={!c.enabled}>
                     {c.label}
-                    {c.enabled ? '' : ' — coming soon'}
+                    {c.enabled ? '' : ` — ${t('connections.comingSoonLabel')}`}
                   </option>
                 ))}
               </select>
@@ -332,25 +340,27 @@ export default function ConnectionsPage() {
 
             {createCloud === 'oci' ? (
               <>
-                {(['name', 'tenancy', 'user', 'fingerprint', 'region'] as const).map((field) => (
-                  <div key={field} className="form-field">
-                    <label>{field}</label>
+                {OCI_CREATE_FIELDS.map((field) => (
+                  <div key={field.key} className="form-field">
+                    <label>{t(`connections.fields.${field.labelKey}`)}</label>
                     <input
-                      value={createForm[field]}
-                      onChange={(e) => setCreateForm({ ...createForm, [field]: e.target.value })}
+                      value={createForm[field.key]}
+                      onChange={(e) =>
+                        setCreateForm({ ...createForm, [field.key]: e.target.value })
+                      }
                       required
                     />
                   </div>
                 ))}
                 <div className="form-field">
-                  <label>description (optional)</label>
+                  <label>{t('connections.fields.descriptionOptional')}</label>
                   <input
                     value={createForm.description}
                     onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
                   />
                 </div>
                 <div className="form-field">
-                  <label>key_content</label>
+                  <label>{t('connections.fields.keyContent')}</label>
                   <textarea
                     rows={4}
                     value={createForm.key_content}
@@ -359,7 +369,7 @@ export default function ConnectionsPage() {
                   />
                 </div>
                 <div className="form-field">
-                  <label>passphrase (optional)</label>
+                  <label>{t('connections.fields.passphraseOptional')}</label>
                   <input
                     type="password"
                     value={createForm.passphrase}
@@ -368,15 +378,16 @@ export default function ConnectionsPage() {
                 </div>
             <div className="form-actions">
               <button type="button" className="btn" onClick={() => setShowCreate(false)}>
-                Cancel
+                {t('connections.cancel')}
               </button>
-              <button type="submit" className="btn btn-primary">Create</button>
+              <button type="submit" className="btn btn-primary">
+                {t('connections.create')}
+              </button>
             </div>
               </>
             ) : (
               <p className="empty" style={{ margin: 0 }}>
-                {CLOUD_LABEL[createCloud]} connections are not available yet. Choose OCI to create
-                a connection today.
+                {t('connections.unavailableHint', { cloud: CLOUD_LABEL[createCloud] })}
               </p>
             )}
           </form>
@@ -384,49 +395,58 @@ export default function ConnectionsPage() {
       )}
 
       {editRow && (
-        <Modal title={`Edit connection — ${editRow.name}`} onClose={() => setEditRow(null)}>
+        <Modal
+          title={`${t('modals.editConnection')} — ${editRow.name}`}
+          onClose={() => setEditRow(null)}
+        >
           <form className="inline-form" onSubmit={(e) => void handleEdit(e)}>
             <div className="form-field">
-              <label>Cloud</label>
+              <label>{t('connections.fields.cloud')}</label>
               <input value={CLOUD_LABEL[editRow.cloud]} disabled />
             </div>
             <div className="form-field">
-              <label>name</label>
+              <label>{t('connections.fields.name')}</label>
               <input
                 value={editForm.name}
                 onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
               />
             </div>
             <div className="form-field">
-              <label>description</label>
+              <label>{t('connections.fields.description')}</label>
               <input
                 value={editForm.description}
                 onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
               />
             </div>
             <div className="form-field">
-              <label>region</label>
+              <label>{t('connections.fields.region')}</label>
               <input
                 value={editForm.region}
                 onChange={(e) => setEditForm({ ...editForm, region: e.target.value })}
               />
             </div>
             <p className="empty" style={{ margin: 0 }}>
-              Credentials (user, fingerprint, key) cannot be updated via this endpoint.
+              {t('connections.credentialsReadOnly')}
             </p>
             <div className="form-actions">
               <button type="button" className="btn" onClick={() => setEditRow(null)}>
-                Cancel
+                {t('connections.cancel')}
               </button>
-              <button type="submit" className="btn btn-primary">Save</button>
+              <button type="submit" className="btn btn-primary">
+                {t('connections.save')}
+              </button>
             </div>
           </form>
         </Modal>
       )}
 
       {viewId && (
-        <Modal title="Connection details" onClose={() => setViewId(null)} wide>
-          {viewLoading ? <p className="loading">Loading…</p> : viewData && <JsonViewer data={viewData} />}
+        <Modal title={t('modals.connectionDetails')} onClose={() => setViewId(null)} wide>
+          {viewLoading ? (
+            <p className="loading">{t('connections.loading')}</p>
+          ) : (
+            viewData && <JsonViewer data={viewData} />
+          )}
         </Modal>
       )}
     </>

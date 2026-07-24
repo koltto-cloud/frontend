@@ -35,6 +35,7 @@ import PaginationControls, {
 import Modal from '@/components/Modal'
 import JsonViewer from '@/components/JsonViewer'
 import TimeSeriesChart from '@/components/TimeSeriesChart'
+import { intlLocale } from '@/i18n/languages'
 
 const CHART_LIMIT = 2000
 
@@ -64,20 +65,16 @@ interface MonitoringMetric {
   synced_at: string
 }
 
-const RESOURCE_TYPE_LABELS: Record<string, string> = Object.fromEntries(
-  MONITORING_RESOURCE_TYPES.map((t) => [t.value, t.label]),
-)
-
-function formatDate(value: string | null | undefined): string {
+function formatDate(value: string | null | undefined, locale: string): string {
   if (!value) return '—'
   const d = new Date(value)
   if (Number.isNaN(d.getTime())) return value
-  return d.toLocaleString()
+  return d.toLocaleString(locale)
 }
 
-function formatNumber(value: number | null | undefined): string {
+function formatNumber(value: number | null | undefined, locale: string): string {
   if (value == null || Number.isNaN(Number(value))) return '—'
-  return Number(value).toLocaleString(undefined, { maximumFractionDigits: 2 })
+  return Number(value).toLocaleString(locale, { maximumFractionDigits: 2 })
 }
 
 function metricValues(rows: MonitoringMetric[]): number[] {
@@ -94,8 +91,9 @@ function statusClass(status: UtilizationStatus): string {
 }
 
 export default function MonitoringPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { activeCompany, connection } = useAuth()
+  const locale = intlLocale(i18n.resolvedLanguage)
   const defaults = defaultDateRange()
   const [startDate, setStartDate] = useState(defaults.start)
   const [endDate, setEndDate] = useState(defaults.end)
@@ -328,7 +326,7 @@ export default function MonitoringPage() {
           helpTitle={t('pages.monitoring.helpTitle')}
           help={<MonitoringHelp />}
         />
-        <p className="empty">Select a company and connection from the top bar.</p>
+        <p className="empty">{t('monitoring.selectContext')}</p>
       </>
     )
   }
@@ -358,26 +356,27 @@ export default function MonitoringPage() {
       />
 
       <Alert type="info">
-        Sync monitoring from <Link to="/oci/inventory">Inventory → Compartments</Link>: select
-        compartments, then Sync monitoring. Pick a resource type and resource to chart. Compute
-        charts show capacity (shape) and default thresholds ({'<'}
-        {DEFAULT_UTILIZATION_THRESHOLDS.under}% under / {'>'}
-        {DEFAULT_UTILIZATION_THRESHOLDS.over}% over).
+        {t('monitoring.infoBeforeLink')}{' '}
+        <Link to="/oci/inventory">{t('monitoring.inventoryCompartments')}</Link>
+        {t('monitoring.infoAfterLink', {
+          under: DEFAULT_UTILIZATION_THRESHOLDS.under,
+          over: DEFAULT_UTILIZATION_THRESHOLDS.over,
+        })}
       </Alert>
 
       <div className="filters">
         <label>
-          Start date
+          {t('monitoring.filters.startDate')}
           <input type="date" value={startDate} onChange={(e) => onStartDateChange(e.target.value)} />
         </label>
         <label>
-          End date
+          {t('monitoring.filters.endDate')}
           <input type="date" value={endDate} onChange={(e) => onEndDateChange(e.target.value)} />
         </label>
         <label>
-          Compartment
+          {t('monitoring.filters.compartment')}
           <select value={compartmentId} onChange={(e) => onCompartmentChange(e.target.value)}>
-            <option value="">All compartments</option>
+            <option value="">{t('monitoring.filters.allCompartments')}</option>
             {compartments.map((c) => (
               <option key={c.compartment_ocid} value={c.compartment_ocid}>
                 {c.name}
@@ -386,24 +385,24 @@ export default function MonitoringPage() {
           </select>
         </label>
         <label>
-          Resource type
+          {t('monitoring.filters.resourceType')}
           <select
             value={resourceType}
             onChange={(e) => onResourceTypeChange(e.target.value as MonitoringResourceType | '')}
           >
-            <option value="">All types</option>
-            {MONITORING_RESOURCE_TYPES.map((t) => (
-              <option key={t.value} value={t.value}>
-                {t.label}
+            <option value="">{t('monitoring.filters.allTypes')}</option>
+            {MONITORING_RESOURCE_TYPES.map((type) => (
+              <option key={type.value} value={type.value}>
+                {t(`monitoring.resourceTypes.${type.value}`)}
               </option>
             ))}
           </select>
         </label>
         {resourceType ? (
           <label>
-            Resource
+            {t('monitoring.filters.resource')}
             <select value={resourceId} onChange={(e) => onResourceChange(e.target.value)}>
-              <option value="">All resources</option>
+              <option value="">{t('monitoring.filters.allResources')}</option>
               {resourceOptions.map((inst) => {
                 const id = inst.resource_ocid
                 const label = inst.display_name || resourceDisplayLabel(id, resourceNames)
@@ -417,12 +416,12 @@ export default function MonitoringPage() {
           </label>
         ) : null}
         <label>
-          Metric
+          {t('monitoring.filters.metric')}
           <select value={metricName} onChange={(e) => onMetricChange(e.target.value)}>
-            {!resourceType && <option value="">All metrics</option>}
+            {!resourceType && <option value="">{t('monitoring.filters.allMetrics')}</option>}
             {metricOptions.map((m) => (
               <option key={m.value} value={m.value}>
-                {m.label}
+                {t(`monitoring.metrics.${m.value}`)}
               </option>
             ))}
             {resourceType && metricOptions.length === 0 && <option value="">—</option>}
@@ -437,11 +436,11 @@ export default function MonitoringPage() {
             setLoaded(true)
           }}
         >
-          {loading ? 'Loading…' : 'Load metrics'}
+          {loading ? t('monitoring.loading') : t('monitoring.loadMetrics')}
         </button>
         {loaded && (
           <button type="button" className="btn btn-secondary" onClick={() => void reload()}>
-            Refresh
+            {t('monitoring.refresh')}
           </button>
         )}
       </div>
@@ -449,9 +448,7 @@ export default function MonitoringPage() {
       <Alert type="error">{error || chartError || utilError}</Alert>
 
       {!loaded ? (
-        <p className="empty">
-          Pick a resource type and resource, then Load metrics to see the chart.
-        </p>
+        <p className="empty">{t('monitoring.empty')}</p>
       ) : (
         <>
           {resourceId && metricName && (
@@ -459,53 +456,62 @@ export default function MonitoringPage() {
               <div className="monitoring-chart-header">
                 <h2>
                   {resourceDisplayLabel(resourceId, resourceNames)} ·{' '}
-                  {metricOptions.find((m) => m.value === metricName)?.label ?? metricName}
+                  {t(`monitoring.metrics.${metricName}`, { defaultValue: metricName })}
                 </h2>
                 {utilization?.overall && (
-                  <span className={statusClass(utilization.overall)} title="Based on period mean CPU/memory">
-                    {UTILIZATION_STATUS_LABEL[utilization.overall]}
+                  <span
+                    className={statusClass(utilization.overall)}
+                    title={t('monitoring.utilizationBasis')}
+                  >
+                    {t(`monitoring.status.${utilization.overall}`, {
+                      defaultValue: UTILIZATION_STATUS_LABEL[utilization.overall],
+                    })}
                   </span>
                 )}
               </div>
 
               {capacityLabel ? (
                 <p className="page-lead" style={{ marginTop: 0 }}>
-                  Provisioned capacity: <strong>{capacityLabel}</strong>
-                  {isPercentMetric ? ' · 100% = full capacity' : null}
+                  {t('monitoring.provisionedCapacity')}: <strong>{capacityLabel}</strong>
+                  {isPercentMetric ? ` · ${t('monitoring.fullCapacity')}` : null}
                 </p>
               ) : null}
 
               {resourceType === 'compute' && (
                 <div className="monitoring-util-row">
                   {utilLoading ? (
-                    <p className="loading">Evaluating utilization…</p>
+                    <p className="loading">{t('monitoring.evaluatingUtilization')}</p>
                   ) : (
                     <>
                       <div className="monitoring-stat">
-                        <span className="monitoring-stat-label">CPU mean</span>
-                        <span>{formatNumber(utilization?.cpuMean)}%</span>
+                        <span className="monitoring-stat-label">{t('monitoring.stats.cpuMean')}</span>
+                        <span>{formatNumber(utilization?.cpuMean, locale)}%</span>
                         {utilization?.cpuStatus && (
                           <span className={statusClass(utilization.cpuStatus)}>
-                            {UTILIZATION_STATUS_LABEL[utilization.cpuStatus]}
+                            {t(`monitoring.status.${utilization.cpuStatus}`, {
+                              defaultValue: UTILIZATION_STATUS_LABEL[utilization.cpuStatus],
+                            })}
                           </span>
                         )}
                       </div>
                       <div className="monitoring-stat">
-                        <span className="monitoring-stat-label">CPU p95</span>
-                        <span>{formatNumber(utilization?.cpuP95)}%</span>
+                        <span className="monitoring-stat-label">{t('monitoring.stats.cpuP95')}</span>
+                        <span>{formatNumber(utilization?.cpuP95, locale)}%</span>
                       </div>
                       <div className="monitoring-stat">
-                        <span className="monitoring-stat-label">Memory mean</span>
-                        <span>{formatNumber(utilization?.memMean)}%</span>
+                        <span className="monitoring-stat-label">{t('monitoring.stats.memoryMean')}</span>
+                        <span>{formatNumber(utilization?.memMean, locale)}%</span>
                         {utilization?.memStatus && (
                           <span className={statusClass(utilization.memStatus)}>
-                            {UTILIZATION_STATUS_LABEL[utilization.memStatus]}
+                            {t(`monitoring.status.${utilization.memStatus}`, {
+                              defaultValue: UTILIZATION_STATUS_LABEL[utilization.memStatus],
+                            })}
                           </span>
                         )}
                       </div>
                       <div className="monitoring-stat">
-                        <span className="monitoring-stat-label">Memory p95</span>
-                        <span>{formatNumber(utilization?.memP95)}%</span>
+                        <span className="monitoring-stat-label">{t('monitoring.stats.memoryP95')}</span>
+                        <span>{formatNumber(utilization?.memP95, locale)}%</span>
                       </div>
                     </>
                   )}
@@ -514,31 +520,31 @@ export default function MonitoringPage() {
 
               <div className="monitoring-util-row monitoring-chart-stats">
                 <div className="monitoring-stat">
-                  <span className="monitoring-stat-label">Series mean</span>
+                  <span className="monitoring-stat-label">{t('monitoring.stats.seriesMean')}</span>
                   <span>
-                    {formatNumber(chartStats.mean)}
+                    {formatNumber(chartStats.mean, locale)}
                     {isPercentMetric ? '%' : ''}
                   </span>
                 </div>
                 <div className="monitoring-stat">
-                  <span className="monitoring-stat-label">Series p95</span>
+                  <span className="monitoring-stat-label">{t('monitoring.stats.seriesP95')}</span>
                   <span>
-                    {formatNumber(chartStats.p95)}
+                    {formatNumber(chartStats.p95, locale)}
                     {isPercentMetric ? '%' : ''}
                   </span>
                 </div>
                 <div className="monitoring-stat">
-                  <span className="monitoring-stat-label">Points</span>
-                  <span>{chartStats.count}</span>
+                  <span className="monitoring-stat-label">{t('monitoring.stats.points')}</span>
+                  <span>{chartStats.count.toLocaleString(locale)}</span>
                 </div>
               </div>
 
               {chartLoading ? (
-                <p className="loading">Loading chart…</p>
+                <p className="loading">{t('monitoring.loadingChart')}</p>
               ) : (
                 <TimeSeriesChart
                   points={chartPoints}
-                  valueLabel={metricOptions.find((m) => m.value === metricName)?.label ?? metricName}
+                  valueLabel={t(`monitoring.metrics.${metricName}`, { defaultValue: metricName })}
                   valueSuffix={isPercentMetric ? '%' : ''}
                   dateOnly
                   yDomain={isPercentMetric ? [0, 100] : undefined}
@@ -547,12 +553,16 @@ export default function MonitoringPage() {
                       ? [
                           {
                             y: DEFAULT_UTILIZATION_THRESHOLDS.under,
-                            label: `Under ${DEFAULT_UTILIZATION_THRESHOLDS.under}%`,
+                            label: t('monitoring.underThreshold', {
+                              value: DEFAULT_UTILIZATION_THRESHOLDS.under,
+                            }),
                             color: 'rgba(180, 83, 9, 0.7)',
                           },
                           {
                             y: DEFAULT_UTILIZATION_THRESHOLDS.over,
-                            label: `Over ${DEFAULT_UTILIZATION_THRESHOLDS.over}%`,
+                            label: t('monitoring.overThreshold', {
+                              value: DEFAULT_UTILIZATION_THRESHOLDS.over,
+                            }),
                             color: 'rgba(225, 29, 72, 0.65)',
                           },
                         ]
@@ -565,28 +575,28 @@ export default function MonitoringPage() {
 
           {loaded && !resourceId && resourceType && (
             <p className="empty">
-              Select a resource to see the time-series chart
-              {resourceType === 'compute' ? ' and rightsizing badge' : ''}. Or click a resource name
-              in the table below.
+              {resourceType === 'compute'
+                ? t('monitoring.selectComputeResource')
+                : t('monitoring.selectResource')}
             </p>
           )}
 
           {loading ? (
-            <p className="loading">Loading…</p>
+            <p className="loading">{t('monitoring.loading')}</p>
           ) : (
             <>
               <div className="data-table-wrap">
                 <table className="data-table">
                   <thead>
                     <tr>
-                      <th>Date</th>
-                      <th>Resource type</th>
-                      <th>Metric</th>
-                      <th>Resource</th>
-                      <th>Mean</th>
-                      <th>Max</th>
-                      <th>Min</th>
-                      <th>Synced</th>
+                      <th>{t('monitoring.columns.date')}</th>
+                      <th>{t('monitoring.columns.resourceType')}</th>
+                      <th>{t('monitoring.columns.metric')}</th>
+                      <th>{t('monitoring.columns.resource')}</th>
+                      <th>{t('monitoring.columns.mean')}</th>
+                      <th>{t('monitoring.columns.max')}</th>
+                      <th>{t('monitoring.columns.min')}</th>
+                      <th>{t('monitoring.columns.synced')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -594,14 +604,24 @@ export default function MonitoringPage() {
                       const name = resourceDisplayLabel(row.resource_id, resourceNames)
                       return (
                         <tr key={`${row.id}-${row.metric_date}`}>
-                          <td>{formatDate(row.metric_date)}</td>
-                          <td>{RESOURCE_TYPE_LABELS[row.resource_type] ?? row.resource_type}</td>
-                          <td>{row.metric_name || '—'}</td>
+                          <td>{formatDate(row.metric_date, locale)}</td>
+                          <td>
+                            {t(`monitoring.resourceTypes.${row.resource_type}`, {
+                              defaultValue: row.resource_type,
+                            })}
+                          </td>
+                          <td>
+                            {row.metric_name
+                              ? t(`monitoring.metrics.${row.metric_name}`, {
+                                  defaultValue: row.metric_name,
+                                })
+                              : '—'}
+                          </td>
                           <td className="col-resource">
                             <button
                               type="button"
                               className="id-link"
-                              title={`${row.resource_id} — click to chart`}
+                              title={t('monitoring.clickToChart', { resourceId: row.resource_id })}
                               onClick={() => {
                                 const rt = row.resource_type as MonitoringResourceType
                                 if (rt && rt in MONITORING_METRICS_BY_TYPE) {
@@ -629,19 +649,19 @@ export default function MonitoringPage() {
                               style={{ marginLeft: 6 }}
                               onClick={() => setViewRow(row)}
                             >
-                              Details
+                              {t('monitoring.details')}
                             </button>
                           </td>
-                          <td>{formatNumber(row.mean_value)}</td>
-                          <td>{formatNumber(row.max_value)}</td>
-                          <td>{formatNumber(row.min_value)}</td>
-                          <td>{formatDate(row.synced_at)}</td>
+                          <td>{formatNumber(row.mean_value, locale)}</td>
+                          <td>{formatNumber(row.max_value, locale)}</td>
+                          <td>{formatNumber(row.min_value, locale)}</td>
+                          <td>{formatDate(row.synced_at, locale)}</td>
                         </tr>
                       )
                     })}
                   </tbody>
                 </table>
-                {metrics.length === 0 && <p className="empty">No monitoring metrics found.</p>}
+                {metrics.length === 0 && <p className="empty">{t('monitoring.noMetrics')}</p>}
               </div>
               <PaginationControls
                 page={page}
@@ -660,7 +680,7 @@ export default function MonitoringPage() {
       )}
 
       {viewData && (
-        <Modal title="Monitoring metric details" onClose={() => setViewRow(null)} wide>
+        <Modal title={t('modals.monitoringMetricDetails')} onClose={() => setViewRow(null)} wide>
           <JsonViewer data={viewData} />
         </Modal>
       )}

@@ -7,6 +7,7 @@ import { useAsyncData } from '@/hooks/useAsyncData'
 import { Alert } from '@/components/Alert'
 import PageHeader from '@/components/PageHeader'
 import { BudgetsHelp } from '@/content/pageHelp'
+import { intlLocale } from '@/i18n/languages'
 
 interface CostBudget {
   budget_id: string
@@ -66,10 +67,10 @@ const EMPTY_BUDGET = {
   alert_threshold_pct: '80',
 }
 
-function formatMoney(amount: number, currency: string): string {
+function formatMoney(amount: number, currency: string, locale: string): string {
   const code = (currency || 'USD').toUpperCase()
   try {
-    return amount.toLocaleString(undefined, {
+    return amount.toLocaleString(locale, {
       style: 'currency',
       currency: code.length === 3 ? code : 'USD',
       maximumFractionDigits: 0,
@@ -80,8 +81,9 @@ function formatMoney(amount: number, currency: string): string {
 }
 
 export default function BudgetsPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { activeCompany, connection } = useAuth()
+  const locale = intlLocale(i18n.resolvedLanguage)
   const companyId = activeCompany?.company_id
   const connectionId = connection?.connection_id
 
@@ -136,7 +138,7 @@ export default function BudgetsPage() {
     setBusy(true)
     try {
       await apiRequest(budgetsBase, { method: 'POST', body })
-      setMsg('Budget created.')
+      setMsg(t('budgets.created'))
       setForm(EMPTY_BUDGET)
       void reloadBudgets()
     } catch (e) {
@@ -150,7 +152,7 @@ export default function BudgetsPage() {
     e.preventDefault()
     const amount = Number(form.amount)
     if (!form.name.trim() || !Number.isFinite(amount) || amount <= 0) {
-      setErr('Name and a positive amount are required.')
+      setErr(t('budgets.validation'))
       return
     }
     await createBudget({
@@ -178,12 +180,12 @@ export default function BudgetsPage() {
 
   const deleteBudget = async (budgetId: string) => {
     if (!budgetsBase) return
-    if (!window.confirm('Delete this budget?')) return
+    if (!window.confirm(t('budgets.confirmDelete'))) return
     setErr('')
     setMsg('')
     try {
       await apiRequest(`${budgetsBase}/${budgetId}`, { method: 'DELETE' })
-      setMsg('Budget deleted.')
+      setMsg(t('budgets.deleted'))
       void reloadBudgets()
     } catch (e) {
       setErr(formatApiError(e))
@@ -206,7 +208,7 @@ export default function BudgetsPage() {
           template_id: tmpl.template_id,
         },
       })
-      setMsg(`Alert preference “${tmpl.name}” created.`)
+      setMsg(t('budgets.alertCreated', { name: tmpl.name }))
       void reloadAlerts()
     } catch (e) {
       setErr(formatApiError(e))
@@ -231,11 +233,11 @@ export default function BudgetsPage() {
 
   const deleteAlert = async (preferenceId: string) => {
     if (!alertsBase) return
-    if (!window.confirm('Delete this alert preference?')) return
+    if (!window.confirm(t('budgets.confirmDeleteAlert'))) return
     setErr('')
     try {
       await apiRequest(`${alertsBase}/${preferenceId}`, { method: 'DELETE' })
-      setMsg('Alert preference deleted.')
+      setMsg(t('budgets.alertDeleted'))
       void reloadAlerts()
     } catch (e) {
       setErr(formatApiError(e))
@@ -252,8 +254,12 @@ export default function BudgetsPage() {
         method: 'POST',
       })
       setMsg(
-        `Evaluation complete — ${result.emails_sent} email(s) sent` +
-          ` (anomalies ${result.anomalies_flagged}, recommendations ${result.recommendations_flagged}, budgets ${result.budgets_flagged}).`,
+        t('budgets.evaluationComplete', {
+          emails_sent: result.emails_sent,
+          anomalies_flagged: result.anomalies_flagged,
+          recommendations_flagged: result.recommendations_flagged,
+          budgets_flagged: result.budgets_flagged,
+        }),
       )
     } catch (e) {
       setErr(formatApiError(e))
@@ -271,11 +277,11 @@ export default function BudgetsPage() {
           help={<BudgetsHelp />}
         />
         <p className="empty">
-          Select a company and cloud connection in the top bar.
+          {t('budgets.selectContext')}
           {companyId && !connectionId ? (
             <>
               {' '}
-              <Link to="/connections">Set up a connection</Link>
+              <Link to="/connections">{t('budgets.setupConnection')}</Link>
             </>
           ) : null}
         </p>
@@ -298,7 +304,7 @@ export default function BudgetsPage() {
       <Alert type="error">{err || budgetsError || alertsError}</Alert>
       <Alert type="success">{msg}</Alert>
 
-      <h2>Budgets</h2>
+      <h2>{t('budgets.budgets')}</h2>
       {(budgetTemplates ?? []).length > 0 ? (
         <div className="filters" style={{ marginBottom: 12 }}>
           {(budgetTemplates ?? []).map((tmpl) => (
@@ -310,26 +316,26 @@ export default function BudgetsPage() {
               title={tmpl.description}
               onClick={() => void createFromTemplate(tmpl)}
             >
-              Use: {tmpl.name}
+              {t('budgets.useTemplate', { name: tmpl.name })}
             </button>
           ))}
         </div>
       ) : null}
 
       {budgetsLoading && !budgets ? (
-        <p className="loading">Loading budgets…</p>
+        <p className="loading">{t('budgets.loading')}</p>
       ) : budgetRows.length === 0 ? (
-        <p className="empty">No budgets yet. Create one below or use a template.</p>
+        <p className="empty">{t('budgets.empty')}</p>
       ) : (
         <div className="data-table-wrap">
           <table className="data-table">
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Amount</th>
-                <th>Period</th>
-                <th>Scope</th>
-                <th>Alert %</th>
+                <th>{t('budgets.name')}</th>
+                <th>{t('budgets.amount')}</th>
+                <th>{t('budgets.period')}</th>
+                <th>{t('budgets.scope')}</th>
+                <th>{t('budgets.alertPercent')}</th>
                 <th />
               </tr>
             </thead>
@@ -337,10 +343,10 @@ export default function BudgetsPage() {
               {budgetRows.map((b) => (
                 <tr key={b.budget_id}>
                   <td>{b.name}</td>
-                  <td>{formatMoney(b.amount, b.currency)}</td>
-                  <td>{b.period}</td>
+                  <td>{formatMoney(b.amount, b.currency, locale)}</td>
+                  <td>{t(`budgets.${b.period}`, { defaultValue: b.period })}</td>
                   <td>
-                    {b.scope_type}
+                    {t(`budgets.scopeTypes.${b.scope_type}`, { defaultValue: b.scope_type })}
                     {b.scope_value ? ` · ${b.scope_value}` : ''}
                   </td>
                   <td>{b.alert_threshold_pct}%</td>
@@ -350,7 +356,7 @@ export default function BudgetsPage() {
                       className="btn btn-sm btn-danger"
                       onClick={() => void deleteBudget(b.budget_id)}
                     >
-                      Delete
+                      {t('budgets.deleteBudget')}
                     </button>
                   </td>
                 </tr>
@@ -362,7 +368,7 @@ export default function BudgetsPage() {
 
       <form className="filters" onSubmit={(e) => void handleCreate(e)} style={{ marginTop: 16 }}>
         <label>
-          Name
+          {t('budgets.name')}
           <input
             value={form.name}
             onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
@@ -370,7 +376,7 @@ export default function BudgetsPage() {
           />
         </label>
         <label>
-          Amount
+          {t('budgets.amount')}
           <input
             type="number"
             min="1"
@@ -381,39 +387,43 @@ export default function BudgetsPage() {
           />
         </label>
         <label>
-          Period
+          {t('budgets.period')}
           <select
             value={form.period}
             onChange={(e) => setForm((f) => ({ ...f, period: e.target.value }))}
           >
-            <option value="monthly">Monthly</option>
-            <option value="quarterly">Quarterly</option>
-            <option value="annual">Annual</option>
+            <option value="monthly">{t('budgets.monthly')}</option>
+            <option value="quarterly">{t('budgets.quarterly')}</option>
+            <option value="annual">{t('budgets.annual')}</option>
           </select>
         </label>
         <label>
-          Scope
+          {t('budgets.scope')}
           <select
             value={form.scope_type}
             onChange={(e) => setForm((f) => ({ ...f, scope_type: e.target.value }))}
           >
-            <option value="tenancy">Tenancy</option>
-            <option value="service">Service</option>
-            <option value="compartment">Compartment</option>
+            <option value="tenancy">{t('budgets.scopeTypes.tenancy')}</option>
+            <option value="service">{t('budgets.scopeTypes.service')}</option>
+            <option value="compartment">{t('budgets.scopeTypes.compartment')}</option>
           </select>
         </label>
         {form.scope_type !== 'tenancy' ? (
           <label>
-            Scope value
+            {t('budgets.scopeValue')}
             <input
               value={form.scope_value}
-              placeholder={form.scope_type === 'service' ? 'e.g. Compute' : 'compartment OCID'}
+              placeholder={
+                form.scope_type === 'service'
+                  ? t('budgets.servicePlaceholder')
+                  : t('budgets.compartmentPlaceholder')
+              }
               onChange={(e) => setForm((f) => ({ ...f, scope_value: e.target.value }))}
             />
           </label>
         ) : null}
         <label>
-          Alert threshold %
+          {t('budgets.alertThreshold')}
           <input
             type="number"
             min="1"
@@ -423,7 +433,7 @@ export default function BudgetsPage() {
           />
         </label>
         <button type="submit" className="btn btn-primary" disabled={busy}>
-          Create budget
+          {t('budgets.createBudget')}
         </button>
       </form>
 
@@ -438,17 +448,17 @@ export default function BudgetsPage() {
           flexWrap: 'wrap',
         }}
       >
-        <h2 style={{ margin: 0 }}>Alert preferences</h2>
+        <h2 style={{ margin: 0 }}>{t('budgets.alertPreferences')}</h2>
         <button
           type="button"
           className="btn btn-sm"
           disabled={busy}
           onClick={() => void evaluateNow()}
         >
-          Send test / evaluate now
+          {t('budgets.evaluateNow')}
         </button>
       </div>
-      <p className="page-lead">Email when anomalies, recommendations, or budget thresholds fire.</p>
+      <p className="page-lead">{t('budgets.alertHint')}</p>
 
       {(alertTemplates ?? []).length > 0 ? (
         <div className="filters" style={{ marginBottom: 12 }}>
@@ -461,24 +471,24 @@ export default function BudgetsPage() {
               title={tmpl.description}
               onClick={() => void createAlertFromTemplate(tmpl)}
             >
-              Add: {tmpl.name}
+              {t('budgets.addTemplate', { name: tmpl.name })}
             </button>
           ))}
         </div>
       ) : null}
 
       {alertsLoading && !alerts ? (
-        <p className="loading">Loading alerts…</p>
+        <p className="loading">{t('budgets.loadingAlerts')}</p>
       ) : alertRows.length === 0 ? (
-        <p className="empty">No alert preferences yet. Add one from a template above.</p>
+        <p className="empty">{t('budgets.noAlerts')}</p>
       ) : (
         <div className="data-table-wrap">
           <table className="data-table">
             <thead>
               <tr>
-                <th>Event</th>
-                <th>Status</th>
-                <th>Thresholds</th>
+                <th>{t('budgets.event')}</th>
+                <th>{t('budgets.status')}</th>
+                <th>{t('budgets.thresholds')}</th>
                 <th />
               </tr>
             </thead>
@@ -486,7 +496,7 @@ export default function BudgetsPage() {
               {alertRows.map((a) => (
                 <tr key={a.preference_id}>
                   <td>{a.event_type}</td>
-                  <td>{a.enabled ? 'Enabled' : 'Disabled'}</td>
+                  <td>{a.enabled ? t('budgets.enabled') : t('budgets.disabled')}</td>
                   <td>
                     {[
                       a.min_pct_change != null ? `${a.min_pct_change}%` : null,
@@ -501,14 +511,14 @@ export default function BudgetsPage() {
                       className="btn btn-sm"
                       onClick={() => void toggleAlert(a)}
                     >
-                      {a.enabled ? 'Disable' : 'Enable'}
+                      {a.enabled ? t('budgets.disable') : t('budgets.enable')}
                     </button>
                     <button
                       type="button"
                       className="btn btn-sm btn-danger"
                       onClick={() => void deleteAlert(a.preference_id)}
                     >
-                      Delete
+                      {t('budgets.deleteAlert')}
                     </button>
                   </td>
                 </tr>

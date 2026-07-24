@@ -7,6 +7,7 @@ import { useAsyncData } from '@/hooks/useAsyncData'
 import { Alert } from '@/components/Alert'
 import PageHeader from '@/components/PageHeader'
 import { AnomaliesHelp } from '@/content/pageHelp'
+import { intlLocale } from '@/i18n/languages'
 
 interface SpendAnomaly {
   date: string
@@ -32,12 +33,16 @@ function isoDaysAgo(days: number): string {
   return d.toISOString().slice(0, 10)
 }
 
-function formatMoney(amount: number | null | undefined, currency: string | null): string {
+function formatMoney(
+  amount: number | null | undefined,
+  currency: string | null,
+  locale: string,
+): string {
   if (amount == null || Number.isNaN(Number(amount))) return '—'
   const raw = (currency && currency.trim() ? currency.trim() : 'USD').toUpperCase()
   const code = raw === 'US$' || raw === 'USA' ? 'USD' : raw
   try {
-    return Number(amount).toLocaleString(undefined, {
+    return Number(amount).toLocaleString(locale, {
       style: 'currency',
       currency: code.length === 3 ? code : 'USD',
       maximumFractionDigits: 0,
@@ -47,14 +52,15 @@ function formatMoney(amount: number | null | undefined, currency: string | null)
   }
 }
 
-function formatDay(iso: string): string {
+function formatDay(iso: string, locale: string): string {
   const d = new Date(`${iso}T00:00:00`)
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+  return d.toLocaleDateString(locale, { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 export default function AnomaliesPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { activeCompany, connection } = useAuth()
+  const locale = intlLocale(i18n.resolvedLanguage)
   const companyId = activeCompany?.company_id
   const connectionId = connection?.connection_id
 
@@ -93,11 +99,11 @@ export default function AnomaliesPage() {
 
       {!hasCompany || !hasConnection ? (
         <p className="empty">
-          Select a company and cloud connection in the top bar to see anomalies.
+          {t('anomalies.selectContext')}
           {!hasConnection && hasCompany && (
             <>
               {' '}
-              <Link to="/connections">Set up a connection</Link>
+              <Link to="/connections">{t('anomalies.setupConnection')}</Link>
             </>
           )}
         </p>
@@ -106,11 +112,9 @@ export default function AnomaliesPage() {
           <Alert type="error">{error}</Alert>
 
           {loading && !data ? (
-            <p className="loading">Scanning spend for anomalies…</p>
+            <p className="loading">{t('anomalies.loading')}</p>
           ) : items.length === 0 ? (
-            <p className="empty">
-              No spend spikes in the last 30 days — daily cost stayed within its normal range.
-            </p>
+            <p className="empty">{t('anomalies.empty')}</p>
           ) : (
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 6 }}>
               {items.map((a) => (
@@ -125,14 +129,16 @@ export default function AnomaliesPage() {
                     }}
                   >
                     <div>
-                      <strong style={{ fontSize: 14 }}>{formatDay(a.date)}</strong>
+                      <strong style={{ fontSize: 14 }}>{formatDay(a.date, locale)}</strong>
                       <span className="page-lead" style={{ fontSize: 12, marginLeft: 8 }}>
-                        {a.driver_service ? `driven by ${a.driver_service}` : 'mixed drivers'}
+                        {a.driver_service
+                          ? t('anomalies.drivenBy', { service: a.driver_service })
+                          : t('anomalies.mixedDrivers')}
                       </span>
                     </div>
                     <div style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                       <span style={{ fontWeight: 700, color: '#e5484d' }}>
-                        +{formatMoney(a.delta, currency)}
+                        +{formatMoney(a.delta, currency, locale)}
                       </span>
                       <span className="page-lead" style={{ fontSize: 12, marginLeft: 8 }}>
                         +{a.pct_change.toFixed(0)}%
@@ -140,13 +146,16 @@ export default function AnomaliesPage() {
                     </div>
                   </div>
                   <div className="page-lead" style={{ fontSize: 13, marginTop: 4 }}>
-                    {formatMoney(a.total_cost, currency)} vs {formatMoney(a.baseline_avg, currency)}{' '}
-                    typical
+                    {formatMoney(a.total_cost, currency, locale)} {t('anomalies.vs')}{' '}
+                    {formatMoney(a.baseline_avg, currency, locale)} {t('anomalies.typical')}
                     {a.driver_service
-                      ? ` · ${a.driver_service} up ${formatMoney(a.driver_delta, currency)}`
+                      ? ` · ${t('anomalies.up', {
+                          service: a.driver_service,
+                          amount: formatMoney(a.driver_delta, currency, locale),
+                        })}`
                       : ''}
                     {' · '}
-                    <Link to="/">view trend</Link>
+                    <Link to="/">{t('anomalies.viewTrend')}</Link>
                   </div>
                 </li>
               ))}

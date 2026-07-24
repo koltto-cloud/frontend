@@ -7,6 +7,7 @@ import { useAsyncData } from '@/hooks/useAsyncData'
 import { Alert } from '@/components/Alert'
 import PageHeader from '@/components/PageHeader'
 import { UnitEconomicsHelp } from '@/content/pageHelp'
+import { intlLocale } from '@/i18n/languages'
 
 interface BusinessMetric {
   metric_id: string
@@ -50,12 +51,16 @@ function defaultDateRange() {
   }
 }
 
-function formatMoney(amount: number | null | undefined, currency: string | null): string {
+function formatMoney(
+  amount: number | null | undefined,
+  currency: string | null,
+  locale: string,
+): string {
   if (amount == null || Number.isNaN(Number(amount))) return '—'
   const raw = (currency && currency.trim() ? currency.trim() : 'USD').toUpperCase()
   const code = raw === 'US$' || raw === 'USA' ? 'USD' : raw
   try {
-    return Number(amount).toLocaleString(undefined, {
+    return Number(amount).toLocaleString(locale, {
       style: 'currency',
       currency: code.length === 3 ? code : 'USD',
       maximumFractionDigits: 4,
@@ -66,8 +71,9 @@ function formatMoney(amount: number | null | undefined, currency: string | null)
 }
 
 export default function UnitEconomicsPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { activeCompany, connection } = useAuth()
+  const locale = intlLocale(i18n.resolvedLanguage)
   const companyId = activeCompany?.company_id
   const connectionId = connection?.connection_id
   const defaults = defaultDateRange()
@@ -118,7 +124,7 @@ export default function UnitEconomicsPage() {
     if (!base) return
     const value = Number(form.value)
     if (!form.name.trim() || !form.unit_label.trim() || !Number.isFinite(value) || value <= 0) {
-      setErr('Name, unit label, and a positive value are required.')
+      setErr(t('unitEconomics.validation'))
       return
     }
     setErr('')
@@ -134,7 +140,7 @@ export default function UnitEconomicsPage() {
           period: form.period,
         },
       })
-      setMsg('Business count added.')
+      setMsg(t('unitEconomics.created'))
       setForm(EMPTY_FORM)
       void reloadMetrics()
       void reloadComputed()
@@ -147,12 +153,12 @@ export default function UnitEconomicsPage() {
 
   const deleteMetric = async (metricId: string) => {
     if (!base) return
-    if (!window.confirm('Delete this business count?')) return
+    if (!window.confirm(t('unitEconomics.confirmDelete'))) return
     setErr('')
     setMsg('')
     try {
       await apiRequest(`${base}/unit-economics/metrics/${metricId}`, { method: 'DELETE' })
-      setMsg('Business count deleted.')
+      setMsg(t('unitEconomics.deleted'))
       void reloadMetrics()
       void reloadComputed()
     } catch (e2) {
@@ -169,11 +175,11 @@ export default function UnitEconomicsPage() {
           help={<UnitEconomicsHelp />}
         />
         <p className="empty">
-          Select a company and cloud connection in the top bar.
+          {t('unitEconomics.selectContext')}
           {companyId && !connectionId ? (
             <>
               {' '}
-              <Link to="/connections">Set up a connection</Link>
+              <Link to="/connections">{t('unitEconomics.setupConnection')}</Link>
             </>
           ) : null}
         </p>
@@ -198,41 +204,44 @@ export default function UnitEconomicsPage() {
 
       <div className="filters">
         <label>
-          Start date
+          {t('unitEconomics.startDate')}
           <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
         </label>
         <label>
-          End date
+          {t('unitEconomics.endDate')}
           <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
         </label>
       </div>
 
-      <h2>Cloud cost each</h2>
+      <h2>{t('unitEconomics.cloudCostEach')}</h2>
       <p className="page-lead" style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-        Uses the <strong>full bill</strong> for the selected connection in this date range — not a
-        single service or resource. For breakdowns, use Cost Explorer.
+        {t('unitEconomics.fullBillHint')}
       </p>
       {computedLoading && !computed ? (
-        <p className="loading">Computing…</p>
+        <p className="loading">{t('unitEconomics.computing')}</p>
       ) : !computed || computed.items.length === 0 ? (
         <p className="empty">
-          No counts yet. Add a business count below.
+          {t('unitEconomics.empty')}
           {computed
-            ? ` Bill for this range: ${formatMoney(computed.period_cost, currency)}.`
+            ? ` ${t('unitEconomics.billForRange', {
+                amount: formatMoney(computed.period_cost, currency, locale),
+              })}.`
             : ''}
         </p>
       ) : (
         <>
           <p className="page-lead" style={{ marginTop: 0 }}>
-            Bill for this range: {formatMoney(computed.period_cost, currency)}
+            {t('unitEconomics.billForRange', {
+              amount: formatMoney(computed.period_cost, currency, locale),
+            })}
           </p>
           <div className="data-table-wrap">
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>What you count</th>
-                  <th>How many</th>
-                  <th>Cost each</th>
+                  <th>{t('unitEconomics.columns.whatYouCount')}</th>
+                  <th>{t('unitEconomics.columns.howMany')}</th>
+                  <th>{t('unitEconomics.columns.costEach')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -241,11 +250,11 @@ export default function UnitEconomicsPage() {
                     <td>
                       {item.name}
                       <span className="page-lead" style={{ marginLeft: 6, fontSize: 12 }}>
-                        (per {item.unit_label})
+                        ({t('unitEconomics.perUnit', { unit: item.unit_label })})
                       </span>
                     </td>
-                    <td>{item.metric_value}</td>
-                    <td>{formatMoney(item.cost_per_unit, item.currency ?? currency)}</td>
+                    <td>{item.metric_value.toLocaleString(locale)}</td>
+                    <td>{formatMoney(item.cost_per_unit, item.currency ?? currency, locale)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -254,24 +263,23 @@ export default function UnitEconomicsPage() {
         </>
       )}
 
-      <h2 style={{ marginTop: '1.75rem' }}>Your business counts</h2>
+      <h2 style={{ marginTop: '1.75rem' }}>{t('unitEconomics.businessCounts')}</h2>
       <p className="page-lead" style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-        These numbers come from your business (CRM, billing, product analytics) — not from the
-        cloud. Update them when the count changes.
+        {t('unitEconomics.businessCountsHint')}
       </p>
       {metricsLoading && !metrics ? (
-        <p className="loading">Loading…</p>
+        <p className="loading">{t('unitEconomics.loading')}</p>
       ) : metricRows.length === 0 ? (
-        <p className="empty">No business counts yet.</p>
+        <p className="empty">{t('unitEconomics.noBusinessCounts')}</p>
       ) : (
         <div className="data-table-wrap">
           <table className="data-table">
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Counted as</th>
-                <th>How many</th>
-                <th>Period</th>
+                <th>{t('unitEconomics.form.name')}</th>
+                <th>{t('unitEconomics.form.countedAs')}</th>
+                <th>{t('unitEconomics.form.howMany')}</th>
+                <th>{t('unitEconomics.form.period')}</th>
                 <th />
               </tr>
             </thead>
@@ -280,15 +288,15 @@ export default function UnitEconomicsPage() {
                 <tr key={m.metric_id}>
                   <td>{m.name}</td>
                   <td>{m.unit_label}</td>
-                  <td>{m.value}</td>
-                  <td>{m.period}</td>
+                  <td>{m.value.toLocaleString(locale)}</td>
+                  <td>{t(`unitEconomics.form.${m.period}`, { defaultValue: m.period })}</td>
                   <td className="actions-cell">
                     <button
                       type="button"
                       className="btn btn-sm btn-danger"
                       onClick={() => void deleteMetric(m.metric_id)}
                     >
-                      Delete
+                      {t('unitEconomics.delete')}
                     </button>
                   </td>
                 </tr>
@@ -300,48 +308,48 @@ export default function UnitEconomicsPage() {
 
       <form className="filters" onSubmit={(e) => void handleCreate(e)} style={{ marginTop: 16 }}>
         <label>
-          Name
+          {t('unitEconomics.form.name')}
           <input
             value={form.name}
             onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-            placeholder="e.g. Active customers"
+            placeholder={t('unitEconomics.form.namePlaceholder')}
             required
           />
         </label>
         <label>
-          Counted as
+          {t('unitEconomics.form.countedAs')}
           <input
             value={form.unit_label}
             onChange={(e) => setForm((f) => ({ ...f, unit_label: e.target.value }))}
-            placeholder="e.g. customer"
+            placeholder={t('unitEconomics.form.unitPlaceholder')}
             required
           />
         </label>
         <label>
-          How many
+          {t('unitEconomics.form.howMany')}
           <input
             type="number"
             min="0.0001"
             step="any"
             value={form.value}
             onChange={(e) => setForm((f) => ({ ...f, value: e.target.value }))}
-            placeholder="e.g. 120"
+            placeholder={t('unitEconomics.form.valuePlaceholder')}
             required
           />
         </label>
         <label>
-          Period
+          {t('unitEconomics.form.period')}
           <select
             value={form.period}
             onChange={(e) => setForm((f) => ({ ...f, period: e.target.value }))}
           >
-            <option value="monthly">Monthly</option>
-            <option value="quarterly">Quarterly</option>
-            <option value="annual">Annual</option>
+            <option value="monthly">{t('unitEconomics.form.monthly')}</option>
+            <option value="quarterly">{t('unitEconomics.form.quarterly')}</option>
+            <option value="annual">{t('unitEconomics.form.annual')}</option>
           </select>
         </label>
         <button type="submit" className="btn btn-primary" disabled={busy}>
-          Add count
+          {t('unitEconomics.form.addCount')}
         </button>
       </form>
     </div>
