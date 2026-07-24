@@ -259,5 +259,18 @@
       "see4": "Picos de costo recientes comparados con la referencia habitual.",
       "footer": "Abre cualquier sección para consultar sus detalles."
     }
+  },
+  "recommendations": {
+    "advice": {
+      "idle": "Detén o elimina esta instancia: estás pagando por cómputo que no se está usando.",
+      "oversized": "Reduce a una forma más pequeña (aproximadamente la mitad de OCPUs/memoria).",
+      "overutilized": "Aumenta a una forma más grande (o escala horizontalmente) para proteger el rendimiento.",
+      "idleLb": "Elimina este balanceador de carga si ya no está sirviendo tráfico.",
+      "idleVolume": "Revísalo: si nada necesita este volumen, elimínalo.",
+      "idleBootVolume": "Revísalo: si nada necesita este volumen de arranque, elimínalo.",
+      "idleFileSystem": "Revísalo: si nada necesita este sistema de archivos, elimínalo.",
+      "unattachedBlock": "Elimina este volumen de bloque si nada necesita los datos, o adjúntalo a una instancia si aún se requiere.",
+      "unattachedBoot": "Elimina este volumen de arranque si nada necesita los datos, o adjúntalo a una instancia si aún se requiere."
+    }
   }
 }

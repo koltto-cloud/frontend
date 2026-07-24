@@ -8,6 +8,7 @@ import { useOciCompartments } from '@/hooks/useOciCompartments'
 import { Alert } from '@/components/Alert'
 import PageHeader from '@/components/PageHeader'
 import { recommendationsHelp } from '@/content/pageHelp'
+import { recommendationAdvice } from '@/oci/recommendationCopy'
 
 type RecKind =
   | 'idle'
@@ -518,7 +519,7 @@ export default function RecommendationsPage() {
                                 </div>
                               </td>
                               <td className="recs-col-rec">
-                                <div className="recs-advice">{item.recommendation}</div>
+                                <div className="recs-advice">{recommendationAdvice(t, item)}</div>
                               </td>
                               <td className="recs-col-cost">
                                 {after != null ? (
