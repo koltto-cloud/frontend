@@ -6,7 +6,7 @@ import { useAuth } from '@/context/AuthContext'
 import { useAsyncData } from '@/hooks/useAsyncData'
 import { Alert } from '@/components/Alert'
 import PageHeader from '@/components/PageHeader'
-import { unitEconomicsHelp } from '@/content/pageHelp'
+import { UnitEconomicsHelp } from '@/content/pageHelp'
 
 interface BusinessMetric {
   metric_id: string
@@ -166,7 +166,7 @@ export default function UnitEconomicsPage() {
         <PageHeader
           title={t('pages.unitEconomics.title')}
           helpTitle={t('pages.unitEconomics.helpTitle')}
-          help={unitEconomicsHelp}
+          help={<UnitEconomicsHelp />}
         />
         <p className="empty">
           Select a company and cloud connection in the top bar.
@@ -190,7 +190,7 @@ export default function UnitEconomicsPage() {
         title={t('pages.unitEconomics.title')}
         lead={t('pages.unitEconomics.lead')}
         helpTitle={t('pages.unitEconomics.helpTitle')}
-        help={unitEconomicsHelp}
+        help={<UnitEconomicsHelp />}
       />
 
       <Alert type="error">{err || metricsError || computedError}</Alert>

@@ -5,7 +5,7 @@ import { apiRequestText, formatApiError } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
 import { Alert } from '@/components/Alert'
 import PageHeader from '@/components/PageHeader'
-import { reportsHelp } from '@/content/pageHelp'
+import { ReportsHelp } from '@/content/pageHelp'
 
 function defaultDateRange() {
   const end = new Date()
@@ -62,7 +62,7 @@ export default function ReportsPage() {
         <PageHeader
           title={t('pages.reports.title')}
           helpTitle={t('pages.reports.helpTitle')}
-          help={reportsHelp}
+          help={<ReportsHelp />}
         />
         <p className="empty">
           Select a company and cloud connection in the top bar.
@@ -83,7 +83,7 @@ export default function ReportsPage() {
         title={t('pages.reports.title')}
         lead={t('pages.reports.lead')}
         helpTitle={t('pages.reports.helpTitle')}
-        help={reportsHelp}
+        help={<ReportsHelp />}
       />
 
       <div className="filters">

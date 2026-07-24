@@ -6,7 +6,7 @@ import { useAuth } from '@/context/AuthContext'
 import { useAsyncData } from '@/hooks/useAsyncData'
 import { Alert } from '@/components/Alert'
 import PageHeader from '@/components/PageHeader'
-import { budgetsHelp } from '@/content/pageHelp'
+import { BudgetsHelp } from '@/content/pageHelp'
 
 interface CostBudget {
   budget_id: string
@@ -268,7 +268,7 @@ export default function BudgetsPage() {
         <PageHeader
           title={t('pages.budgets.title')}
           helpTitle={t('pages.budgets.helpTitle')}
-          help={budgetsHelp}
+          help={<BudgetsHelp />}
         />
         <p className="empty">
           Select a company and cloud connection in the top bar.
@@ -292,7 +292,7 @@ export default function BudgetsPage() {
         title={t('pages.budgets.title')}
         lead={t('pages.budgets.lead')}
         helpTitle={t('pages.budgets.helpTitle')}
-        help={budgetsHelp}
+        help={<BudgetsHelp />}
       />
 
       <Alert type="error">{err || budgetsError || alertsError}</Alert>

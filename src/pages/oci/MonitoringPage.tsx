@@ -17,7 +17,7 @@ import {
   type InventoryOption,
 } from '@/oci/inventoryOptions'
 import PageHeader from '@/components/PageHeader'
-import { monitoringHelp } from '@/content/pageHelp'
+import { MonitoringHelp } from '@/content/pageHelp'
 import {
   average,
   classifyUtilization,
@@ -326,7 +326,7 @@ export default function MonitoringPage() {
         <PageHeader
           title={t('pages.monitoring.title')}
           helpTitle={t('pages.monitoring.helpTitle')}
-          help={monitoringHelp}
+          help={<MonitoringHelp />}
         />
         <p className="empty">Select a company and connection from the top bar.</p>
       </>
@@ -354,7 +354,7 @@ export default function MonitoringPage() {
         title={t('pages.monitoring.title')}
         lead={t('pages.monitoring.lead')}
         helpTitle={t('pages.monitoring.helpTitle')}
-        help={monitoringHelp}
+        help={<MonitoringHelp />}
       />
 
       <Alert type="info">

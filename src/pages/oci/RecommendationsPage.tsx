@@ -9,7 +9,7 @@ import { useOciCompartments } from '@/hooks/useOciCompartments'
 import { intlLocale } from '@/i18n/languages'
 import { Alert } from '@/components/Alert'
 import PageHeader from '@/components/PageHeader'
-import { recommendationsHelp } from '@/content/pageHelp'
+import { RecommendationsHelp } from '@/content/pageHelp'
 import { recommendationAdvice } from '@/oci/recommendationCopy'
 
 type RecKind =
@@ -367,7 +367,7 @@ export default function RecommendationsPage() {
         title={t('pages.recommendations.title')}
         lead={t('pages.recommendations.lead')}
         helpTitle={t('pages.recommendations.helpTitle')}
-        help={recommendationsHelp}
+        help={<RecommendationsHelp />}
       />
 
       {!hasCompany || !hasConnection ? (

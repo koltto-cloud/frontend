@@ -6,7 +6,7 @@ import { useAuth } from '@/context/AuthContext'
 import { useAsyncData } from '@/hooks/useAsyncData'
 import { Alert } from '@/components/Alert'
 import PageHeader from '@/components/PageHeader'
-import { anomaliesHelp } from '@/content/pageHelp'
+import { AnomaliesHelp } from '@/content/pageHelp'
 
 interface SpendAnomaly {
   date: string
@@ -88,7 +88,7 @@ export default function AnomaliesPage() {
         title={t('pages.anomalies.title')}
         lead={t('pages.anomalies.lead')}
         helpTitle={t('pages.anomalies.helpTitle')}
-        help={anomaliesHelp}
+        help={<AnomaliesHelp />}
       />
 
       {!hasCompany || !hasConnection ? (

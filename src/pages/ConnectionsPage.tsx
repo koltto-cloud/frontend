@@ -9,7 +9,7 @@ import PaginationControls from '@/components/PaginationControls'
 import Modal from '@/components/Modal'
 import JsonViewer from '@/components/JsonViewer'
 import PageHeader from '@/components/PageHeader'
-import { connectionsHelp } from '@/content/pageHelp'
+import { ConnectionsHelp } from '@/content/pageHelp'
 
 type CloudProvider = 'oci' | 'aws' | 'gcp'
 
@@ -199,7 +199,7 @@ export default function ConnectionsPage() {
         <PageHeader
           title={t('pages.connections.title')}
           helpTitle={t('pages.connections.helpTitle')}
-          help={connectionsHelp}
+          help={<ConnectionsHelp />}
         />
         <p className="empty">Select a company from the top bar.</p>
       </>
@@ -212,7 +212,7 @@ export default function ConnectionsPage() {
         title={t('pages.connections.title')}
         lead={t('pages.connections.lead')}
         helpTitle={t('pages.connections.helpTitle')}
-        help={connectionsHelp}
+        help={<ConnectionsHelp />}
       />
 
       <div className="toolbar">

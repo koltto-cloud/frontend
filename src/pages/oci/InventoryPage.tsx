@@ -12,7 +12,7 @@ import PaginationControls, {
 } from '@/components/PaginationControls'
 import { Alert } from '@/components/Alert'
 import PageHeader from '@/components/PageHeader'
-import { inventoryHelp } from '@/content/pageHelp'
+import { InventoryHelp } from '@/content/pageHelp'
 
 const INVENTORY_TABS = [
   { key: 'compartments', label: 'Compartments', segment: 'compartment', resource: 'compartments' },
@@ -110,7 +110,7 @@ export default function InventoryPage() {
         <PageHeader
           title={t('pages.inventory.title')}
           helpTitle={t('pages.inventory.helpTitle')}
-          help={inventoryHelp}
+          help={<InventoryHelp />}
         />
         <p className="empty">Select a company and connection from the top bar.</p>
       </>
@@ -123,7 +123,7 @@ export default function InventoryPage() {
         title={t('pages.inventory.title')}
         lead={t('pages.inventory.lead')}
         helpTitle={t('pages.inventory.helpTitle')}
-        help={inventoryHelp}
+        help={<InventoryHelp />}
       />
 
       <div className="tabs">
