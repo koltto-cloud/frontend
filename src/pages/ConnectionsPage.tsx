@@ -51,6 +51,8 @@ const EMPTY_OCI_CREATE = {
   key_content: '',
   passphrase: '',
   region: 'us-ashburn-1',
+  /** Comma-separated; empty → backend defaults to [region]. */
+  sync_regions: '',
 }
 
 const EMPTY_AWS_CREATE = {
@@ -79,7 +81,12 @@ export default function ConnectionsPage() {
   const [awsCreateForm, setAwsCreateForm] = useState(EMPTY_AWS_CREATE)
 
   const [editRow, setEditRow] = useState<ConnectionRow | null>(null)
-  const [editForm, setEditForm] = useState({ name: '', description: '', region: '' })
+  const [editForm, setEditForm] = useState({
+    name: '',
+    description: '',
+    region: '',
+    sync_regions: '',
+  })
 
   const listBase = companyId ? `/api/v1/cloud/connections/${companyId}` : null
   const ociBase = companyId ? `/api/v1/cloud/oci/connection/${companyId}/connections` : null
@@ -120,15 +127,37 @@ export default function ConnectionsPage() {
     }
   }
 
-  const openEdit = (row: ConnectionRow) => {
+  const parseSyncRegions = (raw: string): string[] | undefined => {
+    const parts = raw
+      .split(',')
+      .map((r) => r.trim())
+      .filter(Boolean)
+    return parts.length ? parts : undefined
+  }
+
+  const openEdit = async (row: ConnectionRow) => {
     if (!MANAGEABLE_CLOUDS.has(row.cloud)) return
     setEditRow(row)
     setEditForm({
       name: row.name,
       description: row.description ?? '',
       region: row.region ?? '',
+      sync_regions: '',
     })
     setErr('')
+    if (row.cloud === 'oci' && ociBase) {
+      try {
+        const detail = await apiRequest<{ sync_regions?: string[] }>(
+          `${ociBase}/${row.connection_id}`,
+        )
+        setEditForm((prev) => ({
+          ...prev,
+          sync_regions: (detail.sync_regions ?? []).join(', '),
+        }))
+      } catch {
+        // Edit still works with home region alone if detail fetch fails.
+      }
+    }
   }
 
   const resetCreateForms = () => {
@@ -148,13 +177,20 @@ export default function ConnectionsPage() {
     setErr('')
     setMsg('')
     try {
+      const ociSyncRegions = parseSyncRegions(ociCreateForm.sync_regions)
       const body =
         createCloud === 'oci'
           ? {
-              ...ociCreateForm,
-              company_id: companyId,
+              name: ociCreateForm.name,
               description: ociCreateForm.description || null,
+              tenancy: ociCreateForm.tenancy,
+              user: ociCreateForm.user,
+              fingerprint: ociCreateForm.fingerprint,
+              key_content: ociCreateForm.key_content,
               passphrase: ociCreateForm.passphrase || null,
+              region: ociCreateForm.region,
+              company_id: companyId,
+              ...(ociSyncRegions ? { sync_regions: ociSyncRegions } : {}),
             }
           : {
               ...awsCreateForm,
@@ -199,13 +235,18 @@ export default function ConnectionsPage() {
     setErr('')
     setMsg('')
     try {
+      const body: Record<string, unknown> = {
+        name: editForm.name,
+        description: editForm.description || null,
+        region: editForm.region,
+      }
+      if (editRow.cloud === 'oci') {
+        const regions = parseSyncRegions(editForm.sync_regions)
+        body.sync_regions = regions ?? [editForm.region].filter(Boolean)
+      }
       await apiRequest(`${base}/${editRow.connection_id}`, {
         method: 'PUT',
-        body: {
-          name: editForm.name,
-          description: editForm.description || null,
-          region: editForm.region,
-        },
+        body,
       })
       setMsg('Connection updated.')
       setEditRow(null)
@@ -416,6 +457,16 @@ export default function ConnectionsPage() {
                     }
                   />
                 </div>
+                <div className="form-field">
+                  <label>sync_regions (optional, comma-separated)</label>
+                  <input
+                    value={ociCreateForm.sync_regions}
+                    onChange={(e) =>
+                      setOciCreateForm({ ...ociCreateForm, sync_regions: e.target.value })
+                    }
+                    placeholder="us-ashburn-1, us-phoenix-1"
+                  />
+                </div>
               </>
             )}
 
@@ -533,10 +584,20 @@ export default function ConnectionsPage() {
                 onChange={(e) => setEditForm({ ...editForm, region: e.target.value })}
               />
             </div>
+            {editRow.cloud === 'oci' && (
+              <div className="form-field">
+                <label>sync_regions (comma-separated)</label>
+                <input
+                  value={editForm.sync_regions}
+                  onChange={(e) => setEditForm({ ...editForm, sync_regions: e.target.value })}
+                  placeholder="us-ashburn-1, us-phoenix-1"
+                />
+              </div>
+            )}
             <p className="empty" style={{ margin: 0 }}>
               {editRow.cloud === 'aws'
                 ? 'Credentials (access key / secret) cannot be updated via this endpoint.'
-                : 'Credentials (user, fingerprint, key) cannot be updated via this endpoint.'}
+                : 'Credentials (user, fingerprint, key) cannot be updated via this endpoint. Home region is for Identity/Usage; sync_regions drives multi-region compute sync.'}
             </p>
             <div className="form-actions">
               <button type="button" className="btn" onClick={() => setEditRow(null)}>
