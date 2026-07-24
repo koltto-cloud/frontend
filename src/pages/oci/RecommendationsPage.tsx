@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import type { TFunction } from 'i18next'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { apiRequest, formatApiError } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
 import { useAsyncData } from '@/hooks/useAsyncData'
 import { useOciCompartments } from '@/hooks/useOciCompartments'
+import { intlLocale } from '@/i18n/languages'
 import { Alert } from '@/components/Alert'
 import PageHeader from '@/components/PageHeader'
 import { recommendationsHelp } from '@/content/pageHelp'
@@ -55,36 +57,36 @@ interface RecommendationsResponse {
   items: RecommendationItem[]
 }
 
-const KIND_META: Record<RecKind, { label: string; tone: string }> = {
-  idle: { label: 'Stop', tone: 'danger' },
-  idle_storage: { label: 'Review', tone: 'warning' },
-  idle_lb: { label: 'Terminate', tone: 'danger' },
-  unattached_volume: { label: 'Terminate', tone: 'danger' },
-  oversized: { label: 'Downsize', tone: 'warning' },
-  overutilized: { label: 'Scale up', tone: 'accent' },
+const KIND_META: Record<RecKind, { labelKey: string; tone: string }> = {
+  idle: { labelKey: 'recommendations.actions.stop', tone: 'danger' },
+  idle_storage: { labelKey: 'recommendations.actions.review', tone: 'warning' },
+  idle_lb: { labelKey: 'recommendations.actions.terminate', tone: 'danger' },
+  unattached_volume: { labelKey: 'recommendations.actions.terminate', tone: 'danger' },
+  oversized: { labelKey: 'recommendations.actions.downsize', tone: 'warning' },
+  overutilized: { labelKey: 'recommendations.actions.scaleUp', tone: 'accent' },
 }
 
-const ACTION_FILTERS: { value: RecAction; label: string }[] = [
-  { value: 'terminate', label: 'Terminate' },
-  { value: 'downsize', label: 'Downsize' },
-  { value: 'review', label: 'Review' },
-  { value: 'stop', label: 'Stop' },
-  { value: 'scale_up', label: 'Scale up' },
+const ACTION_FILTERS: { value: RecAction; labelKey: string }[] = [
+  { value: 'terminate', labelKey: 'recommendations.actions.terminate' },
+  { value: 'downsize', labelKey: 'recommendations.actions.downsize' },
+  { value: 'review', labelKey: 'recommendations.actions.review' },
+  { value: 'stop', labelKey: 'recommendations.actions.stop' },
+  { value: 'scale_up', labelKey: 'recommendations.actions.scaleUp' },
 ]
 
-const TYPE_FILTERS: { value: string; label: string }[] = [
-  { value: '', label: 'All types' },
-  { value: 'compute', label: 'Compute' },
-  { value: 'block_storage', label: 'Block storage' },
-  { value: 'file_storage', label: 'File storage' },
-  { value: 'load_balancer', label: 'Load balancer' },
+const TYPE_FILTERS: { value: string; labelKey: string }[] = [
+  { value: '', labelKey: 'recommendations.allTypes' },
+  { value: 'compute', labelKey: 'recommendations.types.compute' },
+  { value: 'block_storage', labelKey: 'recommendations.types.block_storage' },
+  { value: 'file_storage', labelKey: 'recommendations.types.file_storage' },
+  { value: 'load_balancer', labelKey: 'recommendations.types.load_balancer' },
 ]
 
 const TYPE_LABEL: Record<string, string> = {
-  compute: 'Compute',
-  block_storage: 'Block storage',
-  file_storage: 'File storage',
-  load_balancer: 'Load balancer',
+  compute: 'recommendations.types.compute',
+  block_storage: 'recommendations.types.block_storage',
+  file_storage: 'recommendations.types.file_storage',
+  load_balancer: 'recommendations.types.load_balancer',
 }
 
 function isoDaysAgo(days: number): string {
@@ -93,40 +95,54 @@ function isoDaysAgo(days: number): string {
   return d.toISOString().slice(0, 10)
 }
 
-function formatMoney(amount: number | null | undefined, currency: string | null): string {
+function formatMoney(
+  amount: number | null | undefined,
+  currency: string | null,
+  locale: string,
+): string {
   if (amount == null || Number.isNaN(Number(amount))) return '—'
   const raw = (currency && currency.trim() ? currency.trim() : 'USD').toUpperCase()
   const code = raw === 'US$' || raw === 'USA' || raw === '$' ? 'USD' : raw
   const value = Number(amount)
   const digits = Math.abs(value) > 0 && Math.abs(value) < 10 ? 2 : 0
   try {
-    // Force en-US so USD renders as "$" (some locales show "US$").
-    return value.toLocaleString('en-US', {
+    return value.toLocaleString(locale, {
       style: 'currency',
       currency: code.length === 3 ? code : 'USD',
       maximumFractionDigits: digits,
       minimumFractionDigits: 0,
     })
   } catch {
-    return `$${value.toFixed(digits)}`
+    return value.toLocaleString(locale, {
+      style: 'currency',
+      currency: 'USD',
+      maximumFractionDigits: digits,
+      minimumFractionDigits: 0,
+    })
   }
 }
 
-function pct(value: number | null): string {
-  return value == null || Number.isNaN(value) ? 'n/a' : `${value.toFixed(0)}%`
+function pct(value: number | null, t: TFunction): string {
+  return value == null || Number.isNaN(value)
+    ? t('recommendations.metrics.na')
+    : `${value.toFixed(0)}%`
 }
 
-function metricPhrase(item: RecommendationItem): string {
-  if (item.kind === 'unattached_volume') return 'unattached'
-  if (item.resource_type === 'load_balancer') return 'no traffic'
+function metricPhrase(item: RecommendationItem, t: TFunction): string {
+  if (item.kind === 'unattached_volume') return t('recommendations.metrics.unattached')
+  if (item.resource_type === 'load_balancer') return t('recommendations.metrics.noTraffic')
   if (item.resource_type === 'block_storage' || item.resource_type === 'file_storage') {
-    return 'near-zero I/O'
+    return t('recommendations.metrics.nearZeroIo')
   }
-  return `CPU ${pct(item.cpu_avg)} · Mem ${pct(item.mem_avg)}`
+  return t('recommendations.metrics.cpuMem', {
+    cpu: pct(item.cpu_avg, t),
+    mem: pct(item.mem_avg, t),
+  })
 }
 
-function actionLabel(item: RecommendationItem): string {
-  return KIND_META[item.kind]?.label ?? item.action
+function actionLabel(item: RecommendationItem, t: TFunction): string {
+  const labelKey = KIND_META[item.kind]?.labelKey
+  return labelKey ? t(labelKey) : item.action
 }
 
 function actionTone(item: RecommendationItem): string {
@@ -150,6 +166,7 @@ function RowMenu({
   onSilence: (days: number | null) => void
   onUnsilence: () => void
 }) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
 
@@ -192,7 +209,7 @@ function RowMenu({
                 onUnsilence()
               }}
             >
-              Unsilence
+              {t('recommendations.unsilence')}
             </button>
           ) : (
             <>
@@ -204,7 +221,7 @@ function RowMenu({
                   onSilence(30)
                 }}
               >
-                Silence 30 days
+                {t('recommendations.silence30d')}
               </button>
               <button
                 type="button"
@@ -214,7 +231,7 @@ function RowMenu({
                   onSilence(null)
                 }}
               >
-                Ignore
+                {t('recommendations.ignore')}
               </button>
             </>
           )}
@@ -225,10 +242,11 @@ function RowMenu({
 }
 
 export default function RecommendationsPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { activeCompany, connection } = useAuth()
   const companyId = activeCompany?.company_id
   const connectionId = connection?.connection_id
+  const locale = intlLocale(i18n.resolvedLanguage ?? i18n.language)
   const { compartments } = useOciCompartments(companyId, connectionId)
 
   const [startDate] = useState(isoDaysAgo(30))
@@ -319,7 +337,7 @@ export default function RecommendationsPage() {
       )
       await reload()
     } catch (err) {
-      setActionError(formatApiError(err) || 'Could not silence recommendation')
+      setActionError(formatApiError(err) || t('recommendations.silenceFailed'))
     } finally {
       setBusyKey(null)
     }
@@ -337,7 +355,7 @@ export default function RecommendationsPage() {
       )
       await reload()
     } catch (err) {
-      setActionError(formatApiError(err) || 'Could not clear silence')
+      setActionError(formatApiError(err) || t('recommendations.unsilenceFailed'))
     } finally {
       setBusyKey(null)
     }
@@ -354,11 +372,11 @@ export default function RecommendationsPage() {
 
       {!hasCompany || !hasConnection ? (
         <p className="empty">
-          Select a company and cloud connection in the top bar to see recommendations.
+          {t('recommendations.selectContext')}
           {!hasConnection && hasCompany && (
             <>
               {' '}
-              <Link to="/connections">Set up a connection</Link>
+              <Link to="/connections">{t('recommendations.setupConnection')}</Link>
             </>
           )}
         </p>
@@ -367,10 +385,13 @@ export default function RecommendationsPage() {
           <Alert type="error">{error || actionError}</Alert>
 
           {loading && !data ? (
-            <p className="loading">Analyzing cost vs utilization…</p>
+            <p className="loading">{t('recommendations.loading')}</p>
           ) : (
             <>
-              <section className="recs-stat-grid" aria-label="Recommendation filters">
+              <section
+                className="recs-stat-grid"
+                aria-label={t('recommendations.filtersAria')}
+              >
                 <button
                   type="button"
                   className={`recs-stat-card recs-stat-card--savings${actionFilter === '' ? ' is-active' : ''}`}
@@ -383,11 +404,14 @@ export default function RecommendationsPage() {
                           ? filteredSavings
                           : (data?.total_estimated_monthly_savings ?? 0),
                         currency,
+                        locale,
                       )}
                     </div>
-                    <div className="recs-stat-label">Potential savings / mo</div>
+                    <div className="recs-stat-label">
+                      {t('recommendations.potentialSavings')}
+                    </div>
                   </div>
-                  <span className="recs-stat-hint">All actions</span>
+                  <span className="recs-stat-hint">{t('recommendations.allActions')}</span>
                 </button>
 
                 {ACTION_FILTERS.map((f) => {
@@ -403,7 +427,7 @@ export default function RecommendationsPage() {
                     >
                       <div className="recs-stat-card-body">
                         <div className="recs-stat-value">{count}</div>
-                        <div className="recs-stat-label">{f.label}</div>
+                        <div className="recs-stat-label">{t(f.labelKey)}</div>
                       </div>
                     </button>
                   )
@@ -412,12 +436,16 @@ export default function RecommendationsPage() {
 
               <section className="recs-panel">
                 <div className="recs-panel-toolbar">
-                  <div className="tabs recs-status-tabs" role="tablist" aria-label="Recommendation status">
+                  <div
+                    className="tabs recs-status-tabs"
+                    role="tablist"
+                    aria-label={t('recommendations.statusAria')}
+                  >
                     {(
                       [
-                        ['active', 'Active'],
-                        ['silenced', 'Silenced'],
-                        ['all', 'All'],
+                        ['active', 'recommendations.status.active'],
+                        ['silenced', 'recommendations.status.silenced'],
+                        ['all', 'recommendations.status.all'],
                       ] as const
                     ).map(([value, label]) => (
                       <button
@@ -428,32 +456,32 @@ export default function RecommendationsPage() {
                         className={`tab${status === value ? ' active' : ''}`}
                         onClick={() => setStatus(value)}
                       >
-                        {label}
+                        {t(label)}
                       </button>
                     ))}
                   </div>
 
                   <div className="recs-panel-filters">
                     <label>
-                      Type
+                      {t('recommendations.type')}
                       <select
                         value={resourceType}
                         onChange={(e) => setResourceType(e.target.value)}
                       >
                         {TYPE_FILTERS.map((o) => (
                           <option key={o.value || 'all'} value={o.value}>
-                            {o.label}
+                            {t(o.labelKey)}
                           </option>
                         ))}
                       </select>
                     </label>
                     <label>
-                      Scope
+                      {t('recommendations.scope')}
                       <select
                         value={compartmentId}
                         onChange={(e) => setCompartmentId(e.target.value)}
                       >
-                        <option value="">All scopes</option>
+                        <option value="">{t('recommendations.allScopes')}</option>
                         {compartments.map((c) => (
                           <option key={c.compartment_ocid} value={c.compartment_ocid}>
                             {c.name}
@@ -466,20 +494,27 @@ export default function RecommendationsPage() {
 
                 {items.length === 0 ? (
                   <p className="empty" style={{ margin: '1rem 0 0' }}>
-                    No recommendations for these filters. Try another status, or sync cost and
-                    monitoring for the last 30 days.
+                    {t('recommendations.empty')}
                   </p>
                 ) : (
                   <div className="data-table-wrap recs-table-wrap">
                     <table className="data-table recs-table">
                       <thead>
                         <tr>
-                          <th className="recs-col-action">Action</th>
-                          <th className="recs-col-resource">Resource</th>
-                          <th className="recs-col-rec">Recommendation</th>
-                          <th className="recs-col-cost">Cost</th>
+                          <th className="recs-col-action">
+                            {t('recommendations.columns.action')}
+                          </th>
+                          <th className="recs-col-resource">
+                            {t('recommendations.columns.resource')}
+                          </th>
+                          <th className="recs-col-rec">
+                            {t('recommendations.columns.recommendation')}
+                          </th>
+                          <th className="recs-col-cost">
+                            {t('recommendations.columns.cost')}
+                          </th>
                           <th className="recs-col-menu">
-                            <span className="sr-only">Row actions</span>
+                            <span className="sr-only">{t('recommendations.rowActions')}</span>
                           </th>
                         </tr>
                       </thead>
@@ -500,7 +535,7 @@ export default function RecommendationsPage() {
                             >
                               <td className="recs-col-action">
                                 <span className={`recs-badge recs-badge--${tone}`}>
-                                  {actionLabel(item)}
+                                  {actionLabel(item, t)}
                                 </span>
                               </td>
                               <td className="recs-col-resource">
@@ -508,14 +543,18 @@ export default function RecommendationsPage() {
                                   className="recs-resource-name"
                                   title={item.resource_id ?? undefined}
                                 >
-                                  {item.resource_name ?? item.resource_id ?? 'unknown'}
+                                  {item.resource_name ?? item.resource_id ?? t('common.unknown')}
                                 </div>
                                 <div className="recs-resource-meta">
-                                  {TYPE_LABEL[item.resource_type] ?? item.resource_type}
+                                  {TYPE_LABEL[item.resource_type]
+                                    ? t(TYPE_LABEL[item.resource_type])
+                                    : item.resource_type}
                                   {scopeName ? ` · ${scopeName}` : ''}
                                   {' · '}
-                                  {metricPhrase(item)}
-                                  {item.confidence === 'low' ? ' · low confidence' : ''}
+                                  {metricPhrase(item, t)}
+                                  {item.confidence === 'low'
+                                    ? ` · ${t('recommendations.metrics.lowConfidence')}`
+                                    : ''}
                                 </div>
                               </td>
                               <td className="recs-col-rec">
@@ -527,29 +566,47 @@ export default function RecommendationsPage() {
                                     <>
                                       {/* Full savings (stop/terminate): after is ~$0 — lead with save amount. */}
                                       <div className="recs-cost-after">
-                                        save {formatMoney(item.estimated_monthly_savings, currency)}
-                                        <span className="recs-cost-suffix">/mo</span>
+                                        {t('recommendations.saveMo', {
+                                          amount: formatMoney(
+                                            item.estimated_monthly_savings,
+                                            currency,
+                                            locale,
+                                          ),
+                                        })}
+                                        <span className="recs-cost-suffix">
+                                          {t('recommendations.perMo')}
+                                        </span>
                                       </div>
                                       <div className="recs-cost-current">
-                                        {formatMoney(item.monthly_cost, currency)}/mo now → $0 after
+                                        {t('recommendations.nowToZero', {
+                                          amount: formatMoney(item.monthly_cost, currency, locale),
+                                        })}
                                       </div>
                                     </>
                                   ) : (
                                     <>
                                       <div className="recs-cost-after">
-                                        {formatMoney(after, currency)}
-                                        <span className="recs-cost-suffix">/mo after</span>
+                                        {formatMoney(after, currency, locale)}
+                                        <span className="recs-cost-suffix">
+                                          {t('recommendations.perMoAfter')}
+                                        </span>
                                       </div>
                                       <div className="recs-cost-current">
-                                        {formatMoney(item.monthly_cost, currency)}/mo now
+                                        {t('recommendations.perMoNow', {
+                                          amount: formatMoney(item.monthly_cost, currency, locale),
+                                        })}
                                       </div>
                                     </>
                                   )
                                 ) : (
                                   <>
-                                    <div className="recs-cost-risk">Performance risk</div>
+                                    <div className="recs-cost-risk">
+                                      {t('recommendations.performanceRisk')}
+                                    </div>
                                     <div className="recs-cost-current">
-                                      {formatMoney(item.monthly_cost, currency)}/mo now
+                                      {t('recommendations.perMoNow', {
+                                        amount: formatMoney(item.monthly_cost, currency, locale),
+                                      })}
                                     </div>
                                   </>
                                 )}
@@ -572,7 +629,7 @@ export default function RecommendationsPage() {
 
                 {loading && data != null ? (
                   <p className="dashboard-cost-updating" aria-live="polite">
-                    Updating…
+                    {t('common.updating')}
                   </p>
                 ) : null}
               </section>
