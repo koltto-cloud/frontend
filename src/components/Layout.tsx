@@ -1,4 +1,4 @@
-import { useEffect, useState, type ComponentType, type SVGProps } from 'react'
+import { useEffect, useRef, useState, type ComponentType, type SVGProps } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import {
   Activity,
@@ -7,6 +7,7 @@ import {
   Building2,
   Cable,
   Calculator,
+  CircleUser,
   ClipboardList,
   FileBarChart,
   Layers,
@@ -26,6 +27,7 @@ import {
 import { useAuth } from '@/context/AuthContext'
 import { useSyncsPaused } from '@/hooks/useSyncsPaused'
 import SyncsPausedBanner from '@/components/SyncsPausedBanner'
+import type { User } from '@/api/client'
 
 type IconComponent = ComponentType<SVGProps<SVGSVGElement> & { size?: number | string; strokeWidth?: number | string }>
 
@@ -99,6 +101,67 @@ function topbarRoleClass(userType: string | undefined): string {
   if (userType === 'super_admin') return ' topbar--super-admin'
   if (userType === 'staff') return ' topbar--staff'
   return ''
+}
+
+function UserMenu({ user, onLogout }: { user: User; onLogout: () => void }) {
+  const [open, setOpen] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
+  const displayName = `${user.first_name} ${user.last_name}`.trim() || user.email
+
+  useEffect(() => {
+    if (!open) return
+    function onDoc(e: MouseEvent) {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false)
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('mousedown', onDoc)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDoc)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+
+  return (
+    <div className="topbar-user-menu" ref={rootRef}>
+      <button
+        type="button"
+        className="topbar-user-trigger"
+        aria-label="Account menu"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <CircleUser size={22} strokeWidth={1.75} aria-hidden="true" />
+      </button>
+      {open ? (
+        <div className="topbar-user-panel" role="menu">
+          <p className="topbar-user-panel-name">{displayName}</p>
+          <Link
+            to="/profile"
+            role="menuitem"
+            className="topbar-user-panel-item"
+            onClick={() => setOpen(false)}
+          >
+            Profile
+          </Link>
+          <button
+            type="button"
+            role="menuitem"
+            className="topbar-user-panel-item"
+            onClick={() => {
+              setOpen(false)
+              onLogout()
+            }}
+          >
+            Logout
+          </button>
+        </div>
+      ) : null}
+    </div>
+  )
 }
 
 function NavSections({ groups, onNavigate }: { groups: NavSection[]; onNavigate: () => void }) {
@@ -223,17 +286,7 @@ export default function Layout() {
             )}
           </div>
           <div className="topbar-user">
-            {user ? (
-              <>
-                <Link to="/profile" className="topbar-user-link">
-                  {user.first_name} {user.last_name}
-                </Link>
-                <span className="topbar-user-chip">{user.user_type}</span>
-                <button type="button" className="btn btn-ghost" onClick={() => void logout()}>
-                  Logout
-                </button>
-              </>
-            ) : null}
+            {user ? <UserMenu user={user} onLogout={() => void logout()} /> : null}
           </div>
         </header>
 
