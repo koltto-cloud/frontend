@@ -18,6 +18,7 @@ const DETAIL_FIELDS: Record<string, string[]> = {
     'resource_ocid',
     'compartment_id',
     'tenancy_ocid',
+    'region',
     'lifecycle_state',
     'shape',
     'mem_gbs',
@@ -111,6 +112,7 @@ export default function InventoryResourceTable({
             <th className="col-expand" aria-label="Expand" />
             <th>Display name</th>
             <th>Compartment</th>
+            <th>Region</th>
             <th>Status</th>
             <th>Created</th>
             <th>Synced</th>
@@ -137,13 +139,14 @@ export default function InventoryResourceTable({
                   </td>
                   <td>{formatValue(row.display_name)}</td>
                   <td title={compartmentId || undefined}>{compartmentLabel}</td>
+                  <td>{formatValue(row.region)}</td>
                   <td>{formatValue(row.lifecycle_state)}</td>
                   <td>{formatValue(row.time_created)}</td>
                   <td>{formatValue(row.synced_at)}</td>
                 </tr>
                 {isOpen && (
                   <tr className="resource-detail-row">
-                    <td colSpan={6}>
+                    <td colSpan={7}>
                       <dl className="resource-detail-list">
                         {detailFields.map((field) => (
                           <div key={field} className="resource-detail-item">
