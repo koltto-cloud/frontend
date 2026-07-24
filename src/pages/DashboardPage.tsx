@@ -14,6 +14,7 @@ import TimeSeriesChart from '@/components/TimeSeriesChart'
 import BarChart from '@/components/BarChart'
 import { Alert } from '@/components/Alert'
 import { intlLocale } from '@/i18n/languages'
+import { recommendationAdvice } from '@/oci/recommendationCopy'
 
 type RangePreset = 'day' | '3m' | '12m' | 'custom'
 /** `all` = sum across clouds (OCI only until AWS/GCP exist). */
@@ -591,7 +592,9 @@ export default function DashboardPage() {
                                 {actionLabel}
                               </span>
                             </div>
-                            <p className="dashboard-opportunity-advice">{item.recommendation}</p>
+                            <p className="dashboard-opportunity-advice">
+                              {recommendationAdvice(t, item)}
+                            </p>
                             <div className="dashboard-opportunity-meta">
                               <span className="dashboard-opportunity-savings">
                                 {t('dashboard.savePerMonth', {
