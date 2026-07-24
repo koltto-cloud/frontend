@@ -19,6 +19,14 @@ export interface User {
   updated_at?: string
 }
 
+/** Persisted per-user prefs (`user_settings` on the backend). */
+export type UserLanguage = 'en' | 'es'
+
+export interface UserSettings {
+  user_id?: string
+  language: UserLanguage
+}
+
 export interface Company {
   company_id: string
   name: string
@@ -103,6 +111,19 @@ export function formatApiError(err: unknown): string {
   }
   if (err instanceof Error) return err.message
   return 'Unknown error'
+}
+
+export async function getUserSettings(): Promise<UserSettings> {
+  return apiRequest<UserSettings>('/api/v1/identity/users/me/settings')
+}
+
+export async function updateUserSettings(
+  body: Pick<UserSettings, 'language'>,
+): Promise<UserSettings> {
+  return apiRequest<UserSettings>('/api/v1/identity/users/me/settings', {
+    method: 'PUT',
+    body,
+  })
 }
 
 function getAccessToken(): string | null {
