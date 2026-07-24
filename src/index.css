@@ -3028,10 +3028,6 @@ a.dashboard-spike-date:hover {
 }
 
 @media (max-width: 380px) {
-  .topbar-user-link {
-    display: none;
-  }
-
   .dashboard-cost-stats {
     grid-template-columns: 1fr;
   }
