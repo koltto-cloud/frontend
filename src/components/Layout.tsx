@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ComponentType, type SVGProps } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   Activity,
   AlertTriangle,
@@ -31,35 +32,35 @@ import type { User } from '@/api/client'
 
 type IconComponent = ComponentType<SVGProps<SVGSVGElement> & { size?: number | string; strokeWidth?: number | string }>
 
-type NavLinkItem = { to: string; label: string; icon: IconComponent }
-type NavSection = { section: string; links: NavLinkItem[] }
+type NavLinkItem = { to: string; labelKey: string; icon: IconComponent }
+type NavSection = { sectionKey: string; links: NavLinkItem[] }
 
 /** Customer-facing: cost analysis, resources, and configuration */
 const CUSTOMER_NAV: NavSection[] = [
   {
-    section: 'Costs',
+    sectionKey: 'nav.sections.costs',
     links: [
-      { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-      { to: '/oci/cost-explorer', label: 'Cost Explorer', icon: FileBarChart },
-      { to: '/oci/recommendations', label: 'Recommendations', icon: Lightbulb },
-      { to: '/oci/anomalies', label: 'Cost Anomalies', icon: AlertTriangle },
-      { to: '/oci/unit-economics', label: 'Unit Economics', icon: Calculator },
+      { to: '/', labelKey: 'nav.dashboard', icon: LayoutDashboard },
+      { to: '/oci/cost-explorer', labelKey: 'nav.costExplorer', icon: FileBarChart },
+      { to: '/oci/recommendations', labelKey: 'nav.recommendations', icon: Lightbulb },
+      { to: '/oci/anomalies', labelKey: 'nav.costAnomalies', icon: AlertTriangle },
+      { to: '/oci/unit-economics', labelKey: 'nav.unitEconomics', icon: Calculator },
     ],
   },
   {
-    section: 'Resources',
+    sectionKey: 'nav.sections.resources',
     links: [
-      { to: '/oci/inventory', label: 'Inventory', icon: Boxes },
-      { to: '/oci/monitoring', label: 'Monitoring', icon: Activity },
-      { to: '/oci/reports', label: 'Reports', icon: ScrollText },
+      { to: '/oci/inventory', labelKey: 'nav.inventory', icon: Boxes },
+      { to: '/oci/monitoring', labelKey: 'nav.monitoring', icon: Activity },
+      { to: '/oci/reports', labelKey: 'nav.reports', icon: ScrollText },
     ],
   },
   {
-    section: 'Settings',
+    sectionKey: 'nav.sections.settings',
     links: [
-      { to: '/connections', label: 'Connections', icon: Cable },
-      { to: '/oci/budgets', label: 'Budgets & Alerts', icon: Wallet },
-      { to: '/oci/allocation', label: 'Allocations', icon: PieChart },
+      { to: '/connections', labelKey: 'nav.connections', icon: Cable },
+      { to: '/oci/budgets', labelKey: 'nav.budgetsAlerts', icon: Wallet },
+      { to: '/oci/allocation', labelKey: 'nav.allocations', icon: PieChart },
     ],
   },
 ]
@@ -67,28 +68,28 @@ const CUSTOMER_NAV: NavSection[] = [
 /** Staff / internal ops — not shown to customers */
 const INTERNAL_NAV: NavSection[] = [
   {
-    section: 'Identity',
+    sectionKey: 'nav.sections.identity',
     links: [
-      { to: '/users', label: 'Users', icon: Users },
-      { to: '/companies', label: 'Companies', icon: Building2 },
-      { to: '/memberships', label: 'Memberships', icon: UserCog },
+      { to: '/users', labelKey: 'nav.users', icon: Users },
+      { to: '/companies', labelKey: 'nav.companies', icon: Building2 },
+      { to: '/memberships', labelKey: 'nav.memberships', icon: UserCog },
     ],
   },
   {
-    section: 'Catalog & Billing',
+    sectionKey: 'nav.sections.catalogBilling',
     links: [
-      { to: '/catalog/plans', label: 'Plans', icon: Layers },
-      { to: '/catalog/features', label: 'Services', icon: Package },
-      { to: '/billing/subscriptions', label: 'Subscriptions', icon: Repeat },
-      { to: '/billing/invoices', label: 'Invoices', icon: Receipt },
+      { to: '/catalog/plans', labelKey: 'nav.plans', icon: Layers },
+      { to: '/catalog/features', labelKey: 'nav.services', icon: Package },
+      { to: '/billing/subscriptions', labelKey: 'nav.subscriptions', icon: Repeat },
+      { to: '/billing/invoices', labelKey: 'nav.invoices', icon: Receipt },
     ],
   },
   {
-    section: 'Admin',
+    sectionKey: 'nav.sections.admin',
     links: [
-      { to: '/audit', label: 'Audit Logs', icon: ClipboardList },
-      { to: '/oci/pricing', label: 'OCI Pricing', icon: Tags },
-      { to: '/admin/maintenance', label: 'Maintenance', icon: Wrench },
+      { to: '/audit', labelKey: 'nav.auditLogs', icon: ClipboardList },
+      { to: '/oci/pricing', labelKey: 'nav.ociPricing', icon: Tags },
+      { to: '/admin/maintenance', labelKey: 'nav.maintenance', icon: Wrench },
     ],
   },
 ]
@@ -104,6 +105,7 @@ function topbarRoleClass(userType: string | undefined): string {
 }
 
 function UserMenu({ user, onLogout }: { user: User; onLogout: () => void }) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
   const displayName = `${user.first_name} ${user.last_name}`.trim() || user.email
@@ -129,7 +131,7 @@ function UserMenu({ user, onLogout }: { user: User; onLogout: () => void }) {
       <button
         type="button"
         className="topbar-user-trigger"
-        aria-label="Account menu"
+        aria-label={t('common.accountMenu')}
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
@@ -145,7 +147,7 @@ function UserMenu({ user, onLogout }: { user: User; onLogout: () => void }) {
             className="topbar-user-panel-item"
             onClick={() => setOpen(false)}
           >
-            Profile
+            {t('common.profile')}
           </Link>
           <button
             type="button"
@@ -156,7 +158,7 @@ function UserMenu({ user, onLogout }: { user: User; onLogout: () => void }) {
               onLogout()
             }}
           >
-            Logout
+            {t('common.logout')}
           </button>
         </div>
       ) : null}
@@ -165,11 +167,12 @@ function UserMenu({ user, onLogout }: { user: User; onLogout: () => void }) {
 }
 
 function NavSections({ groups, onNavigate }: { groups: NavSection[]; onNavigate: () => void }) {
+  const { t } = useTranslation()
   return (
     <>
       {groups.map((group) => (
-        <div key={group.section} className="nav-section">
-          <p className="nav-section-title">{group.section}</p>
+        <div key={group.sectionKey} className="nav-section">
+          <p className="nav-section-title">{t(group.sectionKey)}</p>
           {group.links.map((link) => {
             const Icon = link.icon
             return (
@@ -181,7 +184,7 @@ function NavSections({ groups, onNavigate }: { groups: NavSection[]; onNavigate:
                 onClick={onNavigate}
               >
                 <Icon className="nav-link-icon" size={18} strokeWidth={1.75} aria-hidden="true" />
-                <span className="nav-link-label">{link.label}</span>
+                <span className="nav-link-label">{t(link.labelKey)}</span>
               </NavLink>
             )
           })}
@@ -192,6 +195,7 @@ function NavSections({ groups, onNavigate }: { groups: NavSection[]; onNavigate:
 }
 
 export default function Layout() {
+  const { t } = useTranslation()
   const { user, companies, activeCompany, connections, connection, switchCompany, switchConnection, logout } =
     useAuth()
   const location = useLocation()
@@ -222,8 +226,8 @@ export default function Layout() {
 
         {staff ? (
           <div className="nav-band-internal-zone">
-            <div className="nav-band-divider nav-band-divider--internal" role="separator" aria-label="Internal">
-              <span className="nav-band-divider-label">Internal</span>
+            <div className="nav-band-divider nav-band-divider--internal" role="separator" aria-label={t('common.internal')}>
+              <span className="nav-band-divider-label">{t('common.internal')}</span>
             </div>
             <div className="nav-band">
               <NavSections groups={INTERNAL_NAV} onNavigate={() => setNavOpen(false)} />
@@ -235,7 +239,7 @@ export default function Layout() {
         <button
           type="button"
           className="sidebar-backdrop"
-          aria-label="Close navigation"
+          aria-label={t('common.closeNav')}
           onClick={() => setNavOpen(false)}
         />
       ) : null}
@@ -250,12 +254,12 @@ export default function Layout() {
             onClick={() => setNavOpen((open) => !open)}
           >
             <span aria-hidden="true">☰</span>
-            <span>Menu</span>
+            <span>{t('common.menu')}</span>
           </button>
           <div className="context-bar">
             {companies.length > 0 && (
               <label>
-                Company
+                {t('common.company')}
                 <select
                   value={activeCompany?.company_id ?? ''}
                   onChange={(e) => void switchCompany(e.target.value)}
@@ -270,7 +274,7 @@ export default function Layout() {
             )}
             {connections.length > 0 && (
               <label>
-                Connection
+                {t('common.connection')}
                 <select
                   value={connection?.connection_id ?? ''}
                   onChange={(e) => switchConnection(e.target.value)}
