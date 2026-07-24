@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface ModalProps {
   title: string
@@ -21,6 +22,7 @@ export default function Modal({
   wide,
   xl,
 }: ModalProps) {
+  const { t } = useTranslation()
   const sizeClass = xl ? ' modal-xl' : wide ? ' modal-wide' : ''
 
   useEffect(() => {
@@ -52,7 +54,12 @@ export default function Modal({
             <h2 id="modal-title">{title}</h2>
             {description ? <div className="modal-description">{description}</div> : null}
           </div>
-          <button type="button" className="modal-close" onClick={onClose} aria-label="Close">
+          <button
+            type="button"
+            className="modal-close"
+            onClick={onClose}
+            aria-label={t('common.close')}
+          >
             ×
           </button>
         </div>

@@ -10,6 +10,8 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import { useTranslation } from 'react-i18next'
+import { intlLocale } from '@/i18n/languages'
 
 export interface TimeSeriesPoint {
   /** ISO timestamp or display label */
@@ -55,13 +57,14 @@ const SERIES_COLORS = [
   'var(--cloud-azure)',
 ]
 
-function formatTick(iso: string, dateOnly: boolean): string {
-  const d = new Date(iso)
+function formatTick(iso: string, dateOnly: boolean, locale: string): string {
+  const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(iso)
+  const d = new Date(isDateOnly ? `${iso}T00:00:00` : iso)
   if (Number.isNaN(d.getTime())) return iso
-  if (dateOnly || /^\d{4}-\d{2}-\d{2}$/.test(iso)) {
-    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+  if (dateOnly || isDateOnly) {
+    return d.toLocaleDateString(locale, { month: 'short', day: 'numeric' })
   }
-  return d.toLocaleString(undefined, {
+  return d.toLocaleString(locale, {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
@@ -69,27 +72,28 @@ function formatTick(iso: string, dateOnly: boolean): string {
   })
 }
 
-function formatTooltipLabel(iso: string, dateOnly: boolean): string {
-  const d = new Date(iso)
+function formatTooltipLabel(iso: string, dateOnly: boolean, locale: string): string {
+  const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(iso)
+  const d = new Date(isDateOnly ? `${iso}T00:00:00` : iso)
   if (Number.isNaN(d.getTime())) return iso
-  if (dateOnly || /^\d{4}-\d{2}-\d{2}$/.test(iso)) {
-    return d.toLocaleDateString(undefined, {
+  if (dateOnly || isDateOnly) {
+    return d.toLocaleDateString(locale, {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
     })
   }
-  return d.toLocaleString()
+  return d.toLocaleString(locale)
 }
 
-function formatValue(value: unknown, prefix: string, suffix: string): string {
+function formatValue(value: unknown, prefix: string, suffix: string, locale: string): string {
   if (value == null || Number.isNaN(Number(value))) return '—'
-  return `${prefix}${Number(value).toLocaleString(undefined, { maximumFractionDigits: 2 })}${suffix}`
+  return `${prefix}${Number(value).toLocaleString(locale, { maximumFractionDigits: 2 })}${suffix}`
 }
 
 export default function TimeSeriesChart({
   points,
-  valueLabel = 'Value',
+  valueLabel,
   valuePrefix = '',
   valueSuffix = '',
   series,
@@ -98,8 +102,11 @@ export default function TimeSeriesChart({
   height = 280,
   yDomain,
 }: TimeSeriesChartProps) {
+  const { t, i18n } = useTranslation()
+  const locale = intlLocale(i18n.resolvedLanguage)
+
   if (points.length === 0) {
-    return <p className="empty">No series data for this range.</p>
+    return <p className="empty">{t('chart.noSeriesData')}</p>
   }
 
   const multi = series && series.length > 0
@@ -112,14 +119,14 @@ export default function TimeSeriesChart({
           <CartesianGrid strokeDasharray="4 4" stroke="var(--line)" />
           <XAxis
             dataKey="t"
-            tickFormatter={(v) => formatTick(String(v), dateOnly)}
+            tickFormatter={(v) => formatTick(String(v), dateOnly, locale)}
             minTickGap={40}
             tick={{ fontSize: 11, fill: 'var(--muted)', fontFamily: 'var(--font-mono)' }}
           />
           <YAxis
             domain={yDomain}
             tick={{ fontSize: 11, fill: 'var(--muted)', fontFamily: 'var(--font-mono)' }}
-            tickFormatter={(v: number) => formatValue(v, valuePrefix, valueSuffix)}
+            tickFormatter={(v: number) => formatValue(v, valuePrefix, valueSuffix, locale)}
             width={yWidth}
           />
           <Tooltip
@@ -133,9 +140,9 @@ export default function TimeSeriesChart({
               fontSize: 12,
             }}
             labelStyle={{ color: 'var(--ink)', fontFamily: 'var(--font-body)', marginBottom: 4 }}
-            labelFormatter={(label) => formatTooltipLabel(String(label), dateOnly)}
+            labelFormatter={(label) => formatTooltipLabel(String(label), dateOnly, locale)}
             formatter={(value, name) => [
-              formatValue(value, valuePrefix, valueSuffix),
+              formatValue(value, valuePrefix, valueSuffix, locale),
               String(name),
             ]}
           />
@@ -180,7 +187,7 @@ export default function TimeSeriesChart({
             <Area
               type="monotone"
               dataKey="value"
-              name={valueLabel}
+              name={valueLabel ?? t('chart.value')}
               stroke="var(--primary)"
               fill="var(--primary)"
               fillOpacity={0.12}
