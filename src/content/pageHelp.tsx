@@ -244,18 +244,21 @@ export const monitoringHelp: ReactNode = (
 export const connectionsHelp: ReactNode = (
   <>
     <p>
-      Connections are how Koltto <strong>authenticates to each cloud account</strong> (OCI today;
-      AWS and others later). Each connection scopes inventory, monitoring, and cost sync.
+      Connections are how Koltto <strong>authenticates to each cloud account</strong> (OCI and AWS
+      today; GCP later). Each connection scopes inventory, monitoring, and cost sync.
     </p>
     <h3>How to use it</h3>
     <ol>
-      <li>Create a connection with the required credentials for that cloud.</li>
+      <li>
+        Create a connection with the required credentials for that cloud (OCI API key, or AWS IAM
+        access key + account id).
+      </li>
       <li>Select it in the top bar when working in Costs or Resources.</li>
       <li>One company can have multiple connections across clouds over time.</li>
     </ol>
     <p>
       Cost features (Explorer, budgets, unit economics) currently run against the active
-      connection’s synced data.
+      connection’s synced data. AWS cost sync lands after connection CRUD.
     </p>
   </>
 )
